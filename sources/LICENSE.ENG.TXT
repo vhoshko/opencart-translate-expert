@@ -1,0 +1,73 @@
+Opencart Translate Expert License Agreement
+https://translator.codeguild.com.ua
+
+This license agreement (the "Agreement") is an agreement between you
+(Individual or Company that has purchased a license to use the software)
+and translator.codeguild.com.ua (hereinafter we / us / ours).
+The agreement applies to all Products / Software / scripts / Services Opencart Translate Expert,
+that were purchased or downloaded for free from us or our partners.
+
+1. By purchasing the software, you confirm that you have read this Agreement,
+   and that you agree with the content of the Agreement and its terms, and will
+   use the software in accordance with this Agreement.
+
+2. The agreement enters into force at the time you order, buy or download
+   Software from our site or from the sites of our partners or receive it by e-mail.
+
+3. We represent the copyrights of the software. Software or part thereof
+   is subject to copyright and protected by law. Any
+   activity violates the terms of this Agreement, is a violation of copyright and
+   will be prosecuted in accordance with applicable law. We reserve the right
+   revoke the license of any user who violates the terms of this agreement.
+
+4. This Agreement entitles you to use only one copy of the Software for
+   one installation on Opencart / ocStore 2.3.x for personal or business use only.
+   Separate licenses must be purchased or downloaded for each new software installation.
+   Any distribution of the software without our consent, including non-commercial
+   is considered a violation of this Agreement and entails
+   liability in accordance with applicable law.
+
+5. You may not use individual pieces of code in any other software
+   or on the site.
+
+6. You may not transfer, sell, distribute, sublicense, rent any
+   part of the software. You cannot post
+   software on the server to make it available over the network
+   public use for distribution.
+
+7. You must keep the copyright information intact.
+
+8. We reserve the right to publish a list of users of our software.
+
+9. We are not liable to you for any damages (including lost
+   profit / savings, accidental or indirect) caused to you, your
+   information and your business related to the use of or
+   inability to use the software.
+
+10. If you are unable to use the software in accordance with the terms
+    of this license agreement, this is a breach of agreement, and
+    Your license to use the program is revoked.
+
+11. translator.codeguild.com.ua reserves the right to make changes to the license agreement.
+
+12. The license agreement remains in force until its termination.
+    We reserve the right to terminate your license to use
+    software at any time, in its sole discretion,
+    provided that you do not comply with the terms of the agreement, including if you hide or delete
+    any reference or notice to the copyright set forth in this agreement.
+    You may terminate the license agreement at any time by deleting
+    all copies of the software. Termination of this agreement
+    does not oblige us to refund the amount spent on the purchase of software
+    software.
+
+13. If you continue to use the software after
+    translator.codeguild.com.ua will notify you of the termination of the license, you hereby agree
+    accept payment of all expenses (including, but not limited to, payment for services
+    lawyers within reasonable limits) to revoke your license, as well as any damages,
+    suffered by us due to your abuse of unlicensed software
+    software.
+
+14. This program is designed for Opencart / ocStore 2.3.x. translator.codeguild.com.ua NO
+    guarantees the correct operation of this extension on any other version of Opencart,
+    except Opencart / ocStore 2.3.x. translator.codeguild.com.ua does not support software
+    software for other versions of Opencart.
