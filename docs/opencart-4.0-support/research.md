@@ -245,34 +245,131 @@ The `client_translate_expert_core.php` (852 lines), `client_translate_expert.php
 
 ---
 
+## Event System History Across OpenCart Versions
+
+The Event system is key to replacing OCMOD. Here's when it became available:
+
+| OC Version | Events? | View events (inject JS/CSS)? | Notes |
+|------------|---------|------------------------------|-------|
+| **1.5** | No | No | No event system at all |
+| **2.0–2.1** | Yes, limited | **No** | Controller/model events only, no view hooks |
+| **2.2** | Yes, major rewrite | **Yes** | `admin/view/common/header/before` works. Switched from `pre`/`post` to `before`/`after` |
+| **2.3** | Yes, same as 2.2 | **Yes** | No `sort_order` for events yet |
+| **3.0** | Yes + sort_order | **Yes** | Buggy in 3.0.1.2 & 3.0.2.0 (admin `view/*/before` broken), fixed in 3.0.3+ |
+| **4.0** | Yes, mandatory | **Yes** | Events are the only officially supported extension mechanism |
+
+**Implication:** Events can replace OCMOD for OC 2.2+. OCMOD is only strictly needed for OC 1.5 and OC 2.0–2.1 (which are effectively dead — OC 2.0 is from 2015).
+
+**Decision:** Keep OCMOD for OC 1.5–2.1. For OC 2.2+ (including 4.0), Events are the preferred approach. However, for the scope of this OC 4.0 port, we focus on Events for the OC 4.0 package only. Migrating OC 2.2/2.3/3.0 to Events is a separate initiative.
+
+---
+
+## Build vs Source: What Needs to Change Where
+
+The current build system (`build.sh`) generates version-specific packages by sed-transforming the OC 2.3 source. This works for OC 1.5–3.0 because changes are renames and file moves. OC 4.0 needs **new code that doesn't exist in the source today**.
+
+### What the build script CAN handle (~80%)
+
+| Change | Build script approach |
+|--------|----------------------|
+| Route strings (`extension/module/` → `extension/client_translate_expert/module/`) | `sed` replacement |
+| Method separator in JS (`/translate` → `.translate`) | `sed` replacement |
+| Directory restructure into `extension/client_translate_expert/` | `mkdir` + `mv` |
+| Settings prefix (`module_` — same as OC3) | Already done for OC3, reuse |
+| Token (`user_token` — same as OC3) | Already done for OC3, reuse |
+| Class name changes | `sed` replacement |
+| Create `install.json` | `heredoc` in build script |
+| Add namespace declarations to PHP files | `sed` insert at top of file |
+| Change `extends Controller` → `extends \Opencart\System\Engine\Controller` | `sed` replacement |
+| Remove OCMOD XML from OC4 package | `rm` in build script |
+
+### What REQUIRES new source code (~20%)
+
+| Change | Why build scripts can't handle it |
+|--------|----------------------------------|
+| **Event handler method (`eventHeaderAfter`)** | Entirely new PHP method (~30 lines) that injects JS/CSS into rendered header output. No existing code to transform. |
+| **Event registration in `install()`/`uninstall()`** | New logic to register/remove events via `$this->model_setting_event->addEvent()`. Must be added to controller. |
+| **Bootstrap 5 template (`.twig`)** | Too many CSS class changes (`panel` → `card`, `data-toggle` → `data-bs-toggle`, `pull-right` → `float-end`, `btn-default` → `btn-secondary`, `input-group-addon` → `input-group-text`, etc.) across a 338-line template to do reliably with sed. Needs a separate OC4-specific `.twig` template. |
+| **Version branch in `client_translate_expert_core.php`** | Add `version_compare(VERSION, '4.0', '>=')` for module prefix (`extension/client_translate_expert/module`) and library loading path. |
+| **JS char count display for Bootstrap 5** | The `showTranslatedCharCount()` function targets `#header > .nav.pull-right` and `#header > .container-fluid > .nav.navbar-right` — OC4's admin header uses different selectors. |
+
+### Recommended source changes
+
+1. **Add `eventHeaderAfter()` method to controller** — wrapped in a marker comment that the build script includes only for OC4
+2. **Create OC4-specific `.twig` template** — `client_translate_expert.oc4.twig` in sources, copied by build script
+3. **Add OC4 version branch in `_core.php`** — extend existing `version_compare` blocks
+4. **Add OC4-aware selectors in JS** — extend `showTranslatedCharCount()` with OC4 header selectors
+
+---
+
 ## Effort Estimate
+
+### Source changes (~20% of work)
+
+| Task | Effort | Details |
+|------|--------|---------|
+| Create `eventHeaderAfter()` method | 0.5 day | New PHP method in controller to inject JS/CSS via event |
+| Update `install()`/`uninstall()` for events | 0.25 day | Add event registration/cleanup code |
+| Create OC4 Bootstrap 5 `.twig` template | 1 day | Separate template: `panel→card`, `data-toggle→data-bs-toggle`, etc. |
+| Add OC4 version branch in `_core.php` | 0.25 day | Extend existing `version_compare` blocks |
+| Update JS for OC4 header selectors | 0.25 day | `showTranslatedCharCount()` targets different admin header structure |
+| PHP 8.0 compatibility review & fixes | 0.5 day | Null handling, deprecated functions |
+
+### Build script changes (~80% of work)
+
+| Task | Effort | Details |
+|------|--------|---------|
+| Add OC4 target to `build.sh` | 0.5 day | New section: sed replacements, dir restructure, install.json |
+| Namespace insertion via sed | 0.25 day | Add `namespace` declarations to PHP files |
+| Route/class name transformations | 0.25 day | Similar to existing OC3 transforms |
+| Directory restructure logic | 0.25 day | Rearrange into `extension/client_translate_expert/` layout |
+| Remove OCMOD XML from OC4 package | trivial | `rm` in build script |
+
+### Testing
 
 | Task | Effort |
 |------|--------|
-| Restructure into self-contained extension dir | 0.5 day |
-| Add PHP namespaces to all classes | 0.5 day |
-| Replace OCMOD with Event system | 1 day |
-| Update route strings (controller + JS) | 0.5 day |
-| Update Twig template for Bootstrap 5 | 1 day |
-| Update library loading mechanism | 0.5 day |
-| PHP 8.0 compatibility review & fixes | 0.5 day |
-| Update build system (`build.sh`) for OC4 target | 0.5 day |
-| Testing & debugging | 1 day |
-| **Total** | **~5 days** |
+| Testing & debugging on OC 4.0 | 1 day |
+
+### Total: ~5 days
 
 ---
 
 ## Recommended Approach
 
-1. **Create a separate OC4 source variant** — follow the existing pattern of `oc1.5/`, `oc2.0/`, `oc3.0/` build targets. Do not try to make one codebase serve both OC3 and OC4.
+1. **Start with the Event system** — write `eventHeaderAfter()` and event registration. This is the riskiest change and should be validated first on an OC4 test instance.
 
-2. **Start with the Event system** — replacing OCMOD is the riskiest change and should be validated first.
+2. **Create OC4 Bootstrap 5 template** — add `client_translate_expert.oc4.twig` to sources. Too many CSS class changes for sed.
 
-3. **Keep library code shared** — the core translation logic (`_core.php`, `vh_google_translator.php`) can remain mostly identical between OC3 and OC4 packages, with namespace wrappers added for OC4.
+3. **Extend build script** — add OC4 target after the OC3 section. Base it on the OC3 variant (shares `user_token`, `module_` prefix), then apply OC4-specific transforms.
 
-4. **Add `version_compare(VERSION, '4.0', '>=')` branches** in `client_translate_expert_core.php` for the few places that check OC version at runtime.
+4. **Keep core library shared** — `client_translate_expert_core.php` and `vh_google_translator.php` stay as single-source files. Add `version_compare(VERSION, '4.0', '>=')` branches. Build script adds namespaces via sed.
 
-5. **Test on OC 4.0.2.3+** — this is the version where OCMOD was reintroduced, giving a fallback if the Event approach has gaps.
+5. **Package structure** — build script restructures into `extension/client_translate_expert/` layout and generates `install.json` from version/metadata.
+
+6. **Test on OC 4.0.2.3+** — this version reintroduced OCMOD, giving a fallback if the Event approach has gaps.
+
+### Implementation order
+
+```
+Phase 1: Source changes (new files/code)
+  ├── 1a. eventHeaderAfter() method + install/uninstall event registration
+  ├── 1b. OC4 Bootstrap 5 .twig template
+  ├── 1c. version_compare branches in _core.php
+  └── 1d. JS header selector updates
+
+Phase 2: Build script (build.sh additions)
+  ├── 2a. Copy from OC3 variant as base
+  ├── 2b. Namespace insertion + class rename transforms
+  ├── 2c. Route transforms (extension/client_translate_expert/module/ + dot separator)
+  ├── 2d. Directory restructure into self-contained layout
+  ├── 2e. Generate install.json
+  ├── 2f. Copy OC4 .twig template (replacing OC3 version)
+  └── 2g. Remove OCMOD XML
+
+Phase 3: Testing
+  └── 3a. Deploy and test on OC 4.0.2.3+ instance
+```
 
 ---
 

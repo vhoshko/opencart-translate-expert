@@ -1,0 +1,329 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="float-end">
+        <button type="submit" form="form-bestseller" data-bs-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i></button>
+        <a href="{{ cancel }}" data-bs-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-secondary"><i class="fa fa-reply"></i></a></div>
+      <h1>{{ heading_title }}</h1>
+      <ul class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+        <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+    {% if error_warning %}
+    <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>
+      </div>
+      <div class="card-body">
+        <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-bestseller">
+          <ul class="nav nav-tabs">
+            <li class="nav-item"><a href="#tab-general" class="nav-link {{ tab_general_class }}" data-bs-toggle="tab">{{ tab_general }}</a></li>
+            <li class="nav-item"><a href="#tab-translate-site" class="nav-link" data-bs-toggle="tab">{{ tab_translate_site }}</a></li>
+            <li class="nav-item"><a href="#tab-localization" class="nav-link" data-bs-toggle="tab">{{ tab_localization }}</a></li>
+            <li class="nav-item"><a href="#tab-debug" class="nav-link {{ tab_debug_class }}" data-bs-toggle="tab">{{ tab_debug }}</a></li>
+            <li class="nav-item"><a href="#tab-about" class="nav-link" data-bs-toggle="tab">{{ tab_about }}</a></li>
+          </ul>
+
+          <div class="tab-content">
+            <div class="tab-pane {{ tab_general_class }}" id="tab-general">
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="input-client_translate_expert_status">{{ entry_status }}</label>
+                <div class="col-sm-10">
+                  <select name="client_translate_expert_status" id="input-client_translate_expert_status" class="form-select">
+                    {% if client_translate_expert_status %}
+                    <option value="1" selected="selected">{{ text_enabled }}</option>
+                    <option value="0">{{ text_disabled }}</option>
+                    {% else %}
+                    <option value="1">{{ text_enabled }}</option>
+                    <option value="0" selected="selected">{{ text_disabled }}</option>
+                    {% endif %}
+                  </select>
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="input-client_translate_expert_key">{{ entry_server_key }}</label>
+                <div class="col-sm-10">
+                  <input type="text" name="client_translate_expert_key" value="{{ client_translate_expert_key }}" placeholder="{{ entry_server_key }}" id="input-client_translate_expert_key" class="form-control" />
+                  {% if error_name %}
+                  <div class="text-danger">{{ error_name }}</div>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="input-client_translate_expert_show_char_count_globally">{{ entry_server_show_translation_char_count_globally }}</label>
+                <div class="col-sm-10">
+                  <input type="checkbox" name="client_translate_expert_show_char_count_globally" value="1" id="input-client_translate_expert_show_char_count_globally" class="form-check-input" {% if client_translate_expert_show_char_count_globally == 1 %}checked="checked"{% endif %}/> {{ entry_server_show_translation_char_count_globally }}
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="input-client_translate_expert_reset_char_count_on_start_month">{{ entry_server_reset_translation_char_count_on_start_month }}</label>
+                <div class="col-sm-10">
+                  <input type="checkbox" name="client_translate_expert_reset_char_count_on_start_month" value="1" id="input-client_translate_expert_reset_char_count_on_start_month" class="form-check-input" {% if client_translate_expert_reset_char_count_on_start_month == 1 %}checked="checked"{% endif %} /> {{ entry_server_reset_translation_char_count_on_start_month }}
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="input-client_translate_expert_char_count">{{ entry_server_translation_char_count }}</label>
+                <div class="col-sm-10">
+                  <div name="client_translate_expert_char_count" id="input-client_translate_expert_char_count">
+                    {{ client_translate_expert_char_count ? client_translate_expert_char_count : 0 }}
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label">{{ entry_try_translate }}</label>
+                <div class="col-sm-10">
+                  {% for language in languages %}
+                  <div class="input-group mb-2">
+                    <span class="input-group-text"><img src="{{ language.image_url }}" title="{{ language.name }}" /></span>
+                    <textarea name="test[{{ language.language_id }}][translation]" rows="7" placeholder="{{ entry_try_translate_text }}" class="form-control"></textarea>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane" id="tab-translate-site">
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="te-analization-mode">{{ entry_analization_mode }}</label>
+                <div class="col-sm-10">
+                  <select id="te-analization-mode" class="form-select">
+                    <option value="both" {% if te_mode == 'both' %}selected="selected"{% endif %}>{{ value_analization_mode_both }}</option>
+                    <option value="only_empty" {% if te_mode == 'only_empty' %}selected="selected"{% endif %}>{{ value_analization_mode_only_empty }}</option>
+                    <option value="same_value" {% if te_mode == 'same_value' %}selected="selected"{% endif %}>{{ value_analization_mode_same_value }}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="te-analization-table">{{ entry_table }}</label>
+                <div class="col-sm-10">
+                  <select id="te-analization-table" class="form-select">
+                    <option value="" {% if not te_table %}selected="selected"{% endif %}>{{ entry_all_tables }}</option>
+                    {% for table in tables %}
+                    <option value="{{ table }}" {% if te_table == table %}selected="selected"{% endif %}>{{ table }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="te-analization-language-from">{{ entry_analization_language_from }}</label>
+                <div class="col-sm-10">
+                  <select id="te-analization-language-from" class="form-select">
+                    {% for language in languages %}
+                    <option value="{{ language.language_id }}" {% if te_langIdFrom == language.language_id %}selected="selected"{% endif %}>{{ language.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="te-analization-language-to">{{ entry_analization_language_to }}</label>
+                <div class="col-sm-10">
+                  <select id="te-analization-language-to" class="form-select" onchange="$('#te-begin-removing_data_from_db').val('{{ entity_begin_removing_data_from_db }} - ' + this.options[this.selectedIndex].text)">
+                    {% for language in languages %}
+                    <option value="{{ language.language_id }}" {% if te_langIdTo == language.language_id %}selected="selected"{% endif %}>{{ language.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="te-analization-table-deep">{{ entry_table_deep }}</label>
+                <div class="col-sm-10">
+                  <input type="checkbox" id="te-analization-table-deep" value="1" checked="checked" class="form-check-input"> {{ entry_table_deep_description }}
+                </div>
+              </div>
+
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="te-analization-product-status-filter">{{ entry_table_product_filter }}</label>
+                <div class="col-sm-10">
+                  <input type="checkbox" id="te-analization-product-status-filter" value="1" class="form-check-input" {% if te_product_status %}checked="checked"{% endif %}> {{ entry_table_product_status_filter }}<br><br>
+                  <input type="checkbox" id="te-analization-product-quantity-filter" value="1" class="form-check-input" {% if te_product_quantity %}checked="checked"{% endif %}> {{ entry_table_product_quantity_filter }}<br><br>
+                  <select id="te-analization-product-category-id-filter" class="form-select mb-2">
+                    <option value="" {% if not te_product_category_id %}selected="selected"{% endif %}>{{ entry_filter_all }}</option>
+                    {% for category in categories %}
+                    <option value="{{ category.category_id }}" {% if category.category_id == te_product_category_id %}selected="selected"{% endif %}>{{ category.name }}</option>
+                    {% endfor %}
+                  </select> {{ entry_table_product_category_id_filter }}<br><br>
+                  <select id="te-analization-product-stock-status-filter" class="form-select mb-2">
+                    <option value="" {% if not te_stock_status %}selected="selected"{% endif %}>{{ entry_filter_all }}</option>
+                    {% for stock_status in stock_statuses %}
+                    <option value="{{ stock_status.stock_status_id }}" {% if te_stock_status == stock_status.stock_status_id %}selected="selected"{% endif %}>{{ stock_status.name }}</option>
+                    {% endfor %}
+                  </select> {{ entry_table_product_stock_status_filter }}<br><br>
+                </div>
+              </div>
+
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="te-begin-analization">{{ entry_analization }}</label>
+                <div class="col-sm-10">
+                  <input type="button" id="te-begin-analization" value="{{ entity_begin_analization }}" class="btn btn-primary">
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="te-remove-translation" style="color:red">{{ entry_remove_translation_records_from_db }}</label>
+                <div class="col-sm-10">
+                  <input type="button" id="te-begin-removing_data_from_db" value="{{ entity_begin_removing_data_from_db }}" class="btn btn-danger">
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="input-client_translate_expert_status">{{ entry_analization_result }}</label>
+                <div class="col-sm-10">
+                  <div id="te-analization-result">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+
+
+            <div class="tab-pane" id="tab-localization">
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="te-localization-language-from">{{ entry_localization_language_from }}</label>
+                <div class="col-sm-10">
+                  <select id="te-localization-language-from" class="form-select">
+                    {% for language in languages %}
+                    <option value="{{ language.language_id }}" {% if te_langIdFrom == language.language_id %}selected="selected"{% endif %}>{{ language.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="te-localization-language-to">{{ entry_localization_language_to }}</label>
+                <div class="col-sm-10">
+                  <select id="te-localization-language-to" class="form-select">
+                    {% for language in languages %}
+                    <option value="{{ language.language_id }}" {% if te_langIdTo == language.language_id %}selected="selected"{% endif %}>{{ language.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="te-localization-analization">{{ entry_localization_analization }}</label>
+                <div class="col-sm-10">
+                  <input type="button" id="te-begin-localization-analization" value="{{ entity_begin_analization }}" class="btn btn-primary">
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="input-client_translate_expert_status">{{ entry_localization_analization_result }}</label>
+                <div class="col-sm-10">
+                  <div id="te-localization-analization-result">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+
+
+            <div class="tab-pane {{ tab_debug_class }}" id="tab-debug">
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="client_translate_expert_version">{{ entry_translate_expert_version }}</label>
+                <div class="col-sm-10">
+                  <strong name="client_translate_expert_version" id="client_translate_expert_version" class="form-control">{{ translate_expert_version }}</strong>
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="php_version">{{ entry_php_version }}</label>
+                <div class="col-sm-10">
+                  <strong name="php_version" id="php_version" class="form-control">{{ php_version }}</strong>
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="opencart_version">{{ entry_opencart_version }}</label>
+                <div class="col-sm-10">
+                  <strong name="opencart_version" id="opencart_version" class="form-control">{{ opencart_version }}</strong>
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="reset_translation_cache">{{ entry_reset_translation_cache }}</label>
+                <div class="col-sm-10">
+                  <div class="btn btn-primary" name="reset_translation_cache" id="reset_translation_cache" title="{{ entry_reset_translation_cache }}" onclick="resetTranslationCache()">{{ entry_reset_translation_cache }}</div>
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label class="col-sm-2 form-label">{{ entry_debug_status }}</label>
+                <div class="col-sm-10">
+                  <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="client_translate_expert_debug_status" value="1" id="debug-status-enabled" autocomplete="off" {% if client_translate_expert_debug_status %}checked="checked"{% endif %}>
+                    <label class="btn btn-primary" for="debug-status-enabled">{{ text_enabled }}</label>
+                    <input type="radio" class="btn-check" name="client_translate_expert_debug_status" value="0" id="debug-status-disabled" autocomplete="off" {% if not client_translate_expert_debug_status %}checked="checked"{% endif %}>
+                    <label class="btn btn-primary" for="debug-status-disabled">{{ text_disabled }}</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="container-fluid">
+                  <div class="float-start">
+                    {% if debug_log is defined %}
+                    <a href="{{ download_href }}" data-bs-toggle="tooltip" title="{{ button_download }}" class="btn btn-primary"><i class="fa fa-download"></i></a>
+                    <a onclick="confirm('{{ text_clear_confirm }}') ? location.href='{{ clear_href }}' : false;" data-bs-toggle="tooltip" title="{{ button_clear }}" class="btn btn-danger"><i class="fa fa-eraser"></i></a>
+                    {% else %}
+                    <a class="btn btn-info" href="{{ view_href }}" data-bs-toggle="tooltip" title="{{ button_view }}"><i class="fa fa-eye"> {{ button_view }}</i></a>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="container-fluid">
+                  <div class="card-header">
+                    <h3 class="card-title"><i class="fa fa-exclamation-triangle"></i> {{ text_debug_log }}</h3>
+                  </div>
+                </div>
+                {% if debug_log is defined %}
+                  {% if error_debug_log_warning_frm is defined and error_debug_log_warning_frm %}
+                  <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{ error_debug_log_warning_frm }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  </div>
+                  {% endif %}
+                  <div class="card-body">
+                    <textarea wrap="off" rows="30" readonly class="form-control">{{ debug_log }}</textarea>
+                  </div>
+                {% endif %}
+              </div>
+
+            </div>
+            <div class="tab-pane" id="tab-about">
+              {{ text_about_page|raw }}
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="translateExpertModal" tabindex="-1" aria-labelledby="translateExpertModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="translateExpertModalLabel">{{ heading_title }} - {{ tab_translate_site }}</h5>
+        <button type="button" class="btn btn-secondary stop_modal_process" onclick="return confirmStopTranslationModelProcess('{{ entry_stop_modal_process_confirmation }}')">{{ entry_stop_modal_process }}</button>
+      </div>
+      <div class="modal-body">
+        ...
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary close_modal" onclick="$('#translateExpertModal').modal('hide');">{{ entry_close }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- js constants -->
+<script>
+	document.js_const_done_status = "{{ js_const_done_status|raw }}";
+	document.js_const_in_progress_status = "{{ js_const_in_progress_status|raw }}";
+	document.js_const_statistic_html = "{{ js_const_statistic_html|replace({"\n": "", "\r": ""})|raw }}";
+	document.js_const_analization_process_is_started = "{{ js_const_analization_process_is_started|raw }}";
+	// removing
+	document.js_const_entry_remove_translation_records_from_db_confirmation = "{{ entry_remove_translation_records_from_db_confirmation }}";
+	document.js_const_entry_removing_data_from_db_process_is_started = "{{ entry_removing_data_from_db_process_is_started }}";
+
+	$('#te-analization-language-to').change();
+</script>
+{{ footer }}

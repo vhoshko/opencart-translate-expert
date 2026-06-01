@@ -1,6 +1,10 @@
 <?php
 
-include_once(DIR_SYSTEM . 'library/client_translate_expert_core.php');
+if (defined('DIR_EXTENSION') && version_compare(VERSION, '4.0', '>=')) {
+	include_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert_core.php');
+} else {
+	include_once(DIR_SYSTEM . 'library/client_translate_expert_core.php');
+}
 
 class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 {

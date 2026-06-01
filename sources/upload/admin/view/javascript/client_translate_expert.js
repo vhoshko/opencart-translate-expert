@@ -1020,7 +1020,11 @@ function showTranslatedCharCount()
 			{
 				parentElement = $('#header > .container-fluid > .nav.navbar-right');
 			}
-			parentElement.prepend('<li class="dropdown" id="te-translated-char-count-info">' + data.info + '</li>');
+			if (parentElement.length == 0)
+			{
+				parentElement = $('#header .navbar-nav');
+			}
+			parentElement.prepend('<li class="dropdown nav-item" id="te-translated-char-count-info">' + data.info + '</li>');
 		}
 		else
 		{

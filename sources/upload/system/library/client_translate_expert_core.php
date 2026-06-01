@@ -27,6 +27,10 @@ class LibraryClientTranslateExpertCore
 		{
 			$this->_modulePrefix = 'module';
 		}
+		if (version_compare(VERSION, '4.0', '>='))
+		{
+			$this->_modulePrefix = 'extension/client_translate_expert/module';
+		}
 		$this->_keyParamName = 'client_translate_expert_key';
 		if (version_compare(VERSION, '3.0', '>='))
 		{
@@ -565,7 +569,11 @@ INNER JOIN (
 
 		$this->gebugLog('translateInternal: ============START============', $startTime);
 
-		include_once(DIR_SYSTEM . 'library/vh_google_translator.php');
+		if (defined('DIR_EXTENSION') && version_compare(VERSION, '4.0', '>=')) {
+			include_once(DIR_EXTENSION . 'client_translate_expert/system/library/vh_google_translator.php');
+		} else {
+			include_once(DIR_SYSTEM . 'library/vh_google_translator.php');
+		}
 
 		$this->gebugLog('translateInternal: vh_google_translator');
 
