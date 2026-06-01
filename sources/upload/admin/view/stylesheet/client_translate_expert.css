@@ -1,0 +1,100 @@
+.translate_button {
+	background-repeat: no-repeat !important;
+	background-size: cover !important;
+    height: 15px !important;
+    width: 15px !important;
+    min-height: 15px !important;
+    min-width: 15px !important;
+	border: none !important;
+    background-color: transparent !important;
+	float: initial !important;
+}
+.translate_expert_correct {
+	color: green;
+	font-weight: 700;
+}
+.translate_expert_incorrect {
+	color: red;
+	font-weight: 700;
+}
+#translateExpertModal .modal-dialog {
+	width: max-content;
+	max-width: 80%;
+	min-width: 60%;
+}
+
+#translateExpertModal .modal-body {
+    overflow: hidden;
+	overflow-y: hidden;
+    overflow-y: scroll;
+    max-height: 600px;
+}
+
+.localization-analize-file textarea {
+    width: 100%;
+	height: 400px;
+}
+
+.localization-analize-file pre b {
+    color: red;
+}
+
+.localization-analize-file-header b {
+    color: red;
+}
+
+.localization-analize-file-header .info {
+    cursor: pointer;
+	width: fit-content;
+}
+
+.localization-analize-file-toolbar.to .translate_localization_button {
+    margin-left: 10px;
+}
+
+.localization-analize-file-toolbar.to .save_translation_button {
+    margin-left: 10px;
+}
+
+#translation_char_count_info_container {
+  height: 44px;
+}
+#translation_char_count_info_container > div {
+  float: left;
+}
+#translation_char_count_info {
+  color: white;
+  padding: 5px;
+  height: 44px;
+  align-items: center;
+  display: flex;
+}
+#translation_char_count_info.green {
+  background-color: #1e91cf;
+}
+#translation_char_count_info.red {
+  background-color: #f56b6b;
+}
+#reset_translation_char_count {
+  line-height: 39px;
+  padding-left: 5px;
+  padding-right: 5px;
+  cursor: pointer;
+  border-color: green;
+  border-bottom-width: 2px;
+  border-style: solid;
+}
+#reset_translation_char_count.green {
+  border-color: #1e91cf;
+}
+#reset_translation_char_count.red {
+  border-color: #f56b6b;
+}
+/*fix for opencart 3.0*/
+.container-fluid > .nav.navbar-right #translation_char_count_info {
+  height: 60px;
+}
+.container-fluid > .nav.navbar-right #reset_translation_char_count {
+  line-height: 55px;
+}
+/*end fix for opencart 3.0*/
