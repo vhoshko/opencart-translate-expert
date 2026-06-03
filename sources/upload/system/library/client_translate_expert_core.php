@@ -83,7 +83,7 @@ class LibraryClientTranslateExpertCore
 					while (true)
 					{
 						$textToTranslateRows = $this->getTextToTranslateRows($languageIdFrom, $tableResult->table, $tableResult->pkColumnNames, $textColumnName,
-							$mode, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $limit, $offset);
+							$mode, $limit, $offset, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status);
 						if (count($textToTranslateRows) == 0)
 							break;
 						$offset += count($textToTranslateRows);
@@ -378,8 +378,8 @@ INNER JOIN (
 		}
 		else
 		{
-			$rowsToTranslate = $this->getTextToTranslateRows($textToTranslateRow['language_id_from'], $tableResult->table, $tableResult->pkColumnNames, $textColumnName, $mode, $textToTranslateRow['language_id_to'],
-				$product_status, $product_quantity, $product_category_id, $stock_status, 100500, 0, $this->_model->db->escape($textToTranslateRow['text_from']));
+			$rowsToTranslate = $this->getTextToTranslateRows($textToTranslateRow['language_id_from'], $tableResult->table, $tableResult->pkColumnNames, $textColumnName, $mode, 100500, 0,
+				$textToTranslateRow['language_id_to'], $product_status, $product_quantity, $product_category_id, $stock_status, $this->_model->db->escape($textToTranslateRow['text_from']));
 		}
 
 		foreach ($rowsToTranslate as $textToTranslateRow)
@@ -798,8 +798,11 @@ INNER JOIN (
 	{
 		if (version_compare(VERSION, '2.2', '<'))
 			return DIR_CATALOG . 'language/' . $language['directory'] . '/';
-		else
-			return DIR_CATALOG . 'language/' . $language['code'] . '/';
+
+		if (version_compare(VERSION, '4.0', '>=') && !empty($language['extension']))
+			return DIR_EXTENSION . $language['extension'] . '/catalog/language/' . $language['code'] . '/';
+
+		return DIR_CATALOG . 'language/' . $language['code'] . '/';
 	}
 
 	protected function getLanguages()

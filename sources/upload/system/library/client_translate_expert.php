@@ -73,7 +73,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 					$offset = 0;
 					while (true)
 					{
-						$textToTranslateRows = $this->getTextToTranslateRows($languageIdFrom, $tableResult->table, $tableResult->pkColumnNames, $textColumnName, $mode, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $limit, $offset);
+						$textToTranslateRows = $this->getTextToTranslateRows($languageIdFrom, $tableResult->table, $tableResult->pkColumnNames, $textColumnName, $mode, $limit, $offset, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status);
 						if (count($textToTranslateRows) == 0)
 							break;
 						$offset += count($textToTranslateRows);
@@ -312,8 +312,8 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 				$nextExists = true;
 				while ($nextExists)
 				{
-					$textToTranslateRows = $this->getTextToTranslateRows($languageIdFrom, $table, $pkColumnNames, $textColumnName, $mode, $langIdToParam,
-						$product_status, $product_quantity, $product_category_id, $stock_status, $limit + 1, $offset);
+					$textToTranslateRows = $this->getTextToTranslateRows($languageIdFrom, $table, $pkColumnNames, $textColumnName, $mode, $limit + 1, $offset,
+						$langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status);
 					if (count($textToTranslateRows) == 0)
 						break;
 
@@ -492,8 +492,8 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		);
 	}
 
-	protected function getTextToTranslateRows($languageIdFrom, $tableName, $pkColumnNames, $textColumnName, $mode, $langIdToParam = null,
-		$product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $limit, $offset, $text_from_filter = null)
+	protected function getTextToTranslateRows($languageIdFrom, $tableName, $pkColumnNames, $textColumnName, $mode, $limit, $offset,
+		$langIdToParam = null, $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $text_from_filter = null)
 	{
 		$this->gebugLog('getTextToTranslateRows: ============START============', $startTime);
 
@@ -503,8 +503,8 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 			$languages = $this->getLanguages();
 			foreach($languages as $code => $language)
 			{
-				$newRows = $this->getTextToTranslateRows($languageIdFrom, $tableName, $pkColumnNames, $textColumnName, $mode, $language['language_id'],
-					$product_status, $product_quantity, $product_category_id, $stock_status, $limit, $offset);
+				$newRows = $this->getTextToTranslateRows($languageIdFrom, $tableName, $pkColumnNames, $textColumnName, $mode, $limit, $offset,
+					$language['language_id'], $product_status, $product_quantity, $product_category_id, $stock_status);
 				$index = count($res);
 				foreach($newRows as $number => $newRow)
 				{

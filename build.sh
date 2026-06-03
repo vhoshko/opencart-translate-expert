@@ -37,6 +37,7 @@ cleanup_temp() {
 cleanup_temp
 if [ "$IS_RELEASE" != "release" ]; then
     rm -f ./OpenCartTranslateExpertClient-*.ocmod.zip
+    rm -rf ./OpenCartTranslateExpertClient-oc4.0-v*/
 fi
 
 # prepare release for OpenCart 2.3
@@ -276,6 +277,18 @@ file_replace "$OC4_CONTROLLER" 'model_extension_module_client_translate_expert' 
 file_replace "$OC4_CONTROLLER" 'client_translate_expert/downloadDebugLog' 'client_translate_expert.downloadDebugLog'
 file_replace "$OC4_CONTROLLER" 'client_translate_expert/clearDebugLog' 'client_translate_expert.clearDebugLog'
 
+# --- Update setting model methods for OC4 ---
+file_replace "$OC4_CONTROLLER" 'editSettingValue' 'editValue'
+
+# --- Fix language flag image URLs for OC4 (model already provides full URL in 'image' field) ---
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' "/version_compare(VERSION, '2.2'/,/image_url.*langUrl/c\\
+\\				\$data['languages'][\$code]['image_url'] = \$language['image'];" "$OC4_CONTROLLER"
+else
+    sed -i "/version_compare(VERSION, '2.2'/,/image_url.*langUrl/c\\
+\\				\$data['languages'][\$code]['image_url'] = \$language['image'];" "$OC4_CONTROLLER"
+fi
+
 # --- load->language, load->model, load->view paths are correct after route update ---
 # OC4 uses full extension paths: extension/client_translate_expert/module/client_translate_expert
 
@@ -292,6 +305,41 @@ file_replace "$OC4_LIB_CORE" 'new VHGoogleTranslator(' 'new \\Opencart\\Extensio
 
 # --- Update Log class instantiation for OC4 namespaced engine ---
 file_replace "$OC4_LIB_CORE" 'new Log(' 'new \\Opencart\\System\\Library\\Log('
+
+# --- Remove l2.image from SQL (OC4 oc_language table has no 'image' column) ---
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' '/l2\.image language_image_to/d' "$OC4_LIB_MAIN"
+else
+    sed -i '/l2\.image language_image_to/d' "$OC4_LIB_MAIN"
+fi
+
+# --- Fix getLangImgUrl for OC4 (use 'image' field from language model, which has full URL) ---
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' "/function getLangImgUrl/,/^[[:space:]]*}$/c\\
+\\	protected function getLangImgUrl(\$langCode)\\
+\\	{\\
+\\		foreach(\$this->getLanguages() as \$key => \$language)\\
+\\		{\\
+\\			if (\$language['code'] == \$langCode \\&\\& isset(\$language['image']))\\
+\\				return \$language['image'];\\
+\\		}\\
+\\		return '';\\
+\\	}" "$OC4_LIB_CORE"
+else
+    sed -i "/function getLangImgUrl/,/^[[:space:]]*}$/c\\
+\\	protected function getLangImgUrl(\$langCode)\\
+\\	{\\
+\\		foreach(\$this->getLanguages() as \$key => \$language)\\
+\\		{\\
+\\			if (\$language['code'] == \$langCode \\&\\& isset(\$language['image']))\\
+\\				return \$language['image'];\\
+\\		}\\
+\\		return '';\\
+\\	}" "$OC4_LIB_CORE"
+fi
+
+# --- Qualify global classes that would otherwise resolve to the extension namespace ---
+file_replace "$OC4_LIB_GOOGLE" 'new Exception(' 'new \\Exception('
 
 # --- Update install.php route for OC4 ---
 file_replace "$OC4_INSTALL" 'extension/module/client_translate_expert' 'extension/client_translate_expert/module/client_translate_expert'
@@ -314,6 +362,34 @@ file_replace "$OC4_JS" '/client_translate_expert/resetCache' '/client_translate_
 file_replace "$OC4_JS" '/client_translate_expert/translate' '/client_translate_expert.translate'
 file_replace "$OC4_JS" '/client_translate_expert/analize' '/client_translate_expert.analize'
 
+# --- Update Bootstrap modal calls for OC4 (Bootstrap 5 uses native JS API, not jQuery) ---
+# Replace showTranslateExpertModal function to use Bootstrap 5 API
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' "/function showTranslateExpertModal/,/^}$/c\\
+function showTranslateExpertModal(message) {\\
+	\$('#translateExpertModal .modal-body').html(message);\\
+	var modalEl = document.getElementById('translateExpertModal');\\
+	var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: 'static', keyboard: false});\\
+	modal.show();\\
+}" "$OC4_JS"
+else
+    sed -i "/function showTranslateExpertModal/,/^}$/c\\
+function showTranslateExpertModal(message) {\\
+	\$('#translateExpertModal .modal-body').html(message);\\
+	var modalEl = document.getElementById('translateExpertModal');\\
+	var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: 'static', keyboard: false});\\
+	modal.show();\\
+}" "$OC4_JS"
+fi
+# Replace all .modal('hide') calls
+file_replace "$OC4_JS" "\$('#translateExpertModal').modal('hide')" "var _m = bootstrap.Modal.getInstance(document.getElementById('translateExpertModal')); if (_m) _m.hide()"
+
+# --- Update image paths for OC4 extension directory structure ---
+# rootUrl in JS points to admin dir, so we need ../ to reach OC root where extension/ lives
+file_replace "$OC4_JS" "rootUrl + 'view/image/translate_expert_client/" "rootUrl + '../extension/client_translate_expert/admin/view/image/translate_expert_client/"
+# HTTP_SERVER in PHP also points to admin, same fix
+file_replace "$OC4_LIB_CORE" '{$server}view/image/translate_expert_client/' '{$server}../extension/client_translate_expert/admin/view/image/translate_expert_client/'
+
 # --- Apply module_ prefix to settings in OC4 template (same as OC3) ---
 OC4_TEMPLATE="$EXT_DIR/admin/view/template/module/client_translate_expert.twig"
 for setting in client_translate_expert_status client_translate_expert_key client_translate_expert_debug_status client_translate_expert_char_count client_translate_expert_reset_char_count_on_start_month client_translate_expert_show_char_count_globally client_translate_expert_last_reset_char_month; do
@@ -321,8 +397,16 @@ for setting in client_translate_expert_status client_translate_expert_key client
     file_replace "$OC4_TEMPLATE" "$setting" "$module_setting"
 done
 
-# --- Create install.json for OC4 extension installer ---
-cat > "$EXT_DIR/install.json" <<INSTJSON
+
+
+# --- Restructure for OC4 zip: installer expects files at root, not under upload/extension/<code>/ ---
+# The installer extracts to DIR_EXTENSION/<code>/ using the zip filename as code
+OC4_ZIP_ROOT="sources_release_40/oc4zip"
+mkdir -p "$OC4_ZIP_ROOT"
+cp -r "$EXT_DIR"/* "$OC4_ZIP_ROOT/"
+
+# --- Create install.json at zip root ---
+cat > "$OC4_ZIP_ROOT/install.json" <<INSTJSON
 {
     "name": "OpenCart Translate Expert Client",
     "version": "${VERSION}",
@@ -331,8 +415,10 @@ cat > "$EXT_DIR/install.json" <<INSTJSON
 }
 INSTJSON
 
-# --- Build OC4 zip ---
-cd sources_release_40 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc4.0-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' && cd "$SCRIPT_DIR"
+# --- Build OC4 zip (inside a named subfolder for the release archive) ---
+OC4_SUBFOLDER="$SCRIPT_DIR/OpenCartTranslateExpertClient-oc4.0-v${VERSION}-${LOCAL_DATE}"
+mkdir -p "$OC4_SUBFOLDER"
+cd "$OC4_ZIP_ROOT" && zip -r "$OC4_SUBFOLDER/client_translate_expert.ocmod.zip" . -x '*.DS_Store' && cd "$SCRIPT_DIR"
 
 cleanup_temp
 echo "Build complete!"

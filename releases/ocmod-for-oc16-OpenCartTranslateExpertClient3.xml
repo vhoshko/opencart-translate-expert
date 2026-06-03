@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+	<code>OpenCartTranslateExpertClient.ocmod VH</code>
+	<name>OpenCartTranslateExpertClient.ocmod VH</name>
+	<version>03.02.0101</version>
+	<author>Volodymyr Hoshko</author>
+	<link>https://translator.codeguild.com.ua/</link>
+
+  <file name="admin/controller/common/header.php">
+    <operation>
+      <search position="after"><![CDATA[protected function index(]]></search>
+      <add position="after"><![CDATA[
+			$this->data['client_translate_expert_is_enabled'] = $this->config->get('client_translate_expert_status');	  
+			$this->data['client_translate_expert_show_char_count_is_enabled'] = $this->config->get('client_translate_expert_show_char_count_globally');
+			$this->load->model('localisation/language');
+			$this->data['client_translate_expert_languages'] = json_encode($this->model_localisation_language->getLanguages());
+	  ]]></add>
+    </operation>
+  </file>  
+
+  <file name="admin/view/template/common/header.tpl">
+    <operation>
+      <search position="before"><![CDATA[</head>]]></search>
+      <add position="before"><![CDATA[<?php if (version_compare(VERSION, "2.0", "<") && strpos($_SERVER["REQUEST_URI"], "module/client_translate_expert") !== false) { ?><script src="view/stylesheet/oc15/te/jquery-2.1.1.min.js" charset="utf-8"></script><script src="view/stylesheet/oc15/te/bootstrap.min.js" charset="utf-8"></script><link type="text/css" rel="stylesheet" href="view/stylesheet/oc15/te/bootstrap.css"><link type="text/css" rel="stylesheet" href="view/stylesheet/oc15/te/font-awesome.min.css"><?php } ?>
+<script type="text/javascript" src="view/javascript/client_translate_expert.js?v=03.02.0101"></script>
+<link type="text/css" rel="stylesheet" href="view/stylesheet/client_translate_expert.css?v=03.02.0101" />
+<script>
+	document.js_const_client_translate_expert_is_enabled = <?php echo $client_translate_expert_is_enabled; ?>;
+	document.js_const_client_translate_expert_show_char_count_is_enabled = <?php echo $client_translate_expert_show_char_count_is_enabled; ?>;
+	document.js_const_client_translate_expert_languages = <?php echo $client_translate_expert_languages; ?>;
+</script>
+	  ]]></add>
+    </operation>
+  </file>  
+
+</modification>
+
+
+
+
+

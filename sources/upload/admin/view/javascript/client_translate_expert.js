@@ -94,15 +94,13 @@ function doTranslateLocalizationExpert(el, callback = null)
 	var langToId = toEl.data('lang-to');
 	console.log(langToId);
 
-	document.localizationAnalizationResult.forEach((analizationResult) =>
+	var analizationResult = document.localizationAnalizationResult.find((analizationResult) => analizationResult.pathTo == pathTo);
+	if (analizationResult)
 	{
-		if (analizationResult.pathTo == pathTo)
-		{
-			console.log(analizationResult);
-			var toTranslate = analizationResult.toTranslate;
-			doTranslateLocalization(langFromId, langToId, toTranslate, toEl, callback);
-		}
-	});
+		console.log(analizationResult);
+		var toTranslate = analizationResult.toTranslate;
+		doTranslateLocalization(langFromId, langToId, toTranslate, toEl, callback);
+	}
 }
 
 function doTranslateLocalizationAllExpert(index = 0)
@@ -168,9 +166,6 @@ function doTranslateLocalization(langFromId, langToId, toTranslate, toEl, callba
 		}
 		if (translatedResult)
 			translatedResult = translatedResult + "\n";
-		if (translatedResult.indexOf('Массовый автоматический перевод текстов, товаров, категорий, статей и тд с Google translate API') === -1)
-			translatedResult = translatedResult + "/*\nTranslated with\nМассовый автоматический перевод текстов, товаров, категорий, статей и тд с Google translate API\nhttps://translator.codeguild.com.ua/\n*/";
-
 		var i = 0;
 		Object.entries(toTranslate).forEach(([key, value]) => {
 			var valueStr = value.text.trim();
@@ -391,7 +386,7 @@ function showTranslateExpertErrorMessage(data, el) {
 
 	$('.stop_modal_process').hide();
 	$('.close_modal').removeAttr('disabled');
-	$('#translateExpertModal').modal('hide');
+	hideTranslateExpertModal();
 }
 
 function showTranslateExpertInfoMessage(message, el) {
@@ -518,13 +513,28 @@ function getOcToken() {
 	return getParameter('token');
 }
 
+function hideTranslateExpertModal() {
+	var modalEl = document.getElementById('translateExpertModal');
+	if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+		var instance = bootstrap.Modal.getInstance(modalEl);
+		if (instance) instance.hide();
+	} else {
+		$(modalEl).modal('hide');
+	}
+}
+
 function showTranslateExpertModal(message) {
 	$('#translateExpertModal .modal-body').html(message);
 
-	$('#translateExpertModal').modal({
-		backdrop: 'static',
-		keyboard: false
-	});
+	var modalEl = document.getElementById('translateExpertModal');
+	if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+		bootstrap.Modal.getOrCreateInstance(modalEl).show();
+	} else {
+		$(modalEl).modal({
+			backdrop: 'static',
+			keyboard: false
+		});
+	}
 }
 
 function getTranslateExpertFromElement(el) {
@@ -742,7 +752,7 @@ function confirmStopTranslationModelProcess(confirmStr) {
 	if (res)
 	{
 		document.stopTranslationModelProcess = true;
-		$('#translateExpertModal').modal('hide');
+		hideTranslateExpertModal();
 	}
 	return res;
 }
@@ -782,11 +792,16 @@ function makeLocalizationAnalizeRequest(nextFileIndex = 0)
 		{
 			makeLocalizationAnalizeRequest(data.nextFileIndex);
 		}
+		else
+		{
+			$('#te-begin-localization-analization').prop('disabled', false);
+		}
 
 	}).fail(function(data) {
 		console.log(data);
 		showTranslateExpertErrorMessage(data, $('#te-localization-language-from')[0]);
 		$('#te-analization-result').html(data);
+		$('#te-begin-localization-analization').prop('disabled', false);
 	});
 
 }
@@ -926,7 +941,7 @@ function makeAnalizeRequest(lastProcessedTable = null, lastProcessedColumn = nul
 			$('#te-begin-analization').prop('disabled', false);
 
 			$('.close_modal').removeAttr('disabled');
-			$('#translateExpertModal').modal('hide');
+			hideTranslateExpertModal();
 		}
 		else
 		{
@@ -984,7 +999,7 @@ function makeRemovingDataFromDbRequest() {
 		$('#te-begin-analization').prop('disabled', false);
 
 		$('.close_modal').removeAttr('disabled');
-		$('#translateExpertModal').modal('hide');
+		hideTranslateExpertModal();
 	}).fail(function(data) {
 		console.log(data);
 		showTranslateExpertErrorMessage(data, null);
@@ -1108,6 +1123,7 @@ function initModule()
 	});
 
 	$('#te-begin-localization-analization').click(function() {
+		$('#te-begin-localization-analization').prop('disabled', true);
 		makeLocalizationAnalizeRequest();
 	});
 

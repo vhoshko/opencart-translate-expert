@@ -253,7 +253,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			$data['client_translate_expert_reset_char_count_on_start_month'] = $this->config->get('client_translate_expert_reset_char_count_on_start_month');
 		}
 
-		$data['client_translate_expert_char_count'] = number_format($this->config->get('client_translate_expert_char_count'), 0, '.', '`');
+		$data['client_translate_expert_char_count'] = number_format((float)$this->config->get('client_translate_expert_char_count'), 0, '.', '`');
 
 		if (isset($this->request->post['client_translate_expert_status'])) {
 			$data['client_translate_expert_status'] = $this->request->post['client_translate_expert_status'];
@@ -752,6 +752,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 				'status'      => 1,
 				'sort_order'  => 0
 			]);
+
 		}
 		// OC4_EVENT_END
 	}
@@ -785,8 +786,9 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 		$version = $this->getCurrentVersion();
 
-		$js = '<script type="text/javascript" src="extension/client_translate_expert/admin/view/javascript/client_translate_expert.js?v=' . $version . '"></script>';
-		$css = '<link type="text/css" rel="stylesheet" href="extension/client_translate_expert/admin/view/stylesheet/client_translate_expert.css?v=' . $version . '" />';
+		$extensionAssetBase = '../extension/client_translate_expert/admin/view/';
+		$js = '<script type="text/javascript" src="' . $extensionAssetBase . 'javascript/client_translate_expert.js?v=' . $version . '"></script>';
+		$css = '<link type="text/css" rel="stylesheet" href="' . $extensionAssetBase . 'stylesheet/client_translate_expert.css?v=' . $version . '" />';
 		$config = '<script>'
 			. 'document.js_const_client_translate_expert_is_enabled = ' . (int)$isEnabled . ';'
 			. 'document.js_const_client_translate_expert_show_char_count_is_enabled = ' . (int)$showCharCount . ';'

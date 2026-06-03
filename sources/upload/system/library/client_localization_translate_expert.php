@@ -30,13 +30,9 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 			return (object)array('success' => 0, 'error_code' => 3001, 'message' => 'Internal error.',
 				'additional_message' => $this->_model->language->get('error_lang_from_folder_is_not_exists') . ' ' . $languageFromFolder);
 
-		if (!file_exists($languageToFolder))
-			return (object)array('success' => 0, 'error_code' => 3002, 'message' => 'Internal error.',
-				'additional_message' => $this->_model->language->get('error_lang_to_folder_is_not_exists') . ' ' . $languageToFolder);
-
 		//$res = (object)array('success' => 0, 'error_code' => 2001, 'message' => 'Internal error.', 'additional_message' => $this->_model->language->get('error_unlicensed'))
 		$languageFromFiles = $this->getDirContents($languageFromFolder, '.php');
-		$languageToFiles = $this->getDirContents($languageToFolder, '.php');
+		$languageToFiles = file_exists($languageToFolder) ? $this->getDirContents($languageToFolder, '.php') : array();
 
 		$analize = array();
 		foreach($languageFromFiles as $path => $contentFrom)
@@ -194,8 +190,8 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 			$html .= 	"<div class='col-md-6 localization-analize-file-toolbar to'>";
 			$html .= 		"<img src='{$langToImgUrl}' alt='{$langTo['name']}' title='{$langTo['name']}'>";
 			if ($toTranslateCount > 0)
-				$html .= 	"<button class='translate_localization_button' title='Translate' onclick='doTranslateLocalizationExpert(this); return false;'><i class='fa fa-language'></i> Translate</button>";
-			$html .= 		"<button class='save_translation_button' title='Save' onclick='doSaveLocalizationExpert(this); return false;'><i class='fa fa-save'></i> Save</button>";
+				$html .= 	"<button type='button' class='translate_localization_button' title='Translate' onclick='doTranslateLocalizationExpert(this); return false;'><i class='fa fa-language'></i> Translate</button>";
+			$html .= 		"<button type='button' class='save_translation_button' title='Save' onclick='doSaveLocalizationExpert(this); return false;'><i class='fa fa-save'></i> Save</button>";
 			$html .= 	"</div>";
 			$html .= "</div>";
 			$html .= "<div class='row localization-analize-row info' style='display:none;'>";

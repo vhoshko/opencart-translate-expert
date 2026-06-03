@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bash build.sh)"
+      "Bash(bash build.sh)",
+      "Bash(bash /Users/macbook/VH/vh-repos/opencart-translate-expert/build.release.sh)",
+      "Bash(./build.release.sh *)",
+      "Bash(./build.sh)",
+      "Bash(unzip *)"
     ]
   }
 }

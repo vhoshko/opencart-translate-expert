@@ -318,7 +318,7 @@
         ...
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary close_modal" onclick="$('#translateExpertModal').modal('hide');"><?php echo $entry_close; ?></button>
+        <button type="button" class="btn btn-secondary close_modal" data-dismiss="modal" data-bs-dismiss="modal" onclick="hideTranslateExpertModal();"><?php echo $entry_close; ?></button>
       </div>
     </div>
   </div>
