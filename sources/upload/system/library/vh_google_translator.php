@@ -22,6 +22,9 @@ class VHGoogleTranslator  {
 		if ($source == 'ge') $source = 'ka';
 		if ($target == 'ge') $target = 'ka';
 
+		if ($source == 'cz') $source = 'cs';
+		if ($target == 'cz') $target = 'cs';
+
 		$res = $this->translateInternal($text, [
 			'source' => $source,
 			'target' => $target,
@@ -46,17 +49,35 @@ class VHGoogleTranslator  {
 		if ($source == 'ge') $source = 'ka';
 		if ($target == 'ge') $target = 'ka';
 
-		$resultTexts = array();
-		foreach ($texts as $text)
+		if ($source == 'cz') $source = 'cs';
+		if ($target == 'cz') $target = 'cs';
+
+		// Empty/null/whitespace-only values are not sent to Google - they are
+		// returned unchanged, in their original position.
+		$resultTexts = array_values($texts);
+
+		$toTranslateIndexes = array();
+		$toTranslateTexts = array();
+		foreach ($resultTexts as $index => $text)
 		{
 			if ($text && trim($text))
 			{
-				$result = $this->translate($text, $source, $target, $format);
-				$resultTexts[] = $result->text;
+				$toTranslateIndexes[] = $index;
+				$toTranslateTexts[] = $text;
 			}
-			else
+		}
+
+		if (!empty($toTranslateTexts))
+		{
+			$translatedTexts = $this->translateInternalBatch($toTranslateTexts, [
+				'source' => $source,
+				'target' => $target,
+				'format' => $format
+			]);
+
+			foreach ($toTranslateIndexes as $pos => $originalIndex)
 			{
-				$resultTexts[] = $text;
+				$resultTexts[$originalIndex] = $this->fixFormatParameters($toTranslateTexts[$pos], $translatedTexts[$pos]);
 			}
 		}
 
@@ -131,10 +152,61 @@ class VHGoogleTranslator  {
 		return $translatedResult;
 	}
 
+	/**
+	 * Translates a list of non-empty texts, grouping them into as few Google
+	 * Translate API requests as possible (one request per group of texts
+	 * whose combined length fits under GOOGLE_TRANSLATE_MAX_LENGTH). A text
+	 * that alone exceeds the limit is translated on its own via translateInternal(),
+	 * which chunks it into sequential requests. Returns translations in the
+	 * same order as $texts.
+	 */
+	private function translateInternalBatch($texts, $options)
+	{
+		$results = array_fill(0, count($texts), '');
+
+		$batchIndexes = array();
+		$batchTexts = array();
+		$batchLength = 0;
+
+		$flushBatch = function() use (&$batchIndexes, &$batchTexts, &$batchLength, &$results, $options)
+		{
+			if (empty($batchTexts))
+				return;
+
+			$translated = $this->callGoogleTranslateApiBatch($batchTexts, $options);
+
+			foreach ($batchIndexes as $pos => $originalIndex)
+				$results[$originalIndex] = $translated[$pos];
+
+			$batchIndexes = array();
+			$batchTexts = array();
+			$batchLength = 0;
+		};
+
+		foreach ($texts as $index => $text)
+		{
+			if (strlen($text) > self::GOOGLE_TRANSLATE_MAX_LENGTH)
+			{
+				$flushBatch();
+				$results[$index] = $this->translateInternal($text, $options);
+				continue;
+			}
+
+			if ($batchLength + strlen($text) > self::GOOGLE_TRANSLATE_MAX_LENGTH)
+				$flushBatch();
+
+			$batchIndexes[] = $index;
+			$batchTexts[] = $text;
+			$batchLength += strlen($text);
+		}
+
+		$flushBatch();
+
+		return $results;
+	}
+
 	protected function callGoogleTranslateApi($text, $options)
 	{
-		$url = 'https://translation.googleapis.com/language/translate/v2?key=' . urlencode($this->googleApiKey);
-
 		$postData = array(
 			'q'      => $text,
 			'target' => $options['target'],
@@ -143,6 +215,45 @@ class VHGoogleTranslator  {
 
 		if (!empty($options['source']))
 			$postData['source'] = $options['source'];
+
+		$translations = $this->sendGoogleTranslateRequest($postData);
+
+		if (!isset($translations[0]['translatedText']))
+			throw new Exception('Google Translate API: unexpected response format');
+
+		return $translations[0]['translatedText'];
+	}
+
+	protected function callGoogleTranslateApiBatch($texts, $options)
+	{
+		$postData = array(
+			'q'      => array_values($texts),
+			'target' => $options['target'],
+			'format' => isset($options['format']) ? $options['format'] : 'html'
+		);
+
+		if (!empty($options['source']))
+			$postData['source'] = $options['source'];
+
+		$translations = $this->sendGoogleTranslateRequest($postData);
+
+		if (count($translations) !== count($texts))
+			throw new Exception('Google Translate API: unexpected response format');
+
+		$translatedTexts = array();
+		foreach ($translations as $translation)
+		{
+			if (!isset($translation['translatedText']))
+				throw new Exception('Google Translate API: unexpected response format');
+			$translatedTexts[] = $translation['translatedText'];
+		}
+
+		return $translatedTexts;
+	}
+
+	private function sendGoogleTranslateRequest($postData)
+	{
+		$url = 'https://translation.googleapis.com/language/translate/v2?key=' . urlencode($this->googleApiKey);
 
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);
@@ -171,9 +282,9 @@ class VHGoogleTranslator  {
 			throw new Exception($errorMessage);
 		}
 
-		if (!isset($responseData['data']['translations'][0]['translatedText']))
+		if (!isset($responseData['data']['translations']) || !is_array($responseData['data']['translations']))
 			throw new Exception('Google Translate API: unexpected response format');
 
-		return $responseData['data']['translations'][0]['translatedText'];
+		return $responseData['data']['translations'];
 	}
 }

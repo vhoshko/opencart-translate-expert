@@ -20,7 +20,13 @@ Build uses bash and `zip`. Version is read from `_version.txt`.
 ./build.release.sh
 ```
 
-Build produces OCMOD `.zip` packages per OpenCart version (1.5, 2.0–2.3, 3.0) in the `releases/` directory.
+Build produces OCMOD `.zip` packages per OpenCart version (1.5, 2.0–2.3, 3.0, 4.0) in the `releases/` directory.
+
+**Always run `./build.release.sh` after making changes to verify the build succeeds.**
+
+**Before running either build script, bump the patch version in `_version.txt`** (format `MM.mm.pppp`, e.g. `04.01.0101` → `04.01.0102`). Every build run needs a new patch version — never build twice with the same version number.
+
+**Never leave `.zip` files or build artifact folders in the repo root.** The build scripts clean up after themselves — if you see leftover zips or `OpenCartTranslateExpertClient-*` folders in the root, remove them.
 
 ## Tests
 

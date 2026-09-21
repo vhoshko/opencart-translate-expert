@@ -31,6 +31,7 @@ class VHGoogleTranslatorTest {
 		$this->testFixFormatParametersSingle();
 		$this->testFixFormatParametersArray();
 		$this->testBatchSkipsEmptyStrings();
+		$this->testBatchSendsSingleRequest();
 
 		if ($this->apiKey) {
 			echo "\n--- Integration Tests (live API) ---\n";
@@ -76,6 +77,14 @@ class VHGoogleTranslatorTest {
 		$translator->translate('hello', 'ge', 'en');
 		$lastOpts = $translator->getLastOptions();
 		$this->assert($lastOpts['source'] === 'ka', 'Language code "ge" mapped to "ka"');
+
+		$translator->translate('hello', 'cz', 'en');
+		$lastOpts = $translator->getLastOptions();
+		$this->assert($lastOpts['source'] === 'cs', 'Language code "cz" mapped to "cs"');
+
+		$translator->translate('hello', 'en', 'cz');
+		$lastOpts = $translator->getLastOptions();
+		$this->assert($lastOpts['target'] === 'cs', 'Target "cz" mapped to "cs"');
 	}
 
 	private function testFixFormatParametersSingle()
@@ -116,6 +125,24 @@ class VHGoogleTranslatorTest {
 		$this->assert($result->texts[0] === '', 'Empty string passed through');
 		$this->assert($result->texts[1] === '  ', 'Whitespace-only string passed through');
 		$this->assert($result->texts[2] === 'hello_translated', 'Non-empty string was translated');
+	}
+
+	private function testBatchSendsSingleRequest()
+	{
+		$translator = new TestableVHGoogleTranslator('test-key');
+
+		$result = $translator->translateBatch(['one', 'two', '', null, '   ', 'three'], 'en', 'uk');
+
+		$this->assert($translator->getBatchCallCount() === 1, 'Batch sends exactly one Google API request for multiple non-empty values');
+		$this->assert($translator->getLastBatchTexts() === ['one', 'two', 'three'], 'Only non-empty values are sent to Google');
+
+		$this->assert($result->texts[0] === 'one_translated', 'First non-empty value translated');
+		$this->assert($result->texts[1] === 'two_translated', 'Second non-empty value translated');
+		$this->assert($result->texts[2] === '', 'Empty string returned unchanged at its original position');
+		$this->assert($result->texts[3] === null, 'Null value returned unchanged at its original position');
+		$this->assert($result->texts[4] === '   ', 'Whitespace-only value returned unchanged at its original position');
+		$this->assert($result->texts[5] === 'three_translated', 'Trailing non-empty value translated');
+		$this->assert(count($result->texts) === 6, 'Result has same length as input');
 	}
 
 	// --- Integration Tests ---
@@ -233,16 +260,36 @@ class VHGoogleTranslatorTest {
  */
 class TestableVHGoogleTranslator extends VHGoogleTranslator {
 	private $lastOptions = [];
+	private $batchCallCount = 0;
+	private $lastBatchTexts = [];
 
 	public function getLastOptions()
 	{
 		return $this->lastOptions;
 	}
 
+	public function getBatchCallCount()
+	{
+		return $this->batchCallCount;
+	}
+
+	public function getLastBatchTexts()
+	{
+		return $this->lastBatchTexts;
+	}
+
 	protected function callGoogleTranslateApi($text, $options)
 	{
 		$this->lastOptions = $options;
 		return $text . '_translated';
+	}
+
+	protected function callGoogleTranslateApiBatch($texts, $options)
+	{
+		$this->lastOptions = $options;
+		$this->batchCallCount++;
+		$this->lastBatchTexts = $texts;
+		return array_map(function($text) { return $text . '_translated'; }, $texts);
 	}
 }
 
