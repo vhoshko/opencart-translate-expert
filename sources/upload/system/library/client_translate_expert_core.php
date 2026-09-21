@@ -27,6 +27,10 @@ class LibraryClientTranslateExpertCore
 		{
 			$this->_modulePrefix = 'module';
 		}
+		if (version_compare(VERSION, '4.0', '>='))
+		{
+			$this->_modulePrefix = 'extension/client_translate_expert/module';
+		}
 		$this->_keyParamName = 'client_translate_expert_key';
 		if (version_compare(VERSION, '3.0', '>='))
 		{
@@ -79,7 +83,7 @@ class LibraryClientTranslateExpertCore
 					while (true)
 					{
 						$textToTranslateRows = $this->getTextToTranslateRows($languageIdFrom, $tableResult->table, $tableResult->pkColumnNames, $textColumnName,
-							$mode, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $limit, $offset);
+							$mode, $limit, $offset, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status);
 						if (count($textToTranslateRows) == 0)
 							break;
 						$offset += count($textToTranslateRows);
@@ -374,8 +378,8 @@ INNER JOIN (
 		}
 		else
 		{
-			$rowsToTranslate = $this->getTextToTranslateRows($textToTranslateRow['language_id_from'], $tableResult->table, $tableResult->pkColumnNames, $textColumnName, $mode, $textToTranslateRow['language_id_to'],
-				$product_status, $product_quantity, $product_category_id, $stock_status, 100500, 0, $this->_model->db->escape($textToTranslateRow['text_from']));
+			$rowsToTranslate = $this->getTextToTranslateRows($textToTranslateRow['language_id_from'], $tableResult->table, $tableResult->pkColumnNames, $textColumnName, $mode, 100500, 0,
+				$textToTranslateRow['language_id_to'], $product_status, $product_quantity, $product_category_id, $stock_status, $this->_model->db->escape($textToTranslateRow['text_from']));
 		}
 
 		foreach ($rowsToTranslate as $textToTranslateRow)
@@ -565,7 +569,11 @@ INNER JOIN (
 
 		$this->gebugLog('translateInternal: ============START============', $startTime);
 
-		include_once(DIR_SYSTEM . 'library/vh_google_translator.php');
+		if (defined('DIR_EXTENSION') && version_compare(VERSION, '4.0', '>=')) {
+			include_once(DIR_EXTENSION . 'client_translate_expert/system/library/vh_google_translator.php');
+		} else {
+			include_once(DIR_SYSTEM . 'library/vh_google_translator.php');
+		}
 
 		$this->gebugLog('translateInternal: vh_google_translator');
 
@@ -790,8 +798,11 @@ INNER JOIN (
 	{
 		if (version_compare(VERSION, '2.2', '<'))
 			return DIR_CATALOG . 'language/' . $language['directory'] . '/';
-		else
-			return DIR_CATALOG . 'language/' . $language['code'] . '/';
+
+		if (version_compare(VERSION, '4.0', '>=') && !empty($language['extension']))
+			return DIR_EXTENSION . $language['extension'] . '/catalog/language/' . $language['code'] . '/';
+
+		return DIR_CATALOG . 'language/' . $language['code'] . '/';
 	}
 
 	protected function getLanguages()

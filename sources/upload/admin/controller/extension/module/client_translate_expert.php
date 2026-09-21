@@ -253,7 +253,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			$data['client_translate_expert_reset_char_count_on_start_month'] = $this->config->get('client_translate_expert_reset_char_count_on_start_month');
 		}
 
-		$data['client_translate_expert_char_count'] = number_format($this->config->get('client_translate_expert_char_count'), 0, '.', '`');
+		$data['client_translate_expert_char_count'] = number_format((float)$this->config->get('client_translate_expert_char_count'), 0, '.', '`');
 
 		if (isset($this->request->post['client_translate_expert_status'])) {
 			$data['client_translate_expert_status'] = $this->request->post['client_translate_expert_status'];
@@ -728,11 +728,81 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	{
 		$this->load->model('extension/module/client_translate_expert');
 		$result = $this->model_extension_module_client_translate_expert->install();
+
+		// OC4_EVENT_START
+		if (version_compare(VERSION, '4.0', '>=')) {
+			$this->load->model('setting/event');
+
+			$this->model_setting_event->deleteEventByCode('client_translate_expert_header_controller');
+			$this->model_setting_event->addEvent([
+				'code'        => 'client_translate_expert_header_controller',
+				'description' => 'Inject Translate Expert config data into admin header',
+				'trigger'     => 'admin/controller/common/header/after',
+				'action'      => 'extension/client_translate_expert/module/client_translate_expert.eventHeaderControllerAfter',
+				'status'      => 1,
+				'sort_order'  => 0
+			]);
+
+			$this->model_setting_event->deleteEventByCode('client_translate_expert_header_view');
+			$this->model_setting_event->addEvent([
+				'code'        => 'client_translate_expert_header_view',
+				'description' => 'Inject Translate Expert JS/CSS into admin header view',
+				'trigger'     => 'admin/view/common/header/after',
+				'action'      => 'extension/client_translate_expert/module/client_translate_expert.eventHeaderViewAfter',
+				'status'      => 1,
+				'sort_order'  => 0
+			]);
+
+		}
+		// OC4_EVENT_END
 	}
 
 	public function uninstall()
 	{
 		$this->load->model('extension/module/client_translate_expert');
 		$result = $this->model_extension_module_client_translate_expert->uninstall();
+
+		// OC4_EVENT_START
+		if (version_compare(VERSION, '4.0', '>=')) {
+			$this->load->model('setting/event');
+			$this->model_setting_event->deleteEventByCode('client_translate_expert_header_controller');
+			$this->model_setting_event->deleteEventByCode('client_translate_expert_header_view');
+		}
+		// OC4_EVENT_END
 	}
+
+	// OC4_EVENT_START
+	public function eventHeaderControllerAfter(string &$route, array &$args, mixed &$output): void {
+		$this->load->model('localisation/language');
+		$languages = $this->model_localisation_language->getLanguages();
+
+		$this->config->set('client_translate_expert_languages_json', json_encode($languages));
+	}
+
+	public function eventHeaderViewAfter(string &$route, array &$args, string &$output): void {
+		$isEnabled = $this->config->get('client_translate_expert_status');
+		$showCharCount = $this->config->get('client_translate_expert_show_char_count_globally');
+		$languagesJson = $this->config->get('client_translate_expert_languages_json');
+
+		$version = $this->getCurrentVersion();
+
+		$extensionAssetBase = '../extension/client_translate_expert/admin/view/';
+		$js = '<script type="text/javascript" src="' . $extensionAssetBase . 'javascript/client_translate_expert.js?v=' . $version . '"></script>';
+		$css = '<link type="text/css" rel="stylesheet" href="' . $extensionAssetBase . 'stylesheet/client_translate_expert.css?v=' . $version . '" />';
+		$config = '<script>'
+			. 'document.js_const_client_translate_expert_is_enabled = ' . (int)$isEnabled . ';'
+			. 'document.js_const_client_translate_expert_show_char_count_is_enabled = ' . (int)$showCharCount . ';'
+			. 'document.js_const_client_translate_expert_languages = ' . ($languagesJson ? $languagesJson : '{}') . ';'
+			. '</script>';
+
+		$output = str_replace('</head>', $js . $css . '</head>', $output);
+		$headerPos = strpos($output, '<header');
+		if ($headerPos !== false) {
+			$headerClosePos = strpos($output, '>', $headerPos);
+			if ($headerClosePos !== false) {
+				$output = substr_replace($output, '>' . $config, $headerClosePos, 1);
+			}
+		}
+	}
+	// OC4_EVENT_END
 }
