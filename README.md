@@ -41,7 +41,7 @@ php tests/test_vh_google_translator.php YOUR_GOOGLE_API_KEY
 
 ## Support
 
-For consultation and support on module operation, contact: admin@codeguild.com.ua
+For consultation and support on module operation, open an issue on GitHub: https://github.com/vhoshko/opencart-translate-expert/issues
 
 ## License
 
