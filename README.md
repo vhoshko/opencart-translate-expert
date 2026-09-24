@@ -1,4 +1,4 @@
-# OpenCart Translate Expert Client
+# OpenCart Translate Expert
 
 An OpenCart admin module (OCMOD extension) that provides translation management for e-commerce stores. It integrates with the Google Cloud Translation API to translate product data, categories, descriptions, and language files directly from the OpenCart admin panel.
 
