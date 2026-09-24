@@ -2,8 +2,6 @@
 
 An OpenCart admin module (OCMOD extension) that provides translation management for e-commerce stores. It integrates with the Google Cloud Translation API to translate product data, categories, descriptions, and language files directly from the OpenCart admin panel.
 
-Website: https://translator.codeguild.com.ua/
-
 ## Features
 
 - Translate product data, categories, descriptions, and other database content via the Google Cloud Translation API
@@ -16,14 +14,6 @@ Website: https://translator.codeguild.com.ua/
 ## Installation
 
 Download the OCMOD package for your OpenCart version from the [releases](releases) directory (or build it yourself, see below), then install it through **Extensions > Installer** in the OpenCart admin panel, and enable it under **Extensions > Modules > Translate Expert (Full)**.
-
-For detailed, up-to-date installation and configuration instructions, see:
-https://translator.codeguild.com.ua/uk-ua/translate-opencart-in-few-clicks
-
-## Usage
-
-See the usage guide on the website:
-https://translator.codeguild.com.ua/uk-ua/translate-opencart-in-few-clicks#head4
 
 ## Building from source
 
@@ -51,7 +41,7 @@ php tests/test_vh_google_translator.php YOUR_GOOGLE_API_KEY
 
 ## Support
 
-All users get free consultation and support on module operation via email: admin@codeguild.com.ua
+For consultation and support on module operation, contact: admin@codeguild.com.ua
 
 ## License
 
