@@ -11,7 +11,7 @@ Website: https://translator.codeguild.com.ua/
 - Configurable translation modes: translate empty fields only, same-value fields only, or both
 - Table analysis with deep scan support to detect translatable columns across the store's database
 - Character usage tracking against the Google API, with a configurable monthly reset
-- Supports OpenCart 1.5 through 4.0, across PHP 5.6, 7.0, and 7.1+
+- Supports OpenCart 1.5 through 4.0, across PHP 5.6, 7.0, 7.1+, and PHP 8.0+ (required for OpenCart 4.0)
 
 ## Installation
 
