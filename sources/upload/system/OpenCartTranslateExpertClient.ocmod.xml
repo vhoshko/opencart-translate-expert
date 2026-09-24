@@ -4,7 +4,7 @@
 	<name>OpenCartTranslateExpertClient.ocmod VH</name>
 	<version>{client_version}</version>
 	<author>Volodymyr Hoshko</author>
-	<link>https://translator.codeguild.com.ua/</link>
+	<link>https://github.com/vhoshko/opencart-translate-expert</link>
 
   <file path="admin/controller/common/header.php">
     <operation>
