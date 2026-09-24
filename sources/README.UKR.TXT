@@ -1,11 +1,15 @@
 1. Про сервіс Opencart Translate Expert
-Дивіться детальну та актуальну інформацію на сайті:
-https://translator.codeguild.com.ua/uk-ua/about-us
+Дивіться репозиторій проекту на GitHub:
+https://github.com/vhoshko/opencart-translate-expert
 
 2. Установка, оновлення та налаштування модуля:
-Дивіться детальну та актуальну інформацію на сайті:
-https://translator.codeguild.com.ua/uk-ua/translate-opencart-in-few-clicks
+Дивіться README на GitHub:
+https://github.com/vhoshko/opencart-translate-expert#readme
 
 3. Як користуватись модулем:
-Дивіться детальну та актуальну інформацію на сайті:
-https://translator.codeguild.com.ua/uk-ua/translate-opencart-in-few-clicks#head4
+Дивіться README на GitHub:
+https://github.com/vhoshko/opencart-translate-expert#readme
+
+4. Підтримка:
+Створіть issue на GitHub:
+https://github.com/vhoshko/opencart-translate-expert/issues
