@@ -10,7 +10,29 @@
 The session was paused in **Phase 0** while the user rebuilds the sandbox container, because the old one had **no PHP interpreter**.
 - Done: issue fetched, branch `feat/1-support-opencart-4-1` created from `origin/main` (version `04.01.0105`), and this task folder.
 - Sanity check (`ote-build-test`, checks only) was **BLOCKED**: there was no `php` binary, so `php -l` and the unit tests did not run. The grep-based PHP 5.6 check was clean. The only PHP 7+ syntax is the controller's OC4 marker block (lines 774–807), which is allowed.
-- An investigation (Explore) agent was comparing our OC4 package against OpenCart 4.1. Its results were **not** captured before the pause, so re-run it.
+- The investigation (Explore) **finished before the pause**. Its findings are under "Investigation results" below, so do **not** re-run it. Only re-clone the OC sources (step 2) if you need to check something specific.
+
+### Investigation results (2026-11-09, OC 4.0.2.3 vs 4.1.0.4 source diff)
+**Bottom line:** no OpenCart 4.1 API change breaks the OC4 package. The same engine, events, installer, setting/event/language/user_group models, request/url/db/log/language libraries, DB schema and admin assets apply (BS 5.3.1 → 5.3.8, same jQuery 3.7.1/FA/CKEditor). The handler signature `(&$route,&$args,&$output)` is unchanged, and 4.1 ignores handler return values (ours return void). **One package can serve 4.0.2.x and 4.1.0.x**: every version gate is `version_compare(VERSION,'4.0','>=')`, so 4.1 takes the 4.0 branches. No runtime 4.1 gating is needed.
+
+The real risks are PHP-level. 4.1 requires **PHP 8.1+** (✅ checked at `oc-4.1.0.4/upload/system/startup.php:6`), so most installs run 8.2+. The 4.1 error handler handles E_DEPRECATED with `error_display=true` by default, so a deprecation echoed into an AJAX response corrupts the JSON.
+
+Concrete fixes, all in `sources/` and safe on PHP 5.6 / every package (each ✅ confirmed by grep in the main session):
+1. `"${c1}"` interpolation is deprecated in PHP 8.2. Change it to `{$c1}` at `sources/upload/system/library/client_translate_expert.php:199,212`.
+2. `ini_set('error_reporting', E_ALL)` / `display_errors` / `display_startup_errors` at `sources/upload/system/library/client_translate_expert_core.php:3-5` force every deprecation onto the screen for the whole admin request. Remove them (all versions).
+3. **Existing 4.0 bug:** `DateTime::createFromFormat` is unqualified at `client_translate_expert_core.php:836-837`. In the namespaced OC4 package this is a fatal "Class …\Library\DateTime not found" when debug logging is on. Use `\DateTime` in the source (PHP 5.3+).
+4. Not yet audited: PHP 8.1 null-to-internal-function deprecations in the libraries. Do a quick pass.
+
+Packaging/docs:
+- Rename the `oc4.0` artifact to `oc4.x` (recommended) at `build.sh:40,419` and `build.release.sh:15,19,21`.
+- Update README (L12, L30) and CLAUDE.md (L23) to "OC 4.0.2.x–4.1.0.x; PHP 8.0+ for 4.0, 8.1+ for 4.1".
+- Optional: add `description` to install.json (`build.sh` ~L409). 4.1 displays it, and 4.0 ignores it (inferred).
+
+Design corrections:
+- The OC4 installer never executes `install.php`, but the package ships it at `extension/client_translate_expert/install.php` (build.sh ~L203,345). The controller's `install()` already does that work. Recommended: drop the file from the OC4 package, because a direct browser hit causes a fatal.
+- 4.1 caches controller instances in the registry, so `index()` and the header events can share an object. Don't rely on per-request controller state.
+
+Inferred, not verified: that the compile-time `${}` deprecation reaches OC's handler, that `DIR_LOGS`/`HTTP_CATALOG` are still defined, and any runtime behaviour, since nothing was executed. Assumption to record: support starts at 4.0.2.x. 4.0.0.x/4.0.1.x were not assessed.
 
 ### Resume checklist (new session)
 1. `command -v php && php -v` must succeed. Then re-run the sanity check (`ote-build-test`, "checks only").
@@ -24,7 +46,7 @@ The session was paused in **Phase 0** while the user rebuilds the sandbox contai
    done
    ```
    The latest tags at handoff were 4.0.x → `4.0.2.3` and 4.1.x → `4.1.0.0`–`4.1.0.4`.
-3. Re-dispatch the Explore investigation. The brief is below.
+3. ~~Re-dispatch the Explore investigation~~. Already done, see "Investigation results".
 4. Write the Context/Approach/Assumptions/Steps sections, then continue from Phase 1 under auto-approve.
 
 ### Investigation brief (to re-use)
