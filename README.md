@@ -39,6 +39,18 @@ php tests/test_vh_google_translator.php
 php tests/test_vh_google_translator.php YOUR_GOOGLE_API_KEY
 ```
 
+### Test stores (Docker)
+
+`docker/` runs OpenCart 2.3, 3.0 and 4.0 stores locally and installs the built package into them:
+
+```bash
+./build.release.sh
+docker compose -f docker/compose.yaml up -d --build
+docker/install-module.sh all
+```
+
+See [docker/README.md](docker/README.md) for the details.
+
 ## Support
 
 For consultation and support on module operation, open an issue on GitHub: https://github.com/vhoshko/opencart-translate-expert/issues
