@@ -13,7 +13,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 COMPOSE=(docker compose -f "$SCRIPT_DIR/compose.yaml")
-ALL_STORES=(oc23 oc30 oc40)
+ALL_STORES=(oc23 oc30 oc40 oc41)
 TIMEOUT="${READY_TIMEOUT:-600}"
 
 usage() {

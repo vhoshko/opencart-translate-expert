@@ -196,7 +196,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		$c2 = count($textRowsToTranslate);
 		if ($c1 != $c2)
 		{
-			return (object)array('success' => 0, 'error_code' => 1000, 'message' => 'Internal error.', 'additional_message' => "count($translationResults->texts) != count($textRowsToTranslate), ${c1} != {$c2}");
+			return (object)array('success' => 0, 'error_code' => 1000, 'message' => 'Internal error.', 'additional_message' => "count($translationResults->texts) != count($textRowsToTranslate), {$c1} != {$c2}");
 		}
 
 		if ($shouldBeDecoded)
@@ -209,7 +209,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		$c2 = count($textRowsToTranslate);
 		if ($c1 != $c2)
 		{
-			return (object)array('success' => 0, 'error_code' => 1000, 'message' => 'Internal error.', 'additional_message' => "count($translationResults->texts) != count($textRowsToTranslate), ${c1} != {$c2}");
+			return (object)array('success' => 0, 'error_code' => 1000, 'message' => 'Internal error.', 'additional_message' => "count($translationResults->texts) != count($textRowsToTranslate), {$c1} != {$c2}");
 		}
 
 		for($i = 0; $i < count($textRowsToTranslate); $i++)

@@ -12,12 +12,12 @@ rm -f "./releases/v${VERSION}/OpenCartTranslateExpertClient-"*.zip
 
 # Clean up any leftover build artifacts from previous runs
 rm -f ./OpenCartTranslateExpertClient-*.ocmod.zip
-rm -rf ./OpenCartTranslateExpertClient-oc4.0-v*/
+rm -rf ./OpenCartTranslateExpertClient-oc4.x-v*/ ./OpenCartTranslateExpertClient-oc4.0-v*/
 
 bash "$SCRIPT_DIR/build.sh" release
 
-zip -r "./releases/v${VERSION}/OpenCartTranslateExpertClient-v${VERSION}-${LOCAL_DATE}.full.zip" ./OpenCartTranslateExpertClient-*.ocmod.zip ./OpenCartTranslateExpertClient-oc4.0-*/
+zip -r "./releases/v${VERSION}/OpenCartTranslateExpertClient-v${VERSION}-${LOCAL_DATE}.full.zip" ./OpenCartTranslateExpertClient-*.ocmod.zip ./OpenCartTranslateExpertClient-oc4.x-*/
 rm -f ./OpenCartTranslateExpertClient-*.ocmod.zip
-rm -rf ./OpenCartTranslateExpertClient-oc4.0-v*/
+rm -rf ./OpenCartTranslateExpertClient-oc4.x-v*/
 
 echo "Release v${VERSION} built in releases/v${VERSION}/"

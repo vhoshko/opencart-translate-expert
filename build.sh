@@ -37,7 +37,7 @@ cleanup_temp() {
 cleanup_temp
 if [ "$IS_RELEASE" != "release" ]; then
     rm -f ./OpenCartTranslateExpertClient-*.ocmod.zip
-    rm -rf ./OpenCartTranslateExpertClient-oc4.0-v*/
+    rm -rf ./OpenCartTranslateExpertClient-oc4.x-v*/ ./OpenCartTranslateExpertClient-oc4.0-v*/
 fi
 
 # prepare release for OpenCart 2.3
@@ -148,7 +148,7 @@ cd sources_release_30 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc3.0
 mv "${OC30_CTRL}.oc4bak" "$OC30_CTRL"
 
 # ============================================================
-# prepare release for OpenCart 4.0
+# prepare release for OpenCart 4.x (one package for 4.0.2.x-4.1.0.x)
 # ============================================================
 # OC4 starts from the OC3 variant (shares user_token, module_ prefix, marketplace/extension route)
 cp -r sources_release_30 sources_release_40
@@ -199,8 +199,9 @@ rm -rf "$EXT_DIR/admin/view/stylesheet/oc15"
 cp "sources/upload/admin/view/template/extension/module/client_translate_expert.oc4.twig" \
    "$EXT_DIR/admin/view/template/module/client_translate_expert.twig"
 
-# Move install.php to extension root
-mv sources_release_40/install.php "$EXT_DIR/install.php" 2>/dev/null || true
+# install.php is not shipped in the OC4 package: the OC4 installer never runs it
+# (the module controller's install() registers events/permissions instead)
+rm -f sources_release_40/install.php
 
 # Clean up old structure directories (now empty or unneeded)
 rm -rf sources_release_40/upload/admin/controller/extension
@@ -224,7 +225,6 @@ OC4_LIB_CORE="$EXT_DIR/system/library/client_translate_expert_core.php"
 OC4_LIB_MAIN="$EXT_DIR/system/library/client_translate_expert.php"
 OC4_LIB_LOC="$EXT_DIR/system/library/client_localization_translate_expert.php"
 OC4_LIB_GOOGLE="$EXT_DIR/system/library/vh_google_translator.php"
-OC4_INSTALL="$EXT_DIR/install.php"
 
 # --- Add namespace declarations (insert after <?php on line 1) ---
 add_namespace() {
@@ -341,9 +341,6 @@ fi
 # --- Qualify global classes that would otherwise resolve to the extension namespace ---
 file_replace "$OC4_LIB_GOOGLE" 'new Exception(' 'new \\Exception('
 
-# --- Update install.php route for OC4 ---
-file_replace "$OC4_INSTALL" 'extension/module/client_translate_expert' 'extension/client_translate_expert/module/client_translate_expert'
-
 # --- Update JS: module prefix and method separator ---
 # Change js_const_module_prefix to OC4 extension route prefix
 file_replace "$OC4_JS" "js_const_module_prefix = 'extension/module'" "js_const_module_prefix = 'extension/client_translate_expert/module'"
@@ -397,8 +394,6 @@ for setting in client_translate_expert_status client_translate_expert_key client
     file_replace "$OC4_TEMPLATE" "$setting" "$module_setting"
 done
 
-
-
 # --- Restructure for OC4 zip: installer expects files at root, not under upload/extension/<code>/ ---
 # The installer extracts to DIR_EXTENSION/<code>/ using the zip filename as code
 OC4_ZIP_ROOT="sources_release_40/oc4zip"
@@ -410,13 +405,14 @@ cat > "$OC4_ZIP_ROOT/install.json" <<INSTJSON
 {
     "name": "OpenCart Translate Expert Client",
     "version": "${VERSION}",
+    "description": "Translate products, categories, descriptions and language files via the Google Cloud Translation API. Supports OpenCart 4.0.2.x-4.1.0.x.",
     "author": "Volodymyr Hoshko",
-    "link": "https://translator.codeguild.com.ua/"
+    "link": "https://github.com/vhoshko/opencart-translate-expert"
 }
 INSTJSON
 
 # --- Build OC4 zip (inside a named subfolder for the release archive) ---
-OC4_SUBFOLDER="$SCRIPT_DIR/OpenCartTranslateExpertClient-oc4.0-v${VERSION}-${LOCAL_DATE}"
+OC4_SUBFOLDER="$SCRIPT_DIR/OpenCartTranslateExpertClient-oc4.x-v${VERSION}-${LOCAL_DATE}"
 mkdir -p "$OC4_SUBFOLDER"
 cd "$OC4_ZIP_ROOT" && zip -r "$OC4_SUBFOLDER/client_translate_expert.ocmod.zip" . -x '*.DS_Store' && cd "$SCRIPT_DIR"
 

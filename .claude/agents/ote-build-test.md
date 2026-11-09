@@ -61,15 +61,15 @@ Every build needs a new patch version, so never build twice with the same one. F
 ## Step 4 — Build
 
 1. Run `./build.release.sh`. It calls `build.sh release` and bundles everything into `releases/v<version>/`.
-2. Confirm that `releases/v<version>/OpenCartTranslateExpertClient-v<version>-<date>.full.zip` exists and list its contents (`unzip -l`). There should be one `.ocmod.zip` per OpenCart version (1.5, 2.0, 2.1, 2.2, 2.3, 3.0) plus the `oc4.0` folder.
+2. Confirm that `releases/v<version>/OpenCartTranslateExpertClient-v<version>-<date>.full.zip` exists and list its contents (`unzip -l`). There should be one `.ocmod.zip` per OpenCart version (1.5, 2.0, 2.1, 2.2, 2.3, 3.0) plus the `oc4.x` folder.
 3. **Check the per-version rewrites when the diff adds any of the following.** The dispatch prompt lists them; also look at the diff yourself.
-   - **A new controller method called by route (AJAX action):** `build.sh` converts `client_translate_expert/<method>` to `client_translate_expert.<method>` for OC 4.0 only for a fixed list of methods, in the controller section and the JS section. Unzip the full zip to a temp dir and grep the oc4.0 folder's controller and JS for `client_translate_expert/<method>`. Any remaining `/` form is a failure.
-   - **A new library class instantiated with `new`:** OC 4.0 needs it namespaced, and `build.sh` rewrites only listed `new X(` calls. Grep the oc4.0 folder for the un-namespaced `new <Class>(`.
-   - **A new setting key `client_translate_expert_*`:** `build.sh` adds the `module_` prefix only for seven listed keys, on 3.0 (controller, model, `.tpl`, OCMOD XML) and 4.0 (twig). Grep the oc3.0 and oc4.0 packages for the bare key.
+   - **A new controller method called by route (AJAX action):** `build.sh` converts `client_translate_expert/<method>` to `client_translate_expert.<method>` for OC 4.0 only for a fixed list of methods, in the controller section and the JS section. Unzip the full zip to a temp dir and grep the oc4.x folder's controller and JS for `client_translate_expert/<method>`. Any remaining `/` form is a failure.
+   - **A new library class instantiated with `new`:** OC 4.0 needs it namespaced, and `build.sh` rewrites only listed `new X(` calls. Grep the oc4.x folder for the un-namespaced `new <Class>(`.
+   - **A new setting key `client_translate_expert_*`:** `build.sh` adds the `module_` prefix only for seven listed keys, on 3.0 (controller, model, `.tpl`, OCMOD XML) and 4.0 (twig). Grep the oc3.0 and oc4.x packages for the bare key.
    - **A new route or class name in general:** grep the oc2.2 and oc1.5 packages for the OC 2.3 form (`extension/module/`, `ControllerExtensionModule`), which should have been rewritten.
 
    Do these checks in a temp dir outside the repo, and delete the temp dir afterwards.
-4. **Leave no artifacts in the repo root.** Run `ls` on the root. If there are leftover `OpenCartTranslateExpertClient-*.ocmod.zip` files, `OpenCartTranslateExpertClient-oc4.0-v*/` folders or `sources_release*/` folders, remove them and say that you did.
+4. **Leave no artifacts in the repo root.** Run `ls` on the root. If there are leftover `OpenCartTranslateExpertClient-*.ocmod.zip` files, `OpenCartTranslateExpertClient-oc4.x-v*/` folders or `sources_release*/` folders, remove them and say that you did.
 
 If the build fails, report the failing command and the relevant error lines. Do not fix `build.sh` or `build.release.sh` unless the dispatch prompt says to.
 

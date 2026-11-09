@@ -8,6 +8,7 @@
 /sources_release_30/
 /sources_release_40/
 /OpenCartTranslateExpertClient-*.ocmod.zip
+/OpenCartTranslateExpertClient-oc4.x-v*/
 /OpenCartTranslateExpertClient-oc4.0-v*/
 
 .DS_Store

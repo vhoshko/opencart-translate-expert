@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-OpenCart Translate Expert Client — an OpenCart admin module (OCMOD extension) that provides translation management for e-commerce stores. Integrates with Google Cloud Translation API to translate product data, categories, descriptions, and language files. Supports OpenCart 1.5–3.0 across PHP 5.6/7.0/7.1+.
+OpenCart Translate Expert Client — an OpenCart admin module (OCMOD extension) that provides translation management for e-commerce stores. Integrates with Google Cloud Translation API to translate product data, categories, descriptions, and language files. Supports OpenCart 1.5–4.1 across PHP 5.6/7.0/7.1+/8.x (OC 4.0 needs PHP 8.0+, OC 4.1 needs PHP 8.1+).
 
 Website: https://translator.codeguild.com.ua/
 
@@ -20,7 +20,7 @@ Build uses bash and `zip`. Version is read from `_version.txt`.
 ./build.release.sh
 ```
 
-Build produces OCMOD `.zip` packages per OpenCart version (1.5, 2.0–2.3, 3.0, 4.0) in the `releases/` directory.
+Build produces OCMOD `.zip` packages per OpenCart version (1.5, 2.0–2.3, 3.0, 4.x) in the `releases/` directory. The single 4.x package (`oc4.x` folder) covers OpenCart 4.0.2.x and 4.1.0.x.
 
 **Always run `./build.release.sh` after making changes to verify the build succeeds.**
 
