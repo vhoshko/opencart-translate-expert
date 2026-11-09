@@ -14,3 +14,6 @@
 
 # Local Claude Code permission overrides (machine-specific)
 /.claude/settings.local.json
+
+# Throwaway scripts from dev-workflow task folders
+/docs/tasks/*/tmp/
