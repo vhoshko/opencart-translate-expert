@@ -1,0 +1,93 @@
+# OpenCart test stores for the Translate Expert module. See docker/README.md.
+#
+#   docker compose -f docker/compose.yaml up -d --build          # all stores
+#   docker compose -f docker/compose.yaml up -d --build oc30     # one store
+#   docker/install-module.sh all                                 # install module
+#   docker compose -f docker/compose.yaml down -v                # tear down
+
+name: ote-test
+
+x-store-env: &store-env
+  DB_HOST: db
+  DB_USER: opencart
+  DB_PASSWORD: opencart
+  OC_ADMIN_USER: admin
+  OC_ADMIN_PASSWORD: admin
+  OC_ADMIN_EMAIL: admin@example.com
+
+services:
+  db:
+    image: mariadb:10.6
+    # OC 2.3 does not reset sql_mode on connect, and its installer and admin
+    # write rows that strict mode rejects.
+    command: ["--sql-mode=", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_general_ci"]
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  oc23:
+    build:
+      context: ./opencart
+      args:
+        PHP_IMAGE: php:5.6-apache
+        OC_URL: https://github.com/opencart/opencart/releases/download/2.3.0.2/2.3.0.2-compiled.zip
+        OC_SHA256: 4b8e0c2132e158863edaa869442614c4cea1502aa4d22308bd8449d6befb6862
+        OC_UPLOAD_DIR: upload
+    image: ote-test/opencart:2.3.0.2
+    ports:
+      - "127.0.0.1:${OC23_PORT:-8023}:80"
+    environment:
+      <<: *store-env
+      DB_NAME: oc23
+      OC_HTTP_SERVER: http://localhost:${OC23_PORT:-8023}/
+    depends_on:
+      db:
+        condition: service_healthy
+
+  oc30:
+    build:
+      context: ./opencart
+      args:
+        PHP_IMAGE: php:7.4-apache
+        OC_URL: https://github.com/opencart/opencart/releases/download/3.0.3.9/opencart-3.0.3.9.zip
+        OC_SHA256: 9ad297bec682a6a13567ca4061c52829a512890819d1f54b3a465c929e7b3241
+        OC_UPLOAD_DIR: upload
+    image: ote-test/opencart:3.0.3.9
+    ports:
+      - "127.0.0.1:${OC30_PORT:-8030}:80"
+    environment:
+      <<: *store-env
+      DB_NAME: oc30
+      OC_HTTP_SERVER: http://localhost:${OC30_PORT:-8030}/
+    depends_on:
+      db:
+        condition: service_healthy
+
+  oc40:
+    build:
+      context: ./opencart
+      args:
+        PHP_IMAGE: php:8.1-apache
+        OC_URL: https://github.com/opencart/opencart/releases/download/4.0.2.3/opencart-4.0.2.3.zip
+        OC_SHA256: 8d18dc67e23d9937925e2efb470f6fabed98aeafd64550c43b6f413d174e5117
+        OC_UPLOAD_DIR: opencart-4.0.2.3/upload
+    image: ote-test/opencart:4.0.2.3
+    ports:
+      - "127.0.0.1:${OC40_PORT:-8040}:80"
+    environment:
+      <<: *store-env
+      DB_NAME: oc40
+      OC_HTTP_SERVER: http://localhost:${OC40_PORT:-8040}/
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
