@@ -58,9 +58,10 @@ These features are allowed **only in the admin controller** (`sources/upload/adm
 
 ```bash
 php tests/test_vh_google_translator.php
+php tests/test_client_translate_expert_route_filter.php
 ```
 
-The script always runs the whole suite. It has no filter. To prove that one new test fails, run the suite. Then confirm that the expected test is among the failures.
+Run both scripts. Report the counts of each script. Each script always runs its whole suite. It has no filter. To prove that one new test fails, run the suite. Then confirm that the expected test is among the failures.
 
 Run integration tests (`php tests/test_vh_google_translator.php <API_KEY>`) only if the dispatch prompt supplies a key. Never invent a key. Never look for a key in the repo.
 

@@ -91,9 +91,37 @@ Second review (Fable 5.2, `7-exclude-routes-review-v2.md`) confirmed the six fix
 
 Live Docker check of v04.01.0115 (OC 2.3.0.2, 3.0.3.9, 4.0.2.3, 4.1.0.4): all checks pass. Excluded pages (`catalog/product`, product edit, `sale/order`) have no module JS, CSS or inline script. `catalog/category`, the dashboard and the module page have them. The form save stores the textarea value, and a saved rule works at once. No PHP notices. The check left module settings rows in the oc30 and oc40 stores (status=1, empty API key).
 
-## Done
-- Landed: setting `client_translate_expert_excluded_routes` (exact route, or prefix with a trailing `*`). On a matching admin page the module adds no JS, CSS or inline script. The module page is always exempt. OC 1.5–3.0 use the OCMOD header op, and OC4 uses `isCurrentRouteExcluded()`.
-- Final version: 04.01.0116. Two Fable 5.2 reviews. Live check in the OC 2.3, 3.0, 4.0 and 4.1 Docker stores passed on 04.01.0115.
-- Gotchas: `strpos()` with an empty needle (PHP < 8), language files with translated comment anchors, two copies of the match logic.
-- Follow-ups: #24 (settings save resets the char count), #25 (JS `route.indexOf` on null). The oc30 and oc40 test stores keep module settings rows from the live check. Nothing is committed.
+## Update 10.11.2026 (shared library)
+The user asked to remove the duplicate match logic after PR #26 opened.
 
+> **Superseded.** The shared library replaces the two copies of the match logic (XML op and OC4 `isCurrentRouteExcluded()`) from `## Approach`. The plan rejected a shared library because of build entries and a `require` on every admin page. The real cost is small: two `build.sh` lines and one small file with no OpenCart dependencies.
+
+- [x] Code: new `sources/upload/system/library/client_translate_expert_route_filter.php`, class `ClientTranslateExpertRouteFilter`, static `isExcluded($route, $rulesText, $defaultRoute)` and `defaultRoute()`. PHP 5.6 syntax.
+- [x] Code: the XML op calls it after `require_once(DIR_SYSTEM . 'library/...')`. The OC4 method calls the namespaced class after `require_once(DIR_EXTENSION . 'client_translate_expert/system/library/...')`. The OC4 call is inside the OC4 markers, so it needs no build rewrite.
+- [x] Code: `build.sh` moves the file into the OC4 extension folder and adds the OC4 library namespace.
+- [x] Tests: new `tests/test_client_translate_expert_route_filter.php`, 34 tests. Any PHP warning fails a test.
+  Findings: if you remove the empty-prefix guard, 5 tests fail on `strpos(): Empty needle`. The proof used a copy under `tmp/proof/`. So the tests would have caught the v2 I1 bug. The source library still has the guard.
+- [x] Docs: `CLAUDE.md`, `.claude/project-workflows.md`, `ote-build-test.md`, `ote-implementer.md` and `dev-workflow` name the new test script.
+- [x] Bump version + build + tests.
+  Findings: 04.01.0116 → 04.01.0117. Build green. `test_vh_google_translator.php` 24 passed, 0 failed, 6 skipped. `test_client_translate_expert_route_filter.php` 34 passed, 0 failed. Pre-4.0 packages have the library without a namespace. The oc4.x package has it in the extension `system/library/` with the OC4 namespace.
+- [x] Live check in the Docker stores.
+  Findings: v04.01.0117 in OC 2.3, 3.0, 4.0 and 4.1. 36 of 36 checks pass, which include a rule of only `*`. The library file is in the correct folder in each store. No PHP error text. The store data is back to the recorded values. The oc23 `error.log` has 2 notices from 16:50:02, before this install: `Undefined variable: client_translate_expert_head_html` and `..._header_html` in the cached `header.tpl`. The probable cause is a request during an earlier modification refresh (not proved).
+- [x] Independent review v3 → 7-exclude-routes-review-v3.md
+  Findings: Fable 5.2. Parity with ac6bf72 is complete. 1 important, 5 minor. The user chose to fix all six.
+  - I1: the XML op loads the library only if `is_file()` finds it. If the file is absent, the module does not load and the admin page does not stop. Before this fix, an uninstall without a modification refresh gave a fatal error on each admin page (OC 1.5–3.0).
+  - M1, M2: 6 more tests (40 in total): `defaultRoute()`, a URL rule on OC 1.5, prefix rules against a missing route, a `*` that is not the last character.
+  - M3: `dev-workflow` and `ote-code-reviewer.md` name both test scripts.
+  - M4: the Done block.
+  - M5: two STE sentences in this section.
+- [x] Bump version + build + tests (verify loop v3).
+  Findings: 04.01.0117 → 04.01.0118. Build green. `test_vh_google_translator.php` 24 passed, 0 failed, 6 skipped. `test_client_translate_expert_route_filter.php` 40 passed, 0 failed.
+- [x] Live check of the I1 guard (oc23, oc30): remove the library file, open an admin page, then restore the file.
+  Findings: with the file absent, the dashboard and category pages give HTTP 200 with no PHP error text and no module JS. `error.log` gets no new lines. With the file back, the JS loads again. The store data is back to the recorded state.
+
+## Done
+- Landed: setting `client_translate_expert_excluded_routes` (exact route, or prefix with a trailing `*`). On a matching admin page the module adds no JS, CSS or inline script. The module page is always exempt.
+- The rules are in one library: `system/library/client_translate_expert_route_filter.php` (`ClientTranslateExpertRouteFilter::isExcluded()`). The OCMOD header op (OC 1.5–3.0) loads it only if the file is present. The OC4 header events call the namespaced class.
+- Tests: `tests/test_client_translate_expert_route_filter.php` has 40 tests. Any PHP warning fails a test.
+- Final version: 04.01.0118. Three Fable 5.2 reviews (v1, v2, v3), with all findings fixed. Live checks in the OC 2.3, 3.0, 4.0 and 4.1 Docker stores passed on 04.01.0115 and 04.01.0117. The guard check passed on 04.01.0118 (OC 2.3, 3.0).
+- Gotchas: `strpos()` with an empty needle (PHP < 8), language files with translated comment anchors, a `require_once` in an OCMOD op needs an `is_file()` guard.
+- Follow-ups: #24 (settings save resets the char count), #25 (JS `route.indexOf` on null). The oc30 and oc40 test stores keep module settings rows from the first live check.

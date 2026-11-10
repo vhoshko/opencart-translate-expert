@@ -823,47 +823,16 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		}
 	}
 
-	// Keep these rules the same as the header op in system/OpenCartTranslateExpertClient.ocmod.xml (OC 1.5–3.0): exact match, or prefix match with a trailing *.
+	// The rules are in system/library/client_translate_expert_route_filter.php (shared with the OCMOD header op for OC 1.5–3.0).
 	// The event $route is common/header, so the page route comes from the request.
 	private function isCurrentRouteExcluded(): bool {
-		$route = isset($this->request->get['route']) ? trim((string)$this->request->get['route'], " \t/") : '';
-		$route = $route === '' ? 'common/dashboard' : str_replace('|', '.', $route);
+		require_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert_route_filter.php');
 
-		// Never exclude the module page: it needs the header JS.
-		if (strpos($route, 'module/client_translate_expert') !== false) {
-			return false;
-		}
-
-		foreach (explode("\n", (string)$this->config->get('client_translate_expert_excluded_routes')) as $rule) {
-			$rule = trim($rule);
-			// Accept "route=x", "index.php?route=x&user_token=..." and a trailing "/".
-			$pos = strpos($rule, 'route=');
-			if ($pos !== false) {
-				$rule = substr($rule, $pos + 6);
-			} elseif (strpos($rule, 'index.php') !== false) {
-				// An admin URL without route= opens the dashboard.
-				$rule = 'common/dashboard';
-			}
-			$pos = strpos($rule, '&');
-			if ($pos !== false) {
-				$rule = substr($rule, 0, $pos);
-			}
-			$rule = str_replace('|', '.', trim($rule, " \t/"));
-			if ($rule === '') {
-				continue;
-			}
-			if (substr($rule, -1) === '*') {
-				// A rule of only * matches all routes.
-				$prefix = substr($rule, 0, -1);
-				if ($prefix === '' || strpos($route, $prefix) === 0) {
-					return true;
-				}
-			} elseif ($rule === $route) {
-				return true;
-			}
-		}
-
-		return false;
+		return \Opencart\Extension\ClientTranslateExpert\System\Library\ClientTranslateExpertRouteFilter::isExcluded(
+			isset($this->request->get['route']) ? $this->request->get['route'] : null,
+			(string)$this->config->get('client_translate_expert_excluded_routes'),
+			'common/dashboard'
+		);
 	}
 	// OC4_EVENT_END
 }

@@ -10,44 +10,17 @@
     <operation>
       <search position="after"><![CDATA[public function index(]]></search>
       <add position="after"><![CDATA[
-			// Translate Expert: skip the module on excluded admin routes (exact match, or prefix match with a trailing *).
-			// Keep these rules the same as isCurrentRouteExcluded() in admin/controller/extension/module/client_translate_expert.php (OC4).
-			$teDefaultRoute = version_compare(VERSION, '2.0', '<') ? 'common/home' : 'common/dashboard';
-			$teRoute = isset($this->request->get['route']) ? trim((string)$this->request->get['route'], " \t/") : '';
-			if ($teRoute === '') {
-				$teRoute = $teDefaultRoute;
-			}
-			$teRoute = str_replace('|', '.', $teRoute);
-			$teExcluded = false;
-			if (strpos($teRoute, 'module/client_translate_expert') === false) {
-				foreach (explode("\n", (string)$this->config->get('client_translate_expert_excluded_routes')) as $teRule) {
-					$teRule = trim($teRule);
-					$tePos = strpos($teRule, 'route=');
-					if ($tePos !== false) {
-						$teRule = substr($teRule, $tePos + 6);
-					} elseif (strpos($teRule, 'index.php') !== false) {
-						// An admin URL without route= opens the dashboard.
-						$teRule = $teDefaultRoute;
-					}
-					$tePos = strpos($teRule, '&');
-					if ($tePos !== false) {
-						$teRule = substr($teRule, 0, $tePos);
-					}
-					$teRule = str_replace('|', '.', trim($teRule, " \t/"));
-					if ($teRule === '') {
-						continue;
-					}
-					if (substr($teRule, -1) === '*') {
-						// A rule of only * matches all routes. Do not call strpos() with an empty needle (warning on PHP < 8).
-						$tePrefix = substr($teRule, 0, -1);
-						$teExcluded = $tePrefix === '' || strpos($teRoute, $tePrefix) === 0;
-					} else {
-						$teExcluded = $teRule === $teRoute;
-					}
-					if ($teExcluded) {
-						break;
-					}
-				}
+			// Translate Expert: skip the module on excluded admin routes. The rules are in system/library/client_translate_expert_route_filter.php.
+			// If the module files are gone (uninstall without a modification refresh), do not load the module and do not stop the page.
+			$teFilterFile = DIR_SYSTEM . 'library/client_translate_expert_route_filter.php';
+			$teExcluded = true;
+			if (is_file($teFilterFile)) {
+				require_once($teFilterFile);
+				$teExcluded = ClientTranslateExpertRouteFilter::isExcluded(
+					isset($this->request->get['route']) ? $this->request->get['route'] : null,
+					(string)$this->config->get('client_translate_expert_excluded_routes'),
+					ClientTranslateExpertRouteFilter::defaultRoute()
+				);
 			}
 			$data['client_translate_expert_head_html'] = '';
 			$data['client_translate_expert_header_html'] = '';

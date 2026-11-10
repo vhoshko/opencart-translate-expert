@@ -226,9 +226,9 @@ On a bug-fix task, do these steps when the suite is green:
 5. Restore the fix from the copies. Do not retype the code.
 6. Verify the restore with `git diff --stat` and a grep for whatever you used to disable the fix. Do this before you move on.
 
-The test script has no filter, so it always runs the whole suite. Run it inline (`php tests/test_vh_google_translator.php`). Or run it through `ote-build-test` in **checks-only** mode. Never run a full build for this check, because a full build uses up a version number.
+The test scripts have no filter, so each script always runs its whole suite. Run the script inline (`php tests/test_vh_google_translator.php` or `php tests/test_client_translate_expert_route_filter.php`). Or run it through `ote-build-test` in **checks-only** mode. Never run a full build for this check, because a full build uses up a version number.
 
-This applies only where a test exists. Today the only test is for `VHGoogleTranslator` (`tests/test_vh_google_translator.php`). For code without a test harness, say so in the Findings of the plan. Do not claim regression coverage.
+This applies only where a test exists. Today the tests are for `VHGoogleTranslator` (`tests/test_vh_google_translator.php`) and `ClientTranslateExpertRouteFilter` (`tests/test_client_translate_expert_route_filter.php`). For code without a test harness, say so in the Findings of the plan. Do not claim regression coverage.
 
 ## Phase 4 — Independent review (subagent)
 
