@@ -1,19 +1,26 @@
 ---
 name: subagent-driven-development
-description: Use when executing implementation plans with independent tasks in the current session
+description: Use when you execute implementation plans with independent tasks in the current session
 ---
 
 # Subagent-Driven Development
 
-Execute plan by dispatching fresh subagent per task, with two-stage review after each: spec compliance review first, then code quality review.
+Write all output, including files under `docs/tasks/**`, in ASD-STE100 Simplified Technical English. See **Writing style (ASD-STE100)** in `CLAUDE.md`.
 
-**Why subagents:** You delegate tasks to specialized agents with isolated context. By precisely crafting their instructions and context, you ensure they stay focused and succeed at their task. They should never inherit your session's context or history — you construct exactly what they need. This also preserves your own context for coordination work.
+Execute the plan. Dispatch a fresh subagent for each task. After each task, run a two-stage review: first the spec compliance review, then the code quality review.
 
-**Core principle:** Fresh subagent per task + two-stage review (spec then quality) = high quality, fast iteration
+**Why subagents:** You delegate tasks to specialized agents with isolated context. Write their instructions and context precisely. Then the agents stay focused and succeed at their task.
 
-**When to use it:** inside `dev-workflow`, as an alternative to Phase 2 when the approved plan has several independent tasks. Setup, planning, build/test, final review and improvements still follow `dev-workflow`.
+A subagent must never inherit the context or history of your session. Construct exactly what it needs. This also preserves your own context for coordination work.
 
-**Continuous execution:** Do not pause to check in with the user between tasks. Execute all tasks from the plan without stopping. The only reasons to stop are: BLOCKED status you cannot resolve, ambiguity that genuinely prevents progress, or all tasks complete.
+**Core principle:** A fresh subagent for each task, plus a two-stage review (spec then quality), gives high quality and fast iteration.
+
+**When to use it:** Use it inside `dev-workflow`, as an alternative to Phase 2, when the approved plan has several independent tasks. Setup, planning, build/test, final review and improvements still follow `dev-workflow`.
+
+**Continuous execution:** Do not pause to check in with the user between tasks. Execute all tasks from the plan without a stop. Stop only in these cases:
+- A BLOCKED status that you cannot resolve
+- An ambiguity that genuinely prevents progress
+- All tasks are complete
 
 ## Process
 
@@ -39,7 +46,7 @@ After all tasks:
 
 ## Model Selection
 
-Each agent pins the least powerful model that can handle its role, in its own definition under `.claude/agents/`. Dispatch by `subagent_type` and the model follows; pass `model:` only to override deliberately.
+Each agent pins the least powerful model that can handle its role. The pin is in the definition of the agent under `.claude/agents/`. Dispatch by `subagent_type`, and the model follows. Pass `model:` only to override deliberately.
 
 | Role | Agent | Model |
 |------|-------|-------|
@@ -49,31 +56,38 @@ Each agent pins the least powerful model that can handle its role, in its own de
 | Final review of the whole change | `ote-code-reviewer` | Opus |
 | Syntax check, tests, version bump, release build | `ote-build-test` | Haiku |
 
-Override downward for a genuinely mechanical task, or upward for a hard architectural one — but say why when you do.
+Override downward for a genuinely mechanical task. Override upward for a hard architectural task. When you override, say why.
 
 ## Handling Implementer Status
 
-**DONE:** Proceed to spec compliance review.
+**DONE:** Proceed to the spec compliance review.
 
-**DONE_WITH_CONCERNS:** Read concerns before proceeding. If about correctness/scope, address first. If observations, note and proceed.
+**DONE_WITH_CONCERNS:** Read the concerns before you proceed. If the concerns are about correctness or scope, address them first. If the concerns are observations, note them and proceed.
 
-**NEEDS_CONTEXT:** Provide missing context and re-dispatch.
+**NEEDS_CONTEXT:** Provide the missing context and dispatch the agent again.
 
-**BLOCKED:** Assess: context problem → more context; reasoning problem → more capable model; task too large → break it up; plan wrong → escalate to user.
+**BLOCKED:** Assess the cause and act:
+- Context problem: provide more context.
+- Reasoning problem: use a more capable model.
+- Task too large: break the task up.
+- Plan wrong: escalate to the user.
 
 ## Agents
 
-Defined in `.claude/agents/`; dispatch with the `Agent` tool by `subagent_type`.
+The definitions of the agents are in `.claude/agents/`. Dispatch them with the `Agent` tool by `subagent_type`.
 
 - `ote-implementer` — implements one task
 - `ote-spec-reviewer` — verifies the implementation matches the spec
-- `ote-code-quality-reviewer` — verifies it is well built, once spec compliance passes
-- `ote-code-reviewer` — reviews the whole change once every task is done
+- `ote-code-quality-reviewer` — verifies that the code is well built, after spec compliance passes
+- `ote-code-reviewer` — reviews the whole change after every task is done
 
-Each agent carries its own standing instructions, so the dispatch prompt only needs what is
-specific to this task: the full task text, scene-setting context, the implementer's report,
-and the git range. `ote-code-reviewer` needs one thing more — the path to write its review
-to — because it reports through that file rather than inline.
+Each agent carries its own standing instructions. The dispatch prompt needs only what is specific to this task:
+- The full task text
+- The scene-setting context
+- The report of the implementer
+- The git range
+
+`ote-code-reviewer` needs one more item: the path to write its review to. It reports through that file and not inline.
 
 ## Red Flags
 
@@ -81,14 +95,14 @@ to — because it reports through that file rather than inline.
 - Skip reviews (spec compliance OR code quality)
 - Proceed with unfixed issues
 - Dispatch multiple implementation subagents in parallel (conflicts)
-- Make subagent read plan file (provide full text instead)
-- Re-paste an agent's standing instructions into the dispatch prompt — they live in `.claude/agents/`
+- Make a subagent read the plan file (provide the full text instead)
+- Paste the standing instructions of an agent again into the dispatch prompt — they are in `.claude/agents/`
 - Skip scene-setting context
-- **Start code quality review before spec compliance is approved**
-- Move to next task while either review has open issues
+- **Start the code quality review before the spec compliance review passes**
+- Move to the next task while either review has open issues
 
-**If subagent asks questions:** Answer clearly and completely.
+**If a subagent asks questions:** Answer clearly and completely.
 
-**If a per-task reviewer (spec or quality) finds issues:** Implementer fixes → reviewer reviews again → repeat until approved. No need to ask the user here; these loops keep the task inside its approved spec.
+**If a per-task reviewer (spec or quality) finds issues:** The implementer fixes the issues. The reviewer reviews again. Repeat until the reviewer approves. Do not ask the user here. These loops keep the task inside its approved spec.
 
-**If the final `ote-code-reviewer` finds issues:** do not auto-fix. Ask the user per finding, as in `dev-workflow` Phase 4, unless they granted standing auto-approve.
+**If the final `ote-code-reviewer` finds issues:** Do not auto-fix. Ask the user for each finding, as in `dev-workflow` Phase 4, unless the user granted standing auto-approve.

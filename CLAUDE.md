@@ -1,16 +1,57 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file gives guidance to Claude Code (claude.ai/code) for work on the code in this repository.
 
 ## Project Overview
 
-OpenCart Translate Expert Client — an OpenCart admin module (OCMOD extension) that provides translation management for e-commerce stores. Integrates with Google Cloud Translation API to translate product data, categories, descriptions, and language files. Supports OpenCart 1.5–4.1 across PHP 5.6/7.0/7.1+/8.x (OC 4.0 needs PHP 8.0+, OC 4.1 needs PHP 8.1+).
+OpenCart Translate Expert Client is an OpenCart admin module (OCMOD extension). It gives translation management for e-commerce stores. It uses the Google Cloud Translation API to translate product data, categories, descriptions and language files. It supports OpenCart 1.5–4.1 on PHP 5.6/7.0/7.1+/8.x. OC 4.0 needs PHP 8.0+. OC 4.1 needs PHP 8.1+.
 
 Website: https://translator.codeguild.com.ua/
 
+## Writing style (ASD-STE100)
+
+Use ASD-STE100 Simplified Technical English (STE) writing rules for:
+
+- All answers in this repository
+- New plan, review and improvements files under `docs/tasks/**`
+- Changes to `CLAUDE.md` and `.claude/**`
+
+The source is ASD-STE100 Issue 9 (January 2025), DOI https://doi.org/10.5281/zenodo.23666005. The document is free. ASD owns it, and its license is CC BY-NC-ND 4.0. Use the writing rules (Part 1) only. Do not do a dictionary check. Do not copy rule text into the repository.
+
+Key rules:
+
+- Procedure sentence: 20 words maximum (rule 5.1). Give one instruction per sentence (5.2).
+- Descriptive sentence: 25 words maximum (6.3). Paragraph: 6 sentences maximum, one topic (6.5, 6.6).
+- Write instructions in the imperative. If a condition applies, put it first: "If X, do Y" (5.3, 5.4).
+- Use the active voice and simple tenses. Use "-ing" forms only as technical nouns (3.2, 3.5, 3.6).
+- Keep noun clusters to 3 words maximum (2.1).
+- Do not use semicolons, contractions or Latin abbreviations (8.1, 4.2, GR-6).
+- Use a vertical list for a sequence of items or steps (4.3).
+- Use one term for one item. Do not switch between synonyms (1.11, 9.4).
+- Start a warning with the instruction. Then give the reason (7.2, 7.3).
+
+You can use technical nouns and technical verbs. Project terms are technical nouns and verbs. These are the kinds of project terms:
+
+- OpenCart and OCMOD terms
+- File and folder paths
+- Table and column names
+- Code identifiers
+- Commands
+- Model names
+
+Out of scope:
+
+- Existing `docs/tasks/**` files (they are records, so do not change them)
+- Source code comments
+- UI copy and language files (en-gb, ru-ru, uk-ua)
+- Code, commands and quoted literal strings
+- Agent answers outside this repository
+
+No automated check enforces these rules.
+
 ## Build
 
-Build uses bash and `zip`. Version is read from `_version.txt`.
+The build uses bash and `zip`. The build reads the version from `_version.txt`.
 
 ```bash
 # Build all OC version zips
@@ -20,13 +61,13 @@ Build uses bash and `zip`. Version is read from `_version.txt`.
 ./build.release.sh
 ```
 
-Build produces OCMOD `.zip` packages per OpenCart version (1.5, 2.0–2.3, 3.0, 4.x) in the `releases/` directory. The single 4.x package (`oc4.x` folder) covers OpenCart 4.0.2.x and 4.1.0.x.
+The build makes OCMOD `.zip` packages for each OpenCart version (1.5, 2.0–2.3, 3.0, 4.x) in the `releases/` directory. One 4.x package (`oc4.x` folder) covers OpenCart 4.0.2.x and 4.1.0.x.
 
-**Always run `./build.release.sh` after making changes to verify the build succeeds.**
+**After you make changes, always run `./build.release.sh`. This command shows that the build succeeds.**
 
-**Before running either build script, bump the patch version in `_version.txt`** (format `MM.mm.pppp`, e.g. `04.01.0101` → `04.01.0102`). Every build run needs a new patch version — never build twice with the same version number.
+**Before you run a build script, bump the patch version in `_version.txt`.** The format is `MM.mm.pppp`, for example `04.01.0101` → `04.01.0102`. Every build run needs a new patch version. Never build twice with the same version number.
 
-**Never leave `.zip` files or build artifact folders in the repo root.** The build scripts clean up after themselves — if you see leftover zips or `OpenCartTranslateExpertClient-*` folders in the root, remove them.
+**Never leave `.zip` files or build artifact folders in the repo root.** The build scripts remove these items themselves. If leftover zips or `OpenCartTranslateExpertClient-*` folders are in the root, remove them.
 
 ## Tests
 
@@ -38,11 +79,11 @@ php tests/test_vh_google_translator.php
 php tests/test_vh_google_translator.php YOUR_GOOGLE_API_KEY
 ```
 
-Tests cover `VHGoogleTranslator`: language code mapping, format parameter preservation, batch processing, and API integration.
+The tests cover these parts of `VHGoogleTranslator`: language code mapping, format parameter preservation, batch processing and API integration.
 
 ## Architecture
 
-Follows OpenCart MVC pattern with library classes for core logic:
+The module follows the OpenCart MVC pattern. Library classes hold the core logic:
 
 ```
 Controller: sources/upload/admin/controller/extension/module/client_translate_expert.php
@@ -59,15 +100,15 @@ Frontend:
     admin/view/template/extension/module/client_translate_expert.tpl → admin template
 ```
 
-OCMOD injects JS/CSS into the admin header via `OpenCartTranslateExpertClient.ocmod.xml`.
+OCMOD adds the JS and CSS to the admin header through `OpenCartTranslateExpertClient.ocmod.xml`.
 
 ## Key Concepts
 
-- **Translation modes**: `both` (empty + same-value), `only_empty`, `same_value` — controls which DB fields get translated
-- **Table analysis**: scans OpenCart DB tables for translatable columns, supports deep analysis with pagination
-- **Character counting**: tracks Google API usage per month with configurable reset
-- **`translate_expert_same_translations` table**: stores hashes of fields where source equals target to avoid re-translating
-- **Multi-version support**: build system generates separate OCMOD packages per OpenCart version, with version-specific template/controller differences
+- **Translation modes**: `both` (empty + same-value), `only_empty`, `same_value`. The mode sets which DB fields the module translates
+- **Table analysis**: scans OpenCart DB tables for translatable columns. It supports deep analysis with pagination
+- **Character counting**: counts the Google API usage for each month. The reset is configurable
+- **`translate_expert_same_translations` table**: stores hashes of fields where source equals target. This prevents a second translation of these fields
+- **Multi-version support**: the build system makes a separate OCMOD package for each OpenCart version. The template and controller differ between versions
 
 ## i18n
 
@@ -75,7 +116,7 @@ Language files in `admin/language/{en-gb,ru-ru,uk-ua}/extension/module/client_tr
 
 ## Tools
 
-Standalone scripts in `tools/` for batch operations outside the OpenCart admin:
+Standalone scripts in `tools/` do batch operations outside the OpenCart admin:
 - `translate_complex_column_values.php` — batch translate DB columns
 - `find_wrong_translated_values.php` — find mistranslated values
 - `replace_in_db.sql` — DB correction queries

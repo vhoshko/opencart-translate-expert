@@ -1,73 +1,86 @@
 ---
-description: Create a GitHub issue in vhoshko/opencart-translate-expert from the current session context. Drafts it, waits for your OK, then creates it.
+description: Create a GitHub issue in vhoshko/opencart-translate-expert from the current session context. Drafts the issue, waits for your OK, then creates it.
 argument-hint: [steer: issue type, angle, or extra context]
 allowed-tools: Bash, Read, Grep, Glob
 ---
 
-Write up what this session has established as a GitHub issue.
+Write a GitHub issue about what this session established.
 
 **Target:** the repo `vhoshko/opencart-translate-expert`, using the `gh` CLI.
 
-`$ARGUMENTS` is an optional steer: an issue type, which part of the session to write up, or extra context. If it is absent, use the whole session.
+`$ARGUMENTS` is an optional steer. It can give an issue type, the part of the session to write about, or extra context. If `$ARGUMENTS` is absent, use the whole session.
 
 ## 1. Gather
 
-Source the issue from **this session only**: the investigation, the diff, the logs and the commands that were run. Pull the specifics while they are still in context: exact error text, the OpenCart and PHP versions involved, the module version from `_version.txt`, table and column names, Google API responses, `file.php:line` references, SQL, and branch and PR numbers. An issue that says "translation fails sometimes" is worthless; one that names the OC version, the table and the API error is what gets picked up.
+Take the issue content from **this session only**: the investigation, the diff, the logs and the commands that you ran. Collect the specifics while they are in context:
 
-Do not re-derive from the repo what the session already proved.
+- The exact error text
+- The OpenCart and PHP versions
+- The module version from `_version.txt`
+- Table and column names
+- Google API responses
+- `file.php:line` references
+- SQL
+- Branch and PR numbers
+
+An issue that says "translation fails sometimes" has no value. An issue that names the OC version, the table and the API error gets action.
+
+Do not find again in the repo what the session already proved.
 
 ## 2. Check for a duplicate
 
-Do one search before writing:
+Do one search before you write the issue:
 
 ```bash
 gh issue list -R vhoshko/opencart-translate-expert --state all --search "<two or three distinctive terms>"
 ```
 
-If something close already exists, say so with its number and ask whether to add a comment there instead of creating a new issue.
+If a close match exists, give its number. Ask whether to add a comment there instead of a new issue.
 
 ## 3. Pick the label
 
 | Label | When |
 |-------|------|
 | `bug` | Something is broken, wrong or failing in a released or buildable state |
-| `enhancement` | New functionality or a change in behaviour |
+| `enhancement` | New functionality or a change in behavior |
 | none | Refactor, tooling or investigation |
 
-Default to `bug` when the session was a diagnosis, and to `enhancement` otherwise. Check that the label exists (`gh label list -R vhoshko/opencart-translate-expert`). If it does not, create the issue without a label rather than inventing one.
+If the session was a diagnosis, use `bug`. Otherwise, use `enhancement`. Check that the label exists (`gh label list -R vhoshko/opencart-translate-expert`). If the label does not exist, create the issue without a label. Do not invent a label.
 
 ## 4. Draft it
 
-**Title:** one line, specific enough to act on from the issue list alone. Name the component and the condition, not just the symptom. Use sentence case and no type prefix.
+**Title:** Write one line. Make it specific, so that a reader can act on it from the issue list alone. Name the component and the condition, not only the symptom. Use sentence case. Do not add a type prefix.
 
 > Good: `Deep analysis skips product_description rows when language_id has no source text`
 > Bad: `Fix analysis bug`
 
-**Body:** markdown.
+**Body:** Write markdown.
 
-- *Bug*: `### Symptom` (where it was seen, which OC and PHP version, exact messages) · `### Root cause` (one entry per cause, numbered, with `file:line`) · `### Fix` (numbered, including the regression test) · `### Verification` (the steps that reproduce it) · `### Notes` (adjacent findings explicitly ruled out of scope)
+Write the issue in ASD-STE100 Simplified Technical English. See **Writing style (ASD-STE100)** in `CLAUDE.md`.
+
+- *Bug*: `### Symptom` (where you saw it, which OC and PHP version, exact messages) · `### Root cause` (one numbered entry for each cause, with `file:line`) · `### Fix` (numbered, with the regression test) · `### Verification` (the steps that show the problem again) · `### Notes` (nearby findings that are out of scope)
 - *Enhancement / task*: `## Why` (the problem) · `## What` (the work) · `## Open questions` · `## Notes`
 
-Rules for the body:
+Follow these rules for the body:
 
-- Include only what the session actually established. Label anything inferred `(unconfirmed)` or put it under `## Open questions`. Never state it as fact.
-- Use absolute dates (`09.11.2026`), never "yesterday" or "last run".
-- Quote error text verbatim in a fenced block rather than paraphrasing it.
+- Include only what the session established. Label each inferred item `(unconfirmed)` or put it under `## Open questions`. Never state an inferred item as fact.
+- Use absolute dates (`09.11.2026`). Never use "yesterday" or "last run".
+- Quote error text word for word in a fenced block. Do not paraphrase it.
 - Do not invent acceptance criteria, estimates or priorities.
-- If related work exists (an open branch, a sibling issue, a PR), say what it covers and what it does not.
+- If related work exists (an open branch, a sibling issue, a PR), state what it covers and what it does not cover.
 
 ## 5. Confirm
 
-Show the label, title and full body in chat and **stop**. Creating an issue is public. Wait for an explicit go-ahead, and apply any correction before creating it.
+Show the label, title and full body in chat. Then **stop**. Do not create the issue yet, because an issue is public. Wait for an explicit go-ahead. Apply each correction before you create the issue.
 
 ## 6. Create
 
-Write the body to a file in the scratchpad, then run:
+Write the body to a file in the scratchpad. Then run:
 
 ```bash
 gh issue create -R vhoshko/opencart-translate-expert --title "<title>" --body-file <file> [--label <label>] --assignee @me
 ```
 
-Report one line: the issue number, the title and the URL that `gh` printed.
+Report one line with the issue number, the title and the URL that `gh` printed.
 
-Do not touch the working tree, the branch or any commit as part of this command.
+Do not change the working tree, the branch or any commit in this command.
