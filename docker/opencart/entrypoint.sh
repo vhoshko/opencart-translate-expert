@@ -44,7 +44,8 @@ if ! grep -q "DB_DATABASE" config.php 2>/dev/null; then
 mysqli_report(MYSQLI_REPORT_OFF);
 function fail($message) {
 	// STDERR is not defined when PHP reads its script from stdin.
-	file_put_contents('php://stderr', "[opencart] adding uk-ua failed: " . $message . "\n");
+	file_put_contents('php://stderr', "[opencart] adding uk-ua failed: " . $message . "\n"
+		. "[opencart] the store is half installed; recreate the container to retry\n");
 	exit(1);
 }
 $db = @mysqli_connect(getenv('DB_HOST'), getenv('DB_USER'), getenv('DB_PASSWORD'), getenv('DB_NAME'));

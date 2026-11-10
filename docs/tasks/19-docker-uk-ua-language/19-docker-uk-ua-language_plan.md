@@ -39,7 +39,7 @@ Agreed scope: one enabled `uk-ua` row in `oc_language`. No language pack, no lan
 - ✅ The store image has PHP mysqli and no mysql CLI (`docker/opencart/php-setup.sh:39,45`).
 - ✅ The module needs no language files or description rows for `uk-ua`. Checked in code, references in Context.
 - ✅ `install-module.sh` is a bash script whose `sql()` runs `mariadb` inside the `db` container.
-- ❓ `mysqli_set_charset('utf8mb4')` works on PHP 5.6 mysqlnd against MariaDB 10.6. mysqlnd should support it. Checked in the live step by reading the name back. If it fails, use `utf8`, which still stores Cyrillic.
+- ✅ (verified 10.11.2026, live) `mysqli_set_charset('utf8mb4')` works on PHP 5.6 mysqlnd against MariaDB 10.6: `oc23.oc_language` reads back `Українська`. Originally unverified: mysqlnd should support it. Checked in the live step by reading the name back. If it fails, use `utf8`, which still stores Cyrillic.
 - ❓ The storefront or admin may log a missing-file notice when `uk-ua` is selected on 2.3/3.0, and the flag image will 404. This is cosmetic and out of scope; I'll note what the live step shows.
 - ❓ Live verification depends on the user rebuilding the stores on the host, because there is no Docker CLI here and `install-module.sh` needs one.
 
@@ -52,10 +52,14 @@ Agreed scope: one enabled `uk-ua` row in `oc_language`. No language pack, no lan
   Findings: running the snippet through `sh` exactly as the entrypoint does exposed a bug. `STDERR` is undefined when PHP reads its script from stdin (`Undefined constant "STDERR"`, exit 255), so the failure message never appeared. Fixed with `file_put_contents('php://stderr', …)`, plus `@` on `mysqli_connect` to drop the duplicate warning. Retest: prints `[opencart] adding uk-ua failed: Access denied …`, exits 1, and `set -e` stops the script. The success path cannot run here (no DB credentials), so it is covered by the live verify. Tested on local PHP 8.2 only; PHP 5.6/7.4 run in the live verify.
 - [x] Bump version + build + test
   Findings: 04.01.0110 → 04.01.0111. Build green (`releases/v04.01.0111/`). Unit tests 24 passed, 0 failed, 6 skipped (no API key). `sh -n` and `bash -n` pass. Note: `feat/1-support-opencart-4-1` also uses 04.01.0111, so whichever merges second will conflict on `_version.txt` and needs a re-bump.
-- [ ] Live verify: user runs `docker compose -f docker/compose.yaml up -d --build --force-recreate` and `docker/install-module.sh all`. I query `oc_language` on oc23, oc30 and oc40 via `host.internal`: 2 rows, Cyrillic name intact, the right per-version columns. The user confirms Check 4 PASS and that Українська appears in the module's language dropdown
-- [ ] Independent review → 19-docker-uk-ua-language-review.md
-- [ ] Address review findings (user picks which to fix or skip)
-- [ ] Bump version + build + tests (verify loop)
+- [x] Live verify: user runs `docker compose -f docker/compose.yaml up -d --build --force-recreate` and `docker/install-module.sh all`. I query `oc_language` on oc23, oc30 and oc40 via `host.internal`: 2 rows, Cyrillic name intact, the right per-version columns. The user confirms Check 4 PASS and that Українська appears in the module's language dropdown
+  Findings (10.11.2026): the first attempt showed only en-gb, because the user's host checkout is separate from this container's /workspace, so the stores were built from the old entrypoint. Fixed by pushing WIP commit `cb55cb5` and having the user check out the branch. Second attempt: oc23, oc30 and oc40 each have row 2 `Українська`/`uk-ua`, status 1, sort_order 2, with the right per-version columns (`ua.png`/`uk-ua` on 2.3/3.0, `extension=''` on 4.0). `docker/install-module.sh all` on the host passes all 4 smoke checks on oc23, oc30 and oc40, including `PASS 2 enabled languages (en-gb, uk-ua)`; the module page renders without PHP errors on all three with uk-ua present.
+- [x] Independent review → 19-docker-uk-ua-language-review.md
+  Findings: Fable 5.1, ready to merge, no Critical/Important findings. 5 Minor findings.
+- [x] Address review findings (user picks which to fix or skip)
+  Findings: the user chose to fix 1-4. (1) README: 2.3/3.0 storefront auto-selects uk-ua from `Accept-Language`, and the install-order wording is corrected (uk-ua is added before `install/` is deleted). (2) The entrypoint error now adds `the store is half installed; recreate the container to retry`; the install's failure behaviour is unchanged. (3) Check 4 message reworded. (4) Check 4 now requires at least 2 enabled languages (`-lt 2`), and the PASS line prints the count. (5) Skipped: version collision with the 4.1 branch, already noted under the build step. Failure path retested: both lines print, exit 1.
+- [x] Bump version + build + tests (verify loop)
+  Findings: 04.01.0111 → 04.01.0112. Build green (`releases/v04.01.0112/`). Unit tests 24/0/6. `sh -n` and `bash -n` pass. The fixes were not re-run live; they only touch messages, the README and the Check 4 comparison (`-lt 2`).
 - [ ] Re-review? (unreviewed fixes exist; ask the user, and if yes repeat from the review step → -review-v2.md, v3, …)
 - [ ] Improvements pass → 19-docker-uk-ua-language-improvements.md
 

@@ -331,11 +331,11 @@ smoke_check() {
 	ukua="$(sql "SELECT code FROM oc_language WHERE code = 'uk-ua' AND status = 1")" \
 		|| { fail "database query failed"; return 1; }
 	if [ "$ukua" != "uk-ua" ]; then
-		fail "language uk-ua is missing or disabled (the store was installed before it was added? recreate it)"
-	elif [ "$n" -ne 2 ]; then
-		fail "expected 2 enabled languages, found $n"
+		fail "language uk-ua is missing or disabled; recreate the store so its entrypoint adds it"
+	elif [ "$n" -lt 2 ]; then
+		fail "expected at least 2 enabled languages, found $n"
 	else
-		log "PASS 2 enabled languages (en-gb, uk-ua)"
+		log "PASS $n enabled languages, including uk-ua"
 	fi
 }
 
