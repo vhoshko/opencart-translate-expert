@@ -23,6 +23,16 @@ docker compose -f docker/compose.yaml up -d --build oc30     # just one
 
 The first build takes a few minutes. Follow the install with `docker compose -f docker/compose.yaml logs -f oc30` and wait for `[opencart] ready`.
 
+To do everything in one go, run `docker/rebuild-stores.sh`. It runs `./build.release.sh`, recreates the stores (a fresh OpenCart install, so anything done in them is lost), waits for `[opencart] ready` and runs `install-module.sh` with its smoke checks on each store. It stops with the store's log if an install fails.
+
+```bash
+docker/rebuild-stores.sh                 # build, then all three stores
+docker/rebuild-stores.sh oc30            # build, then just one
+docker/rebuild-stores.sh -s oc23 oc40    # skip the build, use the newest release
+```
+
+`build.release.sh` uses `_version.txt` as it is, so bump it first if the module sources changed since the last build (see CLAUDE.md). The wait times out after 600 seconds; set `READY_TIMEOUT` to change that.
+
 The stores listen on `127.0.0.1` only, so they are not reachable from the network. Ports can be changed with `OC23_PORT`, `OC30_PORT` and `OC40_PORT`. Set the same variable for `install-module.sh`:
 
 ```bash
