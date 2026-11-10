@@ -60,8 +60,12 @@ Agreed scope: one enabled `uk-ua` row in `oc_language`. No language pack, no lan
   Findings: the user chose to fix 1-4. (1) README: 2.3/3.0 storefront auto-selects uk-ua from `Accept-Language`, and the install-order wording is corrected (uk-ua is added before `install/` is deleted). (2) The entrypoint error now adds `the store is half installed; recreate the container to retry`; the install's failure behaviour is unchanged. (3) Check 4 message reworded. (4) Check 4 now requires at least 2 enabled languages (`-lt 2`), and the PASS line prints the count. (5) Skipped: version collision with the 4.1 branch, already noted under the build step. Failure path retested: both lines print, exit 1.
 - [x] Bump version + build + tests (verify loop)
   Findings: 04.01.0111 → 04.01.0112. Build green (`releases/v04.01.0112/`). Unit tests 24/0/6. `sh -n` and `bash -n` pass. The fixes were not re-run live; they only touch messages, the README and the Check 4 comparison (`-lt 2`).
-- [ ] Re-review? (unreviewed fixes exist; ask the user, and if yes repeat from the review step → -review-v2.md, v3, …)
-- [ ] Improvements pass → 19-docker-uk-ua-language-improvements.md
+- [x] Re-review? Not requested: the user went straight to retest and the PR.
+- [x] Extra (user request): `docker/rebuild-stores.sh` runs build, recreate, wait for ready and install-module in one step. Syntax and argument handling checked here only; not reviewed, and not yet run on the host.
+- [x] Improvements pass → 19-docker-uk-ua-language-improvements.md
 
 ## Done
-<filled at the end>
+- Each Docker store's entrypoint adds an enabled `uk-ua` row to `oc_language` after `cli_install.php` (DB row only). `install-module.sh` Check 4 asserts at least 2 enabled languages including `uk-ua`. The README is updated, and `docker/rebuild-stores.sh` was added.
+- Final version 04.01.0112. Live-verified on oc23/oc30/oc40 on 10.11.2026 (before the review fixes): all 4 smoke checks PASS, and the Cyrillic name is intact on PHP 5.6. The post-fix retest and the first `rebuild-stores.sh` run are pending on the host.
+- Gotchas: PHP from stdin has no `STDERR`; the user's host checkout is separate from `/workspace`.
+- Follow-ups: apply the same row to `oc41` when `feat/1-support-opencart-4-1` merges (re-bump `_version.txt`, which collides at 04.01.0111); optional `ua.png` flag. Not confirmed: Українська in the module's language dropdown (manual check).
