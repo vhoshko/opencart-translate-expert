@@ -2,7 +2,7 @@
 # Install (or update) the built Translate Expert package into the running
 # Docker test stores, the way a store owner would, then run smoke checks.
 #
-#   docker/install-module.sh [-p <package.full.zip>] [-c] <oc23|oc30|oc40|all>
+#   docker/install-module.sh [-p <package.full.zip>] [-c] <oc23|oc30|oc40|oc41|all>
 #
 #   -p  package to install (default: newest in releases/)
 #   -c  checks only: skip the install and only run the smoke checks
@@ -13,7 +13,7 @@
 # First run per store: full install.
 #   oc23, oc30  copy upload/ into the store, Modifications > Refresh,
 #               Extensions > Modules > Install
-#   oc40        Extension Installer upload + install, Extensions > Modules > Install
+#   oc40, oc41  Extension Installer upload + install, Extensions > Modules > Install
 # Later runs: the module is already installed, so only the files are replaced
 # (plus a modification refresh on oc23/oc30). Recreate the store for a clean
 # install: docker compose -f docker/compose.yaml down -v
@@ -30,7 +30,7 @@ ADMIN_PASSWORD="admin"
 MODULE_CODE="client_translate_expert"
 
 usage() {
-	echo "Usage: $0 [-p <package.full.zip>] [-c] <oc23|oc30|oc40|all>" >&2
+	echo "Usage: $0 [-p <package.full.zip>] [-c] <oc23|oc30|oc40|oc41|all>" >&2
 	exit 2
 }
 
@@ -50,8 +50,8 @@ shift $((OPTIND - 1))
 [ $# -eq 1 ] || usage
 
 case "$1" in
-	all) STORES="oc23 oc30 oc40" ;;
-	oc23|oc30|oc40) STORES="$1" ;;
+	all) STORES="oc23 oc30 oc40 oc41" ;;
+	oc23|oc30|oc40|oc41) STORES="$1" ;;
 	*) usage ;;
 esac
 
@@ -76,6 +76,7 @@ store_port() {
 		oc23) echo "${OC23_PORT:-8023}" ;;
 		oc30) echo "${OC30_PORT:-8030}" ;;
 		oc40) echo "${OC40_PORT:-8040}" ;;
+		oc41) echo "${OC41_PORT:-8041}" ;;
 	esac
 }
 
@@ -84,9 +85,15 @@ store_package() {
 	case "$1" in
 		oc23) f="$(ls "$WORK"/full/*-oc2.3-*.ocmod.zip 2>/dev/null | head -n 1 || true)" ;;
 		oc30) f="$(ls "$WORK"/full/*-oc3.0-*.ocmod.zip 2>/dev/null | head -n 1 || true)" ;;
-		oc40) f="$(ls "$WORK"/full/*-oc4.0-*/"$MODULE_CODE".ocmod.zip 2>/dev/null | head -n 1 || true)" ;;
+		# One package serves OC 4.0 and 4.1. Older builds named its folder oc4.0.
+		oc40|oc41) f="$(ls "$WORK"/full/*-oc4.[0x]-*/"$MODULE_CODE".ocmod.zip 2>/dev/null | head -n 1 || true)" ;;
 	esac
 	echo "$f"
+}
+
+# OC 4.0 and 4.1 share the extension installer, routes and admin login flow.
+is_oc4() {
+	case "$1" in oc40|oc41) return 0 ;; *) return 1 ;; esac
 }
 
 # OC 2.3 passes the admin session as ?token=, OC 3.0+ as ?user_token=.
@@ -119,7 +126,7 @@ json_value() {
 
 login() {
 	local location html login_token resp
-	if [ "$STORE" = "oc40" ]; then
+	if is_oc4 "$STORE"; then
 		html="$(http "$BASE/admin/index.php?route=common/login")" || { fail "login page request failed"; return 1; }
 		login_token="$(echo "$html" | sed -n 's/.*login_token=\([0-9a-zA-Z]*\).*/\1/p' | head -n 1)"
 		[ -n "$login_token" ] || { fail "no login_token on the login page"; return 1; }
@@ -187,7 +194,7 @@ install_ocmod_store() {
 	fi
 }
 
-# --- OC 4.0 -----------------------------------------------------------------
+# --- OC 4.x (4.0, 4.1) ------------------------------------------------------
 
 install_id() {
 	sql "SELECT extension_install_id FROM oc_extension_install WHERE code='$MODULE_CODE' ORDER BY extension_install_id DESC LIMIT 1"
@@ -204,7 +211,7 @@ install_oc4_store() {
 	if [ -n "$id" ] && [ "$n" -gt 0 ]; then
 		# Fully installed: replace the extension files. Clearing the folder first
 		# drops files a newer build removed. The installer itself extracts the
-		# whole package here, install.json and install.php included.
+		# whole package here, install.json included.
 		unzip -q "$pkg" -d "$WORK/$STORE" || { fail "cannot unzip $(basename "$pkg")"; return 1; }
 		docker exec "$CONTAINER" sh -c "rm -rf '$ext_dir' && mkdir -p '$ext_dir'" || { fail "clearing $ext_dir failed"; return 1; }
 		docker cp "$WORK/$STORE/." "$CONTAINER:$ext_dir/" || { fail "copying files into the store failed"; return 1; }
@@ -272,7 +279,7 @@ php_errors() {
 
 smoke_check() {
 	local route body errs n events table ukua
-	if [ "$STORE" = "oc40" ]; then
+	if is_oc4 "$STORE"; then
 		route="extension/$MODULE_CODE/module/$MODULE_CODE"
 	else
 		route="extension/module/$MODULE_CODE"
@@ -282,7 +289,7 @@ smoke_check() {
 	# file name alone is not enough, because the header injection puts
 	# client_translate_expert.js on every admin page, including the login,
 	# permission-denied and not-found pages. build.sh prefixes the setting with
-	# module_ for 3.0 and 4.0, hence the optional prefix.
+	# module_ for 3.0 and 4.x, hence the optional prefix.
 	body="$(http "$(admin_url "$route")")" || { fail "module page request failed"; return 1; }
 	errs="$(echo "$body" | php_errors || true)"
 	if ! grep -qE 'id="input-(module_)?client_translate_expert_key"' <<<"$body"; then
@@ -303,9 +310,9 @@ smoke_check() {
 
 	# Check 3. The table alone is weak evidence: OpenCart's own reinstall (a
 	# recreated container) does not drop it. So also check the extension row
-	# and, on 4.0, the two header events install() registers.
+	# and, on 4.x, the two header events install() registers.
 	n="$(module_rows)" || { fail "database query failed"; return 1; }
-	if [ "$STORE" = "oc40" ]; then
+	if is_oc4 "$STORE"; then
 		events="$(sql "SELECT COUNT(*) FROM oc_event WHERE code IN ('client_translate_expert_header_controller','client_translate_expert_header_view')")" \
 			|| { fail "database query failed"; return 1; }
 	else
@@ -319,7 +326,7 @@ smoke_check() {
 		fail "module is not registered in oc_extension"
 	elif [ "$events" -ne 2 ]; then
 		fail "expected 2 header events in oc_event, found $events"
-	elif [ "$STORE" = "oc40" ]; then
+	elif is_oc4 "$STORE"; then
 		log "PASS module registered (oc_extension, 2 header events, table)"
 	else
 		log "PASS module registered (oc_extension, table)"
@@ -364,7 +371,7 @@ for STORE in $STORES; do
 	[ -n "$PKG" ] || { fail "no package for $STORE inside $(basename "$PACKAGE")"; continue; }
 	log "installing $(basename "$PKG") into $BASE"
 
-	if [ "$STORE" = "oc40" ]; then
+	if is_oc4 "$STORE"; then
 		install_oc4_store "$PKG" || continue
 	else
 		install_ocmod_store "$PKG" || continue

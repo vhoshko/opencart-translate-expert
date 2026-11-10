@@ -1,11 +1,5 @@
 <?php
 
-ini_set('error_reporting', E_ALL);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-/*
-*/
-
 class LibraryClientTranslateExpertCore
 {
 	const TRANSLATE_EXPERT_SAME_TRANSLATIONS = "translate_expert_same_translations";
@@ -833,8 +827,8 @@ INNER JOIN (
 			$executionTimeStr = ' (' . number_format($secs, 3, '.', "`") . ' sec)';
 		}
 
-		$currentDateTime = DateTime::createFromFormat('U.u', $currentTime);
-		if (is_bool($currentDateTime)) $currentDateTime = DateTime::createFromFormat('U.u', $currentTime += 0.001);
+		$currentDateTime = \DateTime::createFromFormat('U.u', $currentTime);
+		if (is_bool($currentDateTime)) $currentDateTime = \DateTime::createFromFormat('U.u', $currentTime += 0.001);
 		$this->_debugLog->write($currentDateTime->format("Y-m-d H:i:s.v") . $executionTimeStr . PHP_EOL
 			. $message . PHP_EOL);
 	}

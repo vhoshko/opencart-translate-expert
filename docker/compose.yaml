@@ -89,5 +89,26 @@ services:
       db:
         condition: service_healthy
 
+  # OC 4.1 needs PHP 8.1+. PHP 8.2 is used so its new deprecations
+  # (e.g. "${var}" interpolation) show up in the page.
+  oc41:
+    build:
+      context: ./opencart
+      args:
+        PHP_IMAGE: php:8.2-apache
+        OC_URL: https://github.com/opencart/opencart/releases/download/4.1.0.4/opencart-4.1.0.4.zip
+        OC_SHA256: cdef537f5a0a7e1b4ddbe16f589dd2e80b10150a09bfbe93ce76ef2d5c3218c0
+        OC_UPLOAD_DIR: upload
+    image: ote-test/opencart:4.1.0.4
+    ports:
+      - "127.0.0.1:${OC41_PORT:-8041}:80"
+    environment:
+      <<: *store-env
+      DB_NAME: oc41
+      OC_HTTP_SERVER: http://localhost:${OC41_PORT:-8041}/
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   db-data:

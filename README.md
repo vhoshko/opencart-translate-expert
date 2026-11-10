@@ -9,7 +9,7 @@ An OpenCart admin module (OCMOD extension) that provides translation management 
 - Configurable translation modes: translate empty fields only, same-value fields only, or both
 - Table analysis with deep scan support to detect translatable columns across the store's database
 - Character usage tracking against the Google API, with a configurable monthly reset
-- Supports OpenCart 1.5 through 4.0, across PHP 5.6, 7.0, 7.1+, and PHP 8.0+ (required for OpenCart 4.0)
+- Supports OpenCart 1.5 through 4.1 (4.x: 4.0.2.x–4.1.0.x), across PHP 5.6, 7.0, 7.1+ and 8.x (OpenCart 4.0 requires PHP 8.0+, OpenCart 4.1 requires PHP 8.1+)
 
 ## Installation
 
@@ -27,7 +27,7 @@ Requires `bash` and `zip`. The build version is read from [`_version.txt`](_vers
 ./build.release.sh
 ```
 
-The build scripts produce OCMOD `.zip` packages per supported OpenCart version (1.5, 2.0–2.3, 3.0, 4.0) in the `releases/` directory.
+The build scripts produce OCMOD `.zip` packages per supported OpenCart version (1.5, 2.0–2.3, 3.0, 4.x) in the `releases/` directory. The single 4.x package installs on both OpenCart 4.0.2.x and 4.1.0.x.
 
 ## Tests
 
@@ -41,7 +41,7 @@ php tests/test_vh_google_translator.php YOUR_GOOGLE_API_KEY
 
 ### Test stores (Docker)
 
-`docker/` runs OpenCart 2.3, 3.0 and 4.0 stores locally and installs the built package into them:
+`docker/` runs OpenCart 2.3, 3.0, 4.0 and 4.1 stores locally and installs the built package into them:
 
 ```bash
 ./build.release.sh

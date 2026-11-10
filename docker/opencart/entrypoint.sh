@@ -11,7 +11,7 @@ if ! grep -q "DB_DATABASE" config.php 2>/dev/null; then
 		sleep 2
 	done
 
-	# OC 4.0 refuses to install unless both config files already exist.
+	# OC 4.x refuses to install unless both config files already exist.
 	[ -f config.php ] || cp config-dist.php config.php
 	[ -f admin/config.php ] || cp admin/config-dist.php admin/config.php
 

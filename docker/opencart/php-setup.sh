@@ -39,7 +39,7 @@ case "$PHP_VERSION" in
 		docker-php-ext-install -j"$(nproc)" gd mysqli mcrypt
 		;;
 	*)
-		# OC 3.0 needs openssl (built in); OC 4.0 installer needs zip.
+		# OC 3.0 needs openssl (built in); OC 4.0/4.1 installers need zip.
 		apt_install libpng-dev libjpeg62-turbo-dev libfreetype6-dev libzip-dev
 		docker-php-ext-configure gd --with-freetype --with-jpeg
 		docker-php-ext-install -j"$(nproc)" gd mysqli zip
