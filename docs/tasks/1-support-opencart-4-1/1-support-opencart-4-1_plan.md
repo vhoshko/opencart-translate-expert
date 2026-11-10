@@ -119,7 +119,7 @@ Design correction vs the issue title: OpenCart 4.1 itself needs no code changes.
 
 ## Done
 - **Landed:** one OC4 package (`oc4.x`) for OpenCart 4.0.2.x–4.1.0.x. PHP 8.2 fixes in the libraries (`${}` → `{$}`, removed the forced `ini_set` error display, `\DateTime`, which also fixes a latent fatal on the 4.0 debug path). install.json gets a description + GitHub link. install.php is dropped from the OC4 package. Docs updated.
-- **Final version:** ~~04.01.0107~~ → **04.01.0111** after the rebase onto main (`releases/v04.01.0111/`, gitignored). Build green, 24/0/6 tests.
+- **Final version:** ~~04.01.0107~~ → ~~04.01.0111~~ → **04.01.0113** after the second rebase onto main (`releases/v04.01.0113/`, gitignored). Build green, 24/0/6 tests.
 - **Also landed (after the rebase):** an `oc41` Docker test store (OC 4.1.0.4 / PHP 8.2), and `install-module.sh` support for oc41 and the `oc4.x` folder. Not run here (no Docker in the sandbox).
 - **Gotcha:** `php -l` hides E_DEPRECATED unless run with `-d error_reporting=-1`. OC 4.1 displays deprecations by default.
 - **Follow-ups:** (1) a live smoke test on an OC 4.1.0.x / PHP 8.2+ store (install, settings save, a translate AJAX call); (2) an audit of PHP 8.1 null-to-internal-function deprecations in the libraries; (3) the proposed workflow edits in the improvements file.
@@ -136,3 +136,11 @@ The user asked to rebase onto `origin/main` and extend the files from the new co
 - [x] Targeted review v2 (Sonnet 5.5) → 1-support-opencart-4-1-review-v2.md
   Findings: ready to merge, 0 critical/important. All 3 minor items FIXED (auto-approve): named the hang symptom in the old-volume note, "Older builds" wording, banner width. No v3: the fixes were comment/doc-only, and both passes were at wording level.
 - [x] Commit + push (the user asked; `--force-with-lease`, since the rebase rewrote the 2 pushed plan commits)
+
+## Update 2026-11-10: second rebase onto main (#20 uk-ua Docker language)
+- Rebased onto `a3e2df7` (#20: entrypoint adds an enabled `uk-ua` row, smoke check 4 for ≥2 languages, new `docker/rebuild-stores.sh`).
+- Conflicts: `_version.txt` (kept main's 04.01.0112), `docker/README.md` (kept main's rebuild-stores section and check 4, plus my `OC41_PORT` and 4.x wording), `docker/install-module.sh` (main's `ukua` local + my `is_oc4`).
+- Ported to 4.1: `rebuild-stores.sh` `ALL_STORES` now includes `oc41`, and the README says "all four stores" and "4.x (4.0, 4.1) are not affected".
+- ✅ 4.1.0.4 `oc_language` columns (`db_schema.php:3578`) are name/code/locale/extension/sort_order/status with no `directory`, so the entrypoint's OC 4.x insert branch applies unchanged. ✅ The 4.1 `catalog/controller/startup/language.php` does not read Accept-Language, so the "4.x not affected" note holds.
+- [x] Bump version + build + test → 04.01.0113 (PASS, 24/0/6, strict lint 0 Deprecated, entrypoint PHP heredoc lints clean, no conflict markers)
+- [x] Force-push (with lease)
