@@ -79,6 +79,13 @@
 					</div>
 				  </div>
 				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-client_translate_expert_excluded_routes"><?php echo $entry_excluded_routes; ?></label>
+					<div class="col-sm-10">
+					  <textarea name="client_translate_expert_excluded_routes" rows="5" id="input-client_translate_expert_excluded_routes" class="form-control"><?php echo $client_translate_expert_excluded_routes; ?></textarea>
+					  <span class="help-block"><?php echo $help_excluded_routes; ?></span>
+					</div>
+				  </div>
+				  <div class="form-group">
 					<label class="col-sm-2 control-label"><?php echo $entry_try_translate; ?></label>
 					<div class="col-sm-10">
 						<?php foreach ($languages as $language) { ?>

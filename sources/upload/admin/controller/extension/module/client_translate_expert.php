@@ -100,6 +100,10 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['entry_server_reset_translation_char_count_on_start_month'] = $this->language->get('entry_server_reset_translation_char_count_on_start_month');
 		$data['entry_server_translation_char_count'] = $this->language->get('entry_server_translation_char_count');
 
+		// excluded routes
+		$data['entry_excluded_routes'] = $this->language->get('entry_excluded_routes');
+		$data['help_excluded_routes'] = $this->language->get('help_excluded_routes');
+
 		// reset cache
 		$data['entry_reset_translation_cache'] = $this->language->get('entry_reset_translation_cache');
 
@@ -251,6 +255,12 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			$data['client_translate_expert_reset_char_count_on_start_month'] = $this->request->post['client_translate_expert_reset_char_count_on_start_month'];
 		} else {
 			$data['client_translate_expert_reset_char_count_on_start_month'] = $this->config->get('client_translate_expert_reset_char_count_on_start_month');
+		}
+
+		if (isset($this->request->post['client_translate_expert_excluded_routes'])) {
+			$data['client_translate_expert_excluded_routes'] = $this->request->post['client_translate_expert_excluded_routes'];
+		} else {
+			$data['client_translate_expert_excluded_routes'] = (string)$this->config->get('client_translate_expert_excluded_routes');
 		}
 
 		$data['client_translate_expert_char_count'] = number_format((float)$this->config->get('client_translate_expert_char_count'), 0, '.', '`');
@@ -773,6 +783,10 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 	// OC4_EVENT_START
 	public function eventHeaderControllerAfter(string &$route, array &$args, mixed &$output): void {
+		if ($this->isCurrentRouteExcluded()) {
+			return;
+		}
+
 		$this->load->model('localisation/language');
 		$languages = $this->model_localisation_language->getLanguages();
 
@@ -780,6 +794,10 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	}
 
 	public function eventHeaderViewAfter(string &$route, array &$args, string &$output): void {
+		if ($this->isCurrentRouteExcluded()) {
+			return;
+		}
+
 		$isEnabled = $this->config->get('client_translate_expert_status');
 		$showCharCount = $this->config->get('client_translate_expert_show_char_count_globally');
 		$languagesJson = $this->config->get('client_translate_expert_languages_json');
@@ -803,6 +821,49 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 				$output = substr_replace($output, '>' . $config, $headerClosePos, 1);
 			}
 		}
+	}
+
+	// Keep these rules the same as the header op in system/OpenCartTranslateExpertClient.ocmod.xml (OC 1.5–3.0): exact match, or prefix match with a trailing *.
+	// The event $route is common/header, so the page route comes from the request.
+	private function isCurrentRouteExcluded(): bool {
+		$route = isset($this->request->get['route']) ? trim((string)$this->request->get['route'], " \t/") : '';
+		$route = $route === '' ? 'common/dashboard' : str_replace('|', '.', $route);
+
+		// Never exclude the module page: it needs the header JS.
+		if (strpos($route, 'module/client_translate_expert') !== false) {
+			return false;
+		}
+
+		foreach (explode("\n", (string)$this->config->get('client_translate_expert_excluded_routes')) as $rule) {
+			$rule = trim($rule);
+			// Accept "route=x", "index.php?route=x&user_token=..." and a trailing "/".
+			$pos = strpos($rule, 'route=');
+			if ($pos !== false) {
+				$rule = substr($rule, $pos + 6);
+			} elseif (strpos($rule, 'index.php') !== false) {
+				// An admin URL without route= opens the dashboard.
+				$rule = 'common/dashboard';
+			}
+			$pos = strpos($rule, '&');
+			if ($pos !== false) {
+				$rule = substr($rule, 0, $pos);
+			}
+			$rule = str_replace('|', '.', trim($rule, " \t/"));
+			if ($rule === '') {
+				continue;
+			}
+			if (substr($rule, -1) === '*') {
+				// A rule of only * matches all routes.
+				$prefix = substr($rule, 0, -1);
+				if ($prefix === '' || strpos($route, $prefix) === 0) {
+					return true;
+				}
+			} elseif ($rule === $route) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 	// OC4_EVENT_END
 }

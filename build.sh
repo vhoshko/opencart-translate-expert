@@ -124,7 +124,7 @@ file_replace sources_release_30/upload/admin/controller/extension/module/client_
 file_replace "sources_release_30/upload/admin/controller/extension/module/client_translate_expert.php" '\$this->response->setOutput(\$this->load->view' '$this->config->set('\''template_engine'\'', '\''template'\''); $this->response->setOutput($this->load->view'
 file_replace sources_release_30/upload/admin/controller/extension/module/client_translate_expert.php "'client_translate_expert'" "'module_client_translate_expert'"
 
-for setting in client_translate_expert_status client_translate_expert_key client_translate_expert_debug_status client_translate_expert_char_count client_translate_expert_reset_char_count_on_start_month client_translate_expert_show_char_count_globally client_translate_expert_last_reset_char_month; do
+for setting in client_translate_expert_status client_translate_expert_key client_translate_expert_debug_status client_translate_expert_char_count client_translate_expert_reset_char_count_on_start_month client_translate_expert_show_char_count_globally client_translate_expert_last_reset_char_month client_translate_expert_excluded_routes; do
     module_setting="module_${setting}"
     for f in \
         sources_release_30/upload/admin/controller/extension/module/client_translate_expert.php \
@@ -389,7 +389,7 @@ file_replace "$OC4_LIB_CORE" '{$server}view/image/translate_expert_client/' '{$s
 
 # --- Apply module_ prefix to settings in OC4 template (same as OC3) ---
 OC4_TEMPLATE="$EXT_DIR/admin/view/template/module/client_translate_expert.twig"
-for setting in client_translate_expert_status client_translate_expert_key client_translate_expert_debug_status client_translate_expert_char_count client_translate_expert_reset_char_count_on_start_month client_translate_expert_show_char_count_globally client_translate_expert_last_reset_char_month; do
+for setting in client_translate_expert_status client_translate_expert_key client_translate_expert_debug_status client_translate_expert_char_count client_translate_expert_reset_char_count_on_start_month client_translate_expert_show_char_count_globally client_translate_expert_last_reset_char_month client_translate_expert_excluded_routes; do
     module_setting="module_${setting}"
     file_replace "$OC4_TEMPLATE" "$setting" "$module_setting"
 done

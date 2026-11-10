@@ -80,6 +80,10 @@ $_['entry_server_translation_char_count_info'] = "
 </div>
 ";
 
+// excluded routes
+$_['entry_excluded_routes'] = 'Do not load the module on these pages';
+$_['help_excluded_routes'] = 'One admin route on each line. A line ending in * matches all routes that start with this text. Examples: OpenCart 2.3–3.0: extension/module/my_module, catalog/product* (the product list and all product pages); OpenCart 1.5–2.2: module/my_module; OpenCart 4: extension/my_extension/module/my_module, catalog/product*. You can also paste a full admin URL. The module settings page always loads the module.';
+
 // reset cache
 $_['entry_reset_translation_cache'] = 'Reset translation cache';
 
