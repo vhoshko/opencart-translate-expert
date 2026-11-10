@@ -6,4 +6,4 @@ allowed-tools: Bash, Read, Edit, Write, Grep, Glob, Agent, Skill, TodoWrite, Too
 
 **Use skill:** `dev-workflow`
 
-Pass `$ARGUMENTS` as the task input. The skill orchestrates the full workflow: setup, plan, implement, build, test, independent review, and improvements. It never commits, pushes, or creates PRs.
+Pass `$ARGUMENTS` as the task input. The skill controls the full workflow: setup, plan, implement, build, test, independent review, and improvements. The skill never commits, pushes, or creates PRs.
