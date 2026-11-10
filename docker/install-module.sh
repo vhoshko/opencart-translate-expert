@@ -271,7 +271,7 @@ php_errors() {
 }
 
 smoke_check() {
-	local route body errs n events table
+	local route body errs n events table ukua
 	if [ "$STORE" = "oc40" ]; then
 		route="extension/$MODULE_CODE/module/$MODULE_CODE"
 	else
@@ -323,6 +323,19 @@ smoke_check() {
 		log "PASS module registered (oc_extension, 2 header events, table)"
 	else
 		log "PASS module registered (oc_extension, table)"
+	fi
+
+	# Check 4. The entrypoint adds uk-ua next to the stock en-gb, so there is a
+	# target language to translate into.
+	n="$(sql "SELECT COUNT(*) FROM oc_language WHERE status = 1")" || { fail "database query failed"; return 1; }
+	ukua="$(sql "SELECT code FROM oc_language WHERE code = 'uk-ua' AND status = 1")" \
+		|| { fail "database query failed"; return 1; }
+	if [ "$ukua" != "uk-ua" ]; then
+		fail "language uk-ua is missing or disabled (the store was installed before it was added? recreate it)"
+	elif [ "$n" -ne 2 ]; then
+		fail "expected 2 enabled languages, found $n"
+	else
+		log "PASS 2 enabled languages (en-gb, uk-ua)"
 	fi
 }
 
