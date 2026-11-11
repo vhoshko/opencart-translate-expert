@@ -247,16 +247,16 @@ function updateSimpleElements()
 }
 
 function updateBatchEditorElements() {
+	var nameRegex = /^(.*)\_(\d+)\_(.*)$/;
 	var els = $([
 			"textarea[id^='description_'][id$='_description']"
 		].join(','))
 		.filter(function(){
-			return !$(this).attr('name');
+			return !$(this).attr('name') && (nameRegex.exec($(this).attr('id')) != null);
 		});
 
 	//console.log(els);
 	els.each(function( index ) {
-		var nameRegex = /^(.*)\_(\d+)\_(.*)$/;
 		var nameMatch = nameRegex.exec($(this).attr('id'));
 		var newName = nameMatch[1] + "_te_vh[" + nameMatch[2] + "][" + nameMatch[3] + "_te_vh]";
 		$(this).attr('name', newName);

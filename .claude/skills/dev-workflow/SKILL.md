@@ -87,6 +87,8 @@ Show the slug to the user. The user can override it.
 
 ### Create the branch and task folder
 
+Before you discuss the branch base with the user, run `git fetch origin main`. Then check `git log origin/main`. The git status at session start is a snapshot, and it can be stale. A stale snapshot can show a merged commit as unmerged.
+
 ```bash
 git fetch origin main
 git checkout -b <prefix>/<slug> origin/main
@@ -298,6 +300,8 @@ Also give the reviewer the facts that are established so far, in the brief. This
 Do not restate the rest. `ote-code-reviewer.md` holds these standing instructions: scope exclusions, `git diff HEAD` for uncommitted work, and "these are clean is a valid outcome".
 
 **Stop when the passes find nothing important.** Track what each pass returns. If the findings drop to wording and none touch correctness, another pass only polishes phrasing. Say so and recommend that the user stops. Do not loop by reflex.
+
+If a re-review gives only Minor findings that the reviewer marks "no action necessary", do not ask a fix-or-skip question for each one. Record the findings in the plan. Then recommend a stop. The user can still ask for a fix.
 
 **A fix can introduce a regression.** This is the reason for the gate: a fix that closes one finding was never reviewed itself. Treat a fix pass exactly like the original change. Do not rubber-stamp it.
 
