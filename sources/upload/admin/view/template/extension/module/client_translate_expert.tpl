@@ -73,7 +73,7 @@
 				  <div class="form-group">
 					<label class="col-sm-2 control-label" for="input-client_translate_expert_char_count"><?php echo $entry_server_translation_char_count; ?></label>
 					<div class="col-sm-10">
-					  <div name="client_translate_expert_char_count" id="input-client_translate_expert_char_count">
+					  <div id="input-client_translate_expert_char_count">
 						<?php echo $client_translate_expert_char_count ? $client_translate_expert_char_count : 0; ?>
 					  </div>
 					</div>

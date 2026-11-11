@@ -45,10 +45,12 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$this->load->model('setting/setting');
 
 		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
-			if (!isset($this->request->post['client_translate_expert_char_count']))
-			{
-				$this->request->post['client_translate_expert_char_count'] = 0;
-			}
+			// The form has no field for the counter and its reset month. Keep the stored values,
+			// so that a settings save does not reset the monthly character count.
+			$storedCharCount = $this->config->get('client_translate_expert_char_count');
+			$this->request->post['client_translate_expert_char_count'] = $storedCharCount ? $storedCharCount : 0;
+			$storedResetMonth = $this->config->get('client_translate_expert_last_reset_char_month');
+			$this->request->post['client_translate_expert_last_reset_char_month'] = $storedResetMonth ? $storedResetMonth : date('m');
 			if (!isset($this->request->post['client_translate_expert_reset_char_count_on_start_month']))
 			{
 				$this->request->post['client_translate_expert_reset_char_count_on_start_month'] = 0;
@@ -56,10 +58,6 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			if (!isset($this->request->post['client_translate_expert_show_char_count_globally']))
 			{
 				$this->request->post['client_translate_expert_show_char_count_globally'] = 0;
-			}
-			if (!isset($this->request->post['client_translate_expert_last_reset_char_month']))
-			{
-				$this->request->post['client_translate_expert_last_reset_char_month'] = date('m');
 			}
 			$this->model_setting_setting->editSetting('client_translate_expert', $this->request->post);
 
