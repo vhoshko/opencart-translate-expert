@@ -1,6 +1,6 @@
 ---
 name: ote-build-test
-description: Runs the PHP syntax check, unit tests and (unless told checks-only) the version bump and release build for OpenCart Translate Expert. Reports only a pass/fail summary with counts. Keeps build and test logs out of the main conversation. Used by the dev-workflow sanity check, build/test phase and post-fix verify loop.
+description: Runs the PHP and JS syntax checks, unit tests and (unless told checks-only) the version bump and release build for OpenCart Translate Expert. Reports only a pass/fail summary with counts. Keeps build and test logs out of the main conversation. Used by the dev-workflow sanity check, build/test phase and post-fix verify loop.
 model: haiku
 tools: Read, Edit, Grep, Glob, Bash
 ---
@@ -36,6 +36,14 @@ for f in <edited and new .php files>; do php -l "$f"; done
 ```
 
 If a `Parse error` occurs, stop here. Report the file, the line and the message.
+
+**JS syntax.** If an edited or new `.js` file is under `sources/`, run `node --check` on it. If `node` is not available, report the check as skipped.
+
+```bash
+for f in <edited and new .js files>; do node --check "$f"; done
+```
+
+If `node --check` gives an error, stop here. Report the file, the line and the message.
 
 **PHP 5.6 compatibility.** The module ships to stores on PHP 5.6, 7.0 and 7.1+ (OC 1.5–3.0). It also ships to stores on PHP 8 (OC 4.0). The local `php` is 7.4. Therefore `php -l` does **not** find PHP 7+ syntax that breaks on 5.6. Check every changed PHP file under `sources/`:
 
@@ -87,7 +95,7 @@ Every build needs a new patch version. Never build twice with the same version. 
    - **A new setting key `client_translate_expert_*`:** `build.sh` adds the `module_` prefix for only seven listed keys. It does this on 3.0 (controller, model, `.tpl`, OCMOD XML) and on 4.0 (twig). Search the oc3.0 and oc4.x packages for the bare key.
    - **A new route or class name in general:** Search the oc2.2 and oc1.5 packages for the OC 2.3 form (`extension/module/`, `ControllerExtensionModule`). The build should rewrite this form.
 
-   Do these checks in a temp dir outside the repo. Delete the temp dir afterward.
+   Do these checks in a temp dir outside the repo. Delete the temp dir afterward. If the dispatch prompt names a folder in the repo, make a new subfolder in it, for example `docs/tasks/<slug>/tmp/unzip/`. Delete only that subfolder. Never delete `docs/tasks/<slug>/tmp/` itself, because it holds the throwaway scripts of the task.
 4. **Leave no artifacts in the repo root.** Run `ls` on the root. If one of these leftover items is in the root, remove it. Say that you removed it:
    - `OpenCartTranslateExpertClient-*.ocmod.zip` files
    - `OpenCartTranslateExpertClient-oc4.x-v*/` folders
@@ -104,7 +112,7 @@ If the build fails, report the failing command and the relevant error lines. Do 
 ## Report
 
 - Mode: full or checks-only
-- Syntax: pass or fail, plus any PHP-compatibility hits outside the OC4 blocks of the controller
+- Syntax: pass or fail for PHP and JS, plus any PHP-compatibility hits outside the OC4 blocks of the controller
 - Tests: pass or fail, test count, and failure details if any
 - Version: old → new (full mode only)
 - Build: pass or fail, the release zip path and its package list

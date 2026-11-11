@@ -11,6 +11,16 @@ This workflow orchestrates a coding task end-to-end through 7 phases. Each phase
 
 For a trivial task (a single file, under 20 lines, no schema or build-script impact), propose a stripped-down flow. Proceed only if the user agrees.
 
+The stripped-down flow has these steps:
+
+1. Ask for the planning and review models (Phase 0).
+2. Create the branch and the task folder (Phase 0). Do not dispatch the Explore agent or the sanity check.
+3. Write a short plan with Settings, Context, Approach, Assumptions and Steps (Phase 1).
+4. Implement the change in the main context (Phase 2).
+5. Dispatch `ote-build-test` in full mode (Phase 3).
+6. Dispatch one independent review (Phase 4). If fixes follow, do Phase 5 as usual.
+7. Write the improvements file and fill the Done block (Phases 6 and 7).
+
 Project-specific config (repo, commands, source layout, conventions, gotchas) is in `.claude/project-workflows.md`. The definitions of the subagents that this workflow dispatches are in `.claude/agents/`. Each subagent pins its own model. Dispatch by `subagent_type`. Pass `model:` only to override.
 
 ### Context budget principle
@@ -337,7 +347,7 @@ Surface a summary of 3–5 bullets in chat. Do not edit skills without the go-ah
 - Use the phase headers as checkpoints. Pause and surface progress after Plan, Implement and Independent Review.
 - If unrelated uncommitted changes exist, stop and ask (see Phase 0). If the user agrees to stash, use `git stash push -u -m "<slug>: <desc>" -- <paths>`. Do not discard anything.
 - For a plan with many independent tasks, Phase 2 can run under the `subagent-driven-development` skill instead (an implementer plus two reviewers for each task). Phases 3–7 still apply afterward.
-- For genuinely trivial tasks (around 5 minutes), propose a stripped-down flow. Proceed only if the user agrees.
+- For genuinely trivial tasks (around 5 minutes), propose the stripped-down flow (see Overview). Proceed only if the user agrees.
 - **Never poll for subagent completion.** Do not use `ListAgents` loops, sleep-waits or background waiter commands. End the turn. The harness resumes the session when the agent reports back.
 - **Dispatch independent subagents in one message** so that they run concurrently. Before you send an investigation agent, decide what else you need to know about the same code. Put it in the same brief. This prevents a second round trip.
 - **A task that runs across days gets a fresh session for each phase.** The plan file is the handoff. Re-read it when the new session starts. It works as a handoff only if you **commit** it before the session ends. This workflow never commits on its own, so ask the user.
