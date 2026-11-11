@@ -18,3 +18,9 @@
 ## Proposed edits to the workflow skills
 - `dev-workflow` Phase 4, step 2: for each finding, check the fix cost in the code before you show the fix-or-skip question. Do not copy the cost from the reviewer.
 - `ote-code-reviewer.md`: add "`docs/tasks/*/tmp/` is git-ignored. Do not flag it."
+
+## Update 11.11.2026: atomic counter writes
+- The Docker test stores (`docker/`) made a real end-to-end and race test possible. Run SQL and race checks there before a review. Then the review can focus on edge cases.
+- A race test must also start from an empty state. The first `race.sh` set the row to 0 first, so it did not cover the concurrent insert. Review v2 found this gap.
+- To prove a race test, run the old pattern in the same setup. The old read-then-write pattern gave 135 of 1000.
+- Proposed edit to `dev-workflow` Phase 3: if the Docker stores run, use them for checks that need a database. Keep the scripts in `docs/tasks/<slug>/tmp/`.
