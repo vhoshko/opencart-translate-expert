@@ -1,6 +1,6 @@
 <?php
 // Heading
-$_['heading_title']    = 'Translate Expert (Full)';
+$_['heading_title']    = '<img src="view/image/translate_expert_client/translate-icon-32.png" alt="" style="height:1em;width:auto;vertical-align:-0.125em;margin-right:6px;" />Translate <span style="color:#f56b00;">Expert</span> (Full)';
 
 // Text
 $_['text_extension']   = 'Модулі';

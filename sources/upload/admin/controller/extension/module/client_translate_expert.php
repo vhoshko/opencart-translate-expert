@@ -39,7 +39,11 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	public function index() {
 		$this->load->language('extension/module/client_translate_expert');
 
-		$this->document->setTitle($this->language->get('heading_title'));
+		// heading_title holds HTML (icon + colored part) for the module list and the H1.
+		// Use the plain text for the browser title, breadcrumbs and the modal title.
+		$heading_title_text = strip_tags($this->language->get('heading_title'));
+
+		$this->document->setTitle($heading_title_text);
 
 		// $this->load->model('extension/module');
 		$this->load->model('setting/setting');
@@ -67,6 +71,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		}
 
 		$data['heading_title'] = $this->language->get('heading_title');
+		$data['heading_title_text'] = $heading_title_text;
 
 		$data['text_edit'] = $this->language->get('text_edit');
 		$data['text_enabled'] = $this->language->get('text_enabled');
@@ -225,12 +230,12 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 		if (!isset($this->request->get['module_id'])) {
 			$data['breadcrumbs'][] = array(
-				'text' => $this->language->get('heading_title'),
+				'text' => $heading_title_text,
 				'href' => $this->url->link('extension/module/client_translate_expert', 'token=' . $this->session->data['token'], true)
 			);
 		} else {
 			$data['breadcrumbs'][] = array(
-				'text' => $this->language->get('heading_title'),
+				'text' => $heading_title_text,
 				'href' => $this->url->link('extension/module/client_translate_expert', 'token=' . $this->session->data['token'] . '&module_id=' . $this->request->get['module_id'], true)
 			);
 		}

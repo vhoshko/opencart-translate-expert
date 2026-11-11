@@ -36,6 +36,8 @@ Never review, lint or comment on files under `docs/tasks/` from earlier tasks. T
 
 The brief can name facts that are already established. This applies especially to facts measured against an external system, such as the Google Translation API. Treat these facts as ground truth. Do not derive them again.
 
+If a finding depends on OpenCart core behavior, verify the behavior with the probe in **OpenCart Core Source Probe** in `.claude/project-workflows.md`. Do not report core behavior from memory. If you cannot verify it, mark the finding as unverified.
+
 The brief can also name design decisions that are already settled. Do not argue about them again. Focus on what changed.
 
 ## What to check

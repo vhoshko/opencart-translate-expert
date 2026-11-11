@@ -48,6 +48,19 @@ Edit `sources/` only. `sources_release*/` and `releases/` are build output.
 | Build per-version zips | `./build.sh` | Leaves zips in the root. Use the release build instead |
 | Release build | `./build.release.sh` | Puts the output in `releases/v<version>/`. **Run it after every change** (see `CLAUDE.md`) |
 
+## OpenCart Core Source Probe
+
+No local OpenCart source exists. To verify OpenCart core behavior for a version, read the file from GitHub:
+
+```bash
+gh api "repos/opencart/opencart/contents/upload/<path>?ref=<tag>" -H "Accept: application/vnd.github.raw" | grep -n "<pattern>"
+```
+
+- Use a release tag for `ref`, for example `1.5.6.4`, `2.0.3.1`, `2.3.0.2`, `3.0.3.8`, `4.0.2.3` or `4.1.0.0`.
+- The module list controller is at `admin/controller/extension/module.php` on OC 1.5–2.2 and 4.x. On OC 2.3 and 3.0, it is at `admin/controller/extension/extension/module.php`.
+- The Twig setup (`autoescape`) is in `system/library/template/twig.php` on OC 3.0 and 4.x.
+- Use the probe in Phase 0 to verify external assumptions. Record the tag and the line number as evidence in the plan.
+
 ## Known Environment Gotchas
 
 | Symptom | Cause | What to do |
