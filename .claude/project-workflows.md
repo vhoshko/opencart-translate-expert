@@ -43,6 +43,7 @@ Edit `sources/` only. `sources_release*/` and `releases/` are build output.
 | Syntax check | `php -l <file>` | Local PHP is 7.4. It does **not** find syntax that breaks on 5.6 |
 | Unit tests | `php tests/test_vh_google_translator.php` | No API key needed |
 | Unit + integration tests | `php tests/test_vh_google_translator.php <GOOGLE_API_KEY>` | Use only a key that the user gives you |
+| Route filter unit tests | `php tests/test_client_translate_expert_route_filter.php` | No API key needed. Any PHP warning fails a test |
 | Bump version | `/bump-version` | Changes the patch part of `_version.txt` (`MM.mm.pppp`). **Do it before every build** |
 | Build per-version zips | `./build.sh` | Leaves zips in the root. Use the release build instead |
 | Release build | `./build.release.sh` | Puts the output in `releases/v<version>/`. **Run it after every change** (see `CLAUDE.md`) |

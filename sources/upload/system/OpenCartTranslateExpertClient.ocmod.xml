@@ -10,10 +10,31 @@
     <operation>
       <search position="after"><![CDATA[public function index(]]></search>
       <add position="after"><![CDATA[
-			$data['client_translate_expert_is_enabled'] = (int)$this->config->get('client_translate_expert_status');
-			$data['client_translate_expert_show_char_count_is_enabled'] = (int)$this->config->get('client_translate_expert_show_char_count_globally');
-			$this->load->model('localisation/language');
-			$data['client_translate_expert_languages'] = json_encode($this->model_localisation_language->getLanguages()) ?: '{}';
+			// Translate Expert: skip the module on excluded admin routes. The rules are in system/library/client_translate_expert_route_filter.php.
+			// If the module files are gone (uninstall without a modification refresh), do not load the module and do not stop the page.
+			$teFilterFile = DIR_SYSTEM . 'library/client_translate_expert_route_filter.php';
+			$teExcluded = true;
+			if (is_file($teFilterFile)) {
+				require_once($teFilterFile);
+				$teExcluded = ClientTranslateExpertRouteFilter::isExcluded(
+					isset($this->request->get['route']) ? $this->request->get['route'] : null,
+					(string)$this->config->get('client_translate_expert_excluded_routes'),
+					ClientTranslateExpertRouteFilter::defaultRoute()
+				);
+			}
+			$data['client_translate_expert_head_html'] = '';
+			$data['client_translate_expert_header_html'] = '';
+			if (!$teExcluded) {
+				$this->load->model('localisation/language');
+				$teLanguages = json_encode($this->model_localisation_language->getLanguages()) ?: '{}';
+				$data['client_translate_expert_head_html'] = '<script type="text/javascript" src="view/javascript/client_translate_expert.js?v={client_version}"></script>'
+					. '<link type="text/css" rel="stylesheet" href="view/stylesheet/client_translate_expert.css?v={client_version}" />';
+				$data['client_translate_expert_header_html'] = '<script>'
+					. 'document.js_const_client_translate_expert_is_enabled = ' . (int)$this->config->get('client_translate_expert_status') . ';'
+					. 'document.js_const_client_translate_expert_show_char_count_is_enabled = ' . (int)$this->config->get('client_translate_expert_show_char_count_globally') . ';'
+					. 'document.js_const_client_translate_expert_languages = ' . $teLanguages . ';'
+					. '</script>';
+			}
 	  ]]></add>
     </operation>
   </file>  
@@ -22,18 +43,13 @@
     <operation>
       <search position="before"><![CDATA[</head>]]></search>
       <add position="before"><![CDATA[<!--OC15-TE-->
-<script type="text/javascript" src="view/javascript/client_translate_expert.js?v={client_version}"></script>
-<link type="text/css" rel="stylesheet" href="view/stylesheet/client_translate_expert.css?v={client_version}" />
+<?php echo $client_translate_expert_head_html; ?>
 ]]></add>
     </operation>
     <operation>
       <search position="after"><![CDATA[<header ]]></search>
       <add position="after"><![CDATA[
-<script>
-	document.js_const_client_translate_expert_is_enabled = <?php echo $client_translate_expert_is_enabled; ?>;
-	document.js_const_client_translate_expert_show_char_count_is_enabled = <?php echo $client_translate_expert_show_char_count_is_enabled; ?>;
-	document.js_const_client_translate_expert_languages = <?php echo $client_translate_expert_languages; ?>;
-</script>
+<?php echo $client_translate_expert_header_html; ?>
 	  ]]></add>
     </operation>
   </file>  

@@ -18,7 +18,7 @@ If a requirement, the approach, a dependency or an acceptance criterion is uncle
 
 1. Implement exactly what the task specifies.
 2. Write tests. Follow TDD if the task says to.
-3. Verify that the implementation works (`php -l` on edited files, plus `php tests/test_vh_google_translator.php`).
+3. Verify that the implementation works (`php -l` on edited files, plus `php tests/test_vh_google_translator.php` and `php tests/test_client_translate_expert_route_filter.php`).
 4. Do the self-review (below).
 5. Report back.
 

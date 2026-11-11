@@ -79,6 +79,13 @@
                 </div>
               </div>
               <div class="mb-3 row">
+                <label class="col-sm-2 form-label" for="input-client_translate_expert_excluded_routes">{{ entry_excluded_routes }}</label>
+                <div class="col-sm-10">
+                  <textarea name="client_translate_expert_excluded_routes" rows="5" id="input-client_translate_expert_excluded_routes" class="form-control">{{ client_translate_expert_excluded_routes }}</textarea>
+                  <div class="form-text">{{ help_excluded_routes }}</div>
+                </div>
+              </div>
+              <div class="mb-3 row">
                 <label class="col-sm-2 form-label">{{ entry_try_translate }}</label>
                 <div class="col-sm-10">
                   {% for language in languages %}

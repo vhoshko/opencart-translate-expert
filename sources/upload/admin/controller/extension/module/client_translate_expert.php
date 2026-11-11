@@ -100,6 +100,10 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['entry_server_reset_translation_char_count_on_start_month'] = $this->language->get('entry_server_reset_translation_char_count_on_start_month');
 		$data['entry_server_translation_char_count'] = $this->language->get('entry_server_translation_char_count');
 
+		// excluded routes
+		$data['entry_excluded_routes'] = $this->language->get('entry_excluded_routes');
+		$data['help_excluded_routes'] = $this->language->get('help_excluded_routes');
+
 		// reset cache
 		$data['entry_reset_translation_cache'] = $this->language->get('entry_reset_translation_cache');
 
@@ -251,6 +255,12 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			$data['client_translate_expert_reset_char_count_on_start_month'] = $this->request->post['client_translate_expert_reset_char_count_on_start_month'];
 		} else {
 			$data['client_translate_expert_reset_char_count_on_start_month'] = $this->config->get('client_translate_expert_reset_char_count_on_start_month');
+		}
+
+		if (isset($this->request->post['client_translate_expert_excluded_routes'])) {
+			$data['client_translate_expert_excluded_routes'] = $this->request->post['client_translate_expert_excluded_routes'];
+		} else {
+			$data['client_translate_expert_excluded_routes'] = (string)$this->config->get('client_translate_expert_excluded_routes');
 		}
 
 		$data['client_translate_expert_char_count'] = number_format((float)$this->config->get('client_translate_expert_char_count'), 0, '.', '`');
@@ -773,6 +783,10 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 	// OC4_EVENT_START
 	public function eventHeaderControllerAfter(string &$route, array &$args, mixed &$output): void {
+		if ($this->isCurrentRouteExcluded()) {
+			return;
+		}
+
 		$this->load->model('localisation/language');
 		$languages = $this->model_localisation_language->getLanguages();
 
@@ -780,6 +794,10 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	}
 
 	public function eventHeaderViewAfter(string &$route, array &$args, string &$output): void {
+		if ($this->isCurrentRouteExcluded()) {
+			return;
+		}
+
 		$isEnabled = $this->config->get('client_translate_expert_status');
 		$showCharCount = $this->config->get('client_translate_expert_show_char_count_globally');
 		$languagesJson = $this->config->get('client_translate_expert_languages_json');
@@ -803,6 +821,18 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 				$output = substr_replace($output, '>' . $config, $headerClosePos, 1);
 			}
 		}
+	}
+
+	// The rules are in system/library/client_translate_expert_route_filter.php (shared with the OCMOD header op for OC 1.5–3.0).
+	// The event $route is common/header, so the page route comes from the request.
+	private function isCurrentRouteExcluded(): bool {
+		require_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert_route_filter.php');
+
+		return \Opencart\Extension\ClientTranslateExpert\System\Library\ClientTranslateExpertRouteFilter::isExcluded(
+			isset($this->request->get['route']) ? $this->request->get['route'] : null,
+			(string)$this->config->get('client_translate_expert_excluded_routes'),
+			'common/dashboard'
+		);
 	}
 	// OC4_EVENT_END
 }
