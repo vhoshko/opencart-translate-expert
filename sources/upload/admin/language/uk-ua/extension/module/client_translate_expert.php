@@ -23,6 +23,8 @@ $_['text_clear_confirm']	   = 'Чи справді Ви бажаєте вида�
 // Entry
 $_['entry_key']       = 'Ключ';
 $_['entry_server_key'] = 'Google Translate Api Key (Ключ)';
+$_['button_show_key'] = 'Показати ключ';
+$_['button_hide_key'] = 'Сховати ключ';
 $_['entry_limit']      = 'Ліміт';
 $_['entry_image']      = 'Зображення (ширина x висота)';
 $_['entry_width']      = 'Ширина';

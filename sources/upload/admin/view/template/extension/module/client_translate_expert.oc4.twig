@@ -52,7 +52,10 @@
               <div class="mb-3 row">
                 <label class="col-sm-2 form-label" for="input-client_translate_expert_key">{{ entry_server_key }}</label>
                 <div class="col-sm-10">
-                  <input type="text" name="client_translate_expert_key" value="{{ client_translate_expert_key }}" placeholder="{{ entry_server_key }}" id="input-client_translate_expert_key" class="form-control" />
+                  <div class="input-group">
+                    <input type="password" autocomplete="new-password" name="client_translate_expert_key" value="{{ client_translate_expert_key }}" placeholder="{{ entry_server_key }}" id="input-client_translate_expert_key" class="form-control" />
+                    <button type="button" id="button-client_translate_expert_key_toggle" class="btn btn-outline-secondary" data-text-show="{{ button_show_key }}" data-text-hide="{{ button_hide_key }}">{{ button_show_key }}</button>
+                  </div>
                   {% if error_name %}
                   <div class="text-danger">{{ error_name }}</div>
                   {% endif %}
@@ -330,6 +333,13 @@
 	// removing
 	document.js_const_entry_remove_translation_records_from_db_confirmation = "{{ entry_remove_translation_records_from_db_confirmation }}";
 	document.js_const_entry_removing_data_from_db_process_is_started = "{{ entry_removing_data_from_db_process_is_started }}";
+
+	$('#button-client_translate_expert_key_toggle').on('click', function() {
+		var input = document.getElementById('input-client_translate_expert_key');
+		var show = input.type === 'password';
+		input.type = show ? 'text' : 'password';
+		$(this).text($(this).data(show ? 'text-hide' : 'text-show'));
+	});
 
 	$('#te-analization-language-to').change();
 </script>
