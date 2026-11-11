@@ -71,7 +71,7 @@ The input can contain any combination of these items:
 
 If the input has an issue reference, fetch the issue:
 ```bash
-gh issue view <url-or-number> -R vhoshko/opencart-translate-expert
+gh issue view <url-or-number> -R vhoshko/opencart-translate-expert --json title,body,comments,state
 ```
 
 ### Restate the task
@@ -121,7 +121,7 @@ The main context receives only the summary of the agent. It does not receive hun
 
 If two agents disagree on a fact, neither agent is authoritative. Look at the code yourself.
 
-**Skip the investigation subagent** if the task is trivially locatable (for example "fix the typo in file X line Y"). Read the relevant file directly.
+**Skip the investigation subagent** if the task is trivially locatable (for example "fix the typo in file X line Y"). Read the relevant file directly. Also skip it if 2–4 greps find all usages of the identifiers that the task touches. Record the skip and the greps in the Context of the plan.
 
 ### Verify external assumptions (before planning, not after)
 
