@@ -322,7 +322,7 @@
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="translateExpertModalLabel"><?php echo $heading_title; ?> - <?php echo $tab_translate_site; ?></h5>
+        <h5 class="modal-title" id="translateExpertModalLabel"><?php echo $heading_title_text; ?> - <?php echo $tab_translate_site; ?></h5>
         <button type="button" class="btn btn-secondary stop_modal_process" onclick="return confirmStopTranslationModelProcess('<?php echo $entry_stop_modal_process_confirmation; ?>')"><?php echo $entry_stop_modal_process; ?></button>
       </div>
       <div class="modal-body">
