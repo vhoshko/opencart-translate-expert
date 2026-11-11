@@ -208,7 +208,7 @@ function updateGrapesJsElements()
 
 function updateSimpleElements()
 {
-	var route = getParameter('route');
+	var route = getParameter('route') || '';
 	if (route.indexOf('/simple') == -1)
 		return;
 
@@ -265,7 +265,7 @@ function updateBatchEditorElements() {
 }
 
 function updateHandyProductManagerElements() {
-	var route = getParameter('route');
+	var route = getParameter('route') || '';
 	if (route.indexOf('handy_product_manager/productList') == -1)
 		return;
 
