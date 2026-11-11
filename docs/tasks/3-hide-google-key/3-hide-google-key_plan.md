@@ -59,9 +59,29 @@ No change to `build.sh` is necessary. The change adds no AJAX method, library cl
 
 The regression-test step does not apply. This is a feature, and no test harness covers templates.
 
+## Update 2026-11-11
+
+> **Superseded.** The `type="password"` input with `autocomplete="new-password"` (see Approach) did not work with LastPass. The user saw LastPass suggest a password for the key field and offer to save the key. LastPass ignores `autocomplete`. This also confirms review finding Important 1, so the ❓ assumption about `autocomplete="new-password"` is false.
+
+New approach (option 2, approved by the user):
+
+- The key input is `type="text"` with the class `te-key-masked`. A `<style>` rule next to the input sets `-webkit-text-security: disc` for that class. Password managers do not treat a text input as a password field.
+- The input also has `autocomplete="off"`, `spellcheck="false"`, `data-lpignore="true"`, `data-1p-ignore="true"`, `data-bwignore="true"` and `data-form-type="other"`. These are the ignore attributes of LastPass, 1Password, Bitwarden and Dashlane.
+- The handler toggles the class. If `CSS.supports('-webkit-text-security', 'disc')` is false, the handler changes the input to `type="password"` and toggles the type, as before.
+- ✅ verified (web source): Firefox supports `-webkit-text-security` from version 114 (https://bugzil.la/1826629). Chrome, Edge and Safari support it too.
+- ❓ unverified: LastPass shows no suggestion and no save prompt for the new input. The user must check this in the browser.
+
+Steps:
+
+- [x] Code: both templates changed as above.
+- [x] Bump version + build + tests
+  Findings: version 04.01.0129. Tests passed: 24 (6 skipped) and 40. In oc3.0 and oc4.x, all ids and selectors carry `module_`. In oc1.5 and oc2.2, they stay unprefixed. The class `te-key-masked` does not change.
+- [x] Push to PR #32
+  Findings: the user asked for a push. No independent review of this change ran.
+
 ## Done
 
-- The Google API key input is now `type="password"` with `autocomplete="new-password"` in the `.tpl` and the `.oc4.twig`. A "Show key" / "Hide key" button toggles it. The strings are in en-gb, ru-ru and uk-ua.
-- Final version: 04.01.0128. One review pass (Fable 5.2). One Minor fix: the handler binds before `.change()`.
+- The Google API key input is a text input masked with `-webkit-text-security: disc`, with password manager ignore attributes, in the `.tpl` and the `.oc4.twig`. If the CSS is not supported, it falls back to `type="password"`. A "Show key" / "Hide key" button toggles it. The strings are in en-gb, ru-ru and uk-ua.
+- Final version: 04.01.0129 (04.01.0128 before the update of 2026-11-11). One review pass (Fable 5.2). One Minor fix: the handler binds before `.change()`.
 - Gotcha: the `module_` rewrite in `build.sh` changes the new ids and selectors too. They still match on OC 3.0 and 4.x.
-- Follow-up: do a manual check of password manager autofill in Chrome and Firefox after install. This assumption is still unverified.
+- Follow-up: do a manual check in LastPass, Chrome and Firefox that no password suggestion and no save prompt shows. The update of 2026-11-11 has no independent review.
