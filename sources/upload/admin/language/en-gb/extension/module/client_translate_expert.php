@@ -82,7 +82,7 @@ $_['entry_server_translation_char_count_info'] = "
 
 // excluded routes
 $_['entry_excluded_routes'] = 'Do not load the module on these pages';
-$_['help_excluded_routes'] = 'One admin route on each line. A line ending in * matches all routes that start with this text. Examples: OpenCart 2.3–3.0: extension/module/my_module, catalog/product* (the product list and all product pages); OpenCart 1.5–2.2: module/my_module; OpenCart 4: extension/my_extension/module/my_module, catalog/product*. You can also paste a full admin URL. The module settings page always loads the module.';
+$_['help_excluded_routes'] = 'Enter one admin page route on each line. End a line with <code>*</code> to match all routes that start with it.<br>Examples:<br><code>catalog/product*</code> — the product list and all product pages<br><code>extension/module/my_module</code> — a module page in OpenCart 2.3–3.0<br><code>module/my_module</code> — a module page in OpenCart 1.5–2.2<br><code>extension/my_extension/module/my_module</code> — a module page in OpenCart 4<br>You can also paste a full admin page URL. The settings page of this module always loads the module.';
 
 // reset cache
 $_['entry_reset_translation_cache'] = 'Reset translation cache';

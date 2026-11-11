@@ -83,7 +83,7 @@ $_['entry_server_translation_char_count_info'] = "
 
 // виключені маршрути
 $_['entry_excluded_routes'] = 'Не завантажувати модуль на цих сторінках';
-$_['help_excluded_routes'] = 'Один маршрут адмінки в кожному рядку. Рядок, що закінчується на *, збігається з усіма маршрутами, які починаються з цього тексту. Приклади: OpenCart 2.3–3.0: extension/module/my_module, catalog/product* (список товарів і всі сторінки товару); OpenCart 1.5–2.2: module/my_module; OpenCart 4: extension/my_extension/module/my_module, catalog/product*. Можна також вставити повну URL-адресу адмінки. На сторінці налаштувань модуля модуль завантажується завжди.';
+$_['help_excluded_routes'] = 'Вкажіть один маршрут сторінки адмінки в кожному рядку. Додайте <code>*</code> у кінці рядка, щоб вибрати всі маршрути, які починаються з цього тексту.<br>Приклади:<br><code>catalog/product*</code> — список товарів і всі сторінки товару<br><code>extension/module/my_module</code> — сторінка модуля в OpenCart 2.3–3.0<br><code>module/my_module</code> — сторінка модуля в OpenCart 1.5–2.2<br><code>extension/my_extension/module/my_module</code> — сторінка модуля в OpenCart 4<br>Можна також вставити повну URL-адресу сторінки адмінки. На сторінці налаштувань цього модуля модуль завантажується завжди.';
 
 // скинути кеш
 $_['entry_reset_translation_cache'] = 'Скинути кеш перекладу';
