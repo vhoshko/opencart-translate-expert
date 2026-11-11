@@ -45,10 +45,12 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$this->load->model('setting/setting');
 
 		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
-			if (!isset($this->request->post['client_translate_expert_char_count']))
-			{
-				$this->request->post['client_translate_expert_char_count'] = 0;
-			}
+			// The character counter and its reset month live in their own setting group.
+			// Move them there before editSetting(), so that a settings save does not reset the count.
+			unset($this->request->post['client_translate_expert_char_count']);
+			unset($this->request->post['client_translate_expert_last_reset_char_month']);
+			$this->load->model('extension/module/client_translate_expert');
+			$this->model_extension_module_client_translate_expert->prepareCounterSettings();
 			if (!isset($this->request->post['client_translate_expert_reset_char_count_on_start_month']))
 			{
 				$this->request->post['client_translate_expert_reset_char_count_on_start_month'] = 0;
@@ -56,10 +58,6 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			if (!isset($this->request->post['client_translate_expert_show_char_count_globally']))
 			{
 				$this->request->post['client_translate_expert_show_char_count_globally'] = 0;
-			}
-			if (!isset($this->request->post['client_translate_expert_last_reset_char_month']))
-			{
-				$this->request->post['client_translate_expert_last_reset_char_month'] = date('m');
 			}
 			$this->model_setting_setting->editSetting('client_translate_expert', $this->request->post);
 
@@ -535,7 +533,8 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$this->resetCharCountOnStartMonth();
 		$this->load->language('extension/module/client_translate_expert');
 
-		$charCount = $this->config->get("client_translate_expert_char_count");
+		$this->load->model('extension/module/client_translate_expert');
+		$charCount = $this->model_extension_module_client_translate_expert->getCharCount();
 		$monthFreeLimit = 500*1000;
 		$priceFor20MInUSD = 20;
 		$costOverFreeLimit = $charCount <= $monthFreeLimit ? 0 : ($charCount- $monthFreeLimit) / (1000 * 1000) * $priceFor20MInUSD;
@@ -568,10 +567,8 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 	public function resetCharCount()
 	{
-		$currentMonth = date('m');
-		$this->load->model('setting/setting');
-		$this->model_setting_setting->editSettingValue('client_translate_expert', 'client_translate_expert_char_count', 0);
-		$this->model_setting_setting->editSettingValue('client_translate_expert', 'client_translate_expert_last_reset_char_month', $currentMonth);
+		$this->load->model('extension/module/client_translate_expert');
+		$this->model_extension_module_client_translate_expert->resetCharCount(date('m'));
 
 		$result = (object)array(
 			'success' => true,
@@ -604,25 +601,16 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 		$this->resetCharCountOnStartMonth();
 
-		$prevCharCount = $this->config->get("client_translate_expert_char_count");
-		$newCharCount = $charCount + ($prevCharCount ? $prevCharCount : 0);
-
-		$this->load->model('setting/setting');
-		$this->model_setting_setting->editSettingValue('client_translate_expert', 'client_translate_expert_char_count', $newCharCount);
+		$this->load->model('extension/module/client_translate_expert');
+		$this->model_extension_module_client_translate_expert->addCharCount($charCount);
 	}
 
 	private function resetCharCountOnStartMonth()
 	{
 		if ($this->config->get("client_translate_expert_reset_char_count_on_start_month"))
 		{
-			$lastMonth = $this->config->get("client_translate_expert_last_reset_char_month");
-			$currentMonth = date('m');
-			if ($lastMonth != $currentMonth)
-			{
-		        $this->load->model('setting/setting');
-				$this->model_setting_setting->editSettingValue('client_translate_expert', 'client_translate_expert_char_count', 0);
-				$this->model_setting_setting->editSettingValue('client_translate_expert', 'client_translate_expert_last_reset_char_month', $currentMonth);
-			}
+			$this->load->model('extension/module/client_translate_expert');
+			$this->model_extension_module_client_translate_expert->resetCharCountOnNewMonth(date('m'));
 		}
 	}
 
@@ -771,6 +759,8 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	{
 		$this->load->model('extension/module/client_translate_expert');
 		$result = $this->model_extension_module_client_translate_expert->uninstall();
+		// OpenCart deletes the module settings group itself. The counter rows are in their own group.
+		$this->model_extension_module_client_translate_expert->deleteCounterSettings();
 
 		// OC4_EVENT_START
 		if (version_compare(VERSION, '4.0', '>=')) {
