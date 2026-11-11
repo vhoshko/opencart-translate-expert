@@ -23,6 +23,8 @@ $_['text_clear_confirm']	   = 'Are you sure you want to delete the debug log fil
 // Entry;
 $_['entry_key'] = 'Key';
 $_['entry_server_key'] = 'Google Translate Api Key';
+$_['button_show_key'] = 'Show key';
+$_['button_hide_key'] = 'Hide key';
 $_['entry_limit'] = 'Limit';
 $_['entry_image'] = 'Image (width x height)';
 $_['entry_width'] = 'Width';

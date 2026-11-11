@@ -52,7 +52,11 @@
 				  <div class="form-group">
 					<label class="col-sm-2 control-label" for="input-client_translate_expert_key"><?php echo $entry_server_key; ?></label>
 					<div class="col-sm-10">
-					  <input type="text" name="client_translate_expert_key" value="<?php echo $client_translate_expert_key; ?>" placeholder="<?php echo $entry_server_key; ?>" id="input-client_translate_expert_key" class="form-control" />
+					  <style>.te-key-masked { -webkit-text-security: disc; }</style>
+					  <div class="input-group">
+						<input type="text" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" name="client_translate_expert_key" value="<?php echo $client_translate_expert_key; ?>" placeholder="<?php echo $entry_server_key; ?>" id="input-client_translate_expert_key" class="form-control te-key-masked" />
+						<span class="input-group-btn"><button type="button" id="button-client_translate_expert_key_toggle" class="btn btn-default" data-text-show="<?php echo $button_show_key; ?>" data-text-hide="<?php echo $button_hide_key; ?>"><?php echo $button_show_key; ?></button></span>
+					  </div>
 					  <?php if ($error_name) { ?>
 					  <div class="text-danger"><?php echo $error_name; ?></div>
 					  <?php } ?>
@@ -340,6 +344,25 @@
 	document.js_const_entry_remove_translation_records_from_db_confirmation = "<?php echo $entry_remove_translation_records_from_db_confirmation; ?>";
 	document.js_const_entry_removing_data_from_db_process_is_started = "<?php echo $entry_removing_data_from_db_process_is_started; ?>";
 	
+	// The key input is a text input masked with CSS, so password managers do not suggest or save a password for it.
+	// If the browser does not support -webkit-text-security, fall back to a password input.
+	(function() {
+		var input = document.getElementById('input-client_translate_expert_key');
+		var cssMask = !!(window.CSS && CSS.supports && CSS.supports('-webkit-text-security', 'disc'));
+		if (!cssMask) {
+			input.type = 'password';
+		}
+		$('#button-client_translate_expert_key_toggle').on('click', function() {
+			var show = cssMask ? $(input).hasClass('te-key-masked') : input.type === 'password';
+			if (cssMask) {
+				$(input).toggleClass('te-key-masked', !show);
+			} else {
+				input.type = show ? 'text' : 'password';
+			}
+			$(this).text($(this).data(show ? 'text-hide' : 'text-show'));
+		});
+	})();
+
 	$('#te-analization-language-to').change();
 </script>
 <?php echo $footer; ?>

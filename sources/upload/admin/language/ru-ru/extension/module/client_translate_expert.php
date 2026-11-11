@@ -23,6 +23,8 @@ $_['text_clear_confirm']	   = 'Вы хотите удалить файл жур�
 // Entry
 $_['entry_key']       = 'Ключ';
 $_['entry_server_key'] = 'Google Translate Api Key (Ключ)';
+$_['button_show_key'] = 'Показать ключ';
+$_['button_hide_key'] = 'Скрыть ключ';
 $_['entry_limit']      = 'Лимит';
 $_['entry_image']      = 'Изображение (ширина x высота)';
 $_['entry_width']      = 'Ширина';

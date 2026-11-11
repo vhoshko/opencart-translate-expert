@@ -165,6 +165,8 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['button_download'] = $this->language->get('button_download');
 		$data['button_clear'] = $this->language->get('button_clear');
 		$data['button_view'] = $this->language->get('button_view');
+		$data['button_show_key'] = $this->language->get('button_show_key');
+		$data['button_hide_key'] = $this->language->get('button_hide_key');
 
 		$data['entry_table_product_filter'] = $this->language->get('entry_table_product_filter');
 		$data['entry_table_product_status_filter'] = $this->language->get('entry_table_product_status_filter');
