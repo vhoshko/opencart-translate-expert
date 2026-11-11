@@ -53,7 +53,7 @@ Skipped steps:
 ## Done
 - A settings save now keeps the stored `client_translate_expert_char_count` and `client_translate_expert_last_reset_char_month` values. A POST value for these keys has no effect.
 - The count `<div>` in the `.tpl` and `.oc4.twig` has no `name` attribute now.
-- Final version: 04.01.0121. Build green. Tests: 24 passed, 6 skipped and 40 passed.
+- Final version: ~~04.01.0121~~ 04.01.0123 (after the atomic counter update). Build green. Tests: 24 passed, 6 skipped and 40 passed.
 - ~~Deferred: the counter read-modify-write race (review finding 1). The user chose to skip it, with no issue.~~ Superseded by the Update of 11.11.2026: the counter writes are atomic now, in version 04.01.0123.
 - Not done: a manual check in a running store. The user asked for the commit, push and PR after the review.
 
@@ -106,3 +106,8 @@ Two races lose counted characters:
 - [x] Bump version + build + tests (verify loop)
   Findings: version 04.01.0123. Build green. Tests: 24 passed, 6 skipped and 40 passed. Docker: `test_counter.sh` 0 failures on the four stores. `race.sh` and `race.sh norows` give 1000 and one row on oc30 and oc40.
 - [x] Commit and push to PR #27
+- [x] Independent review → 24-char-count-reset-review-v3.md
+  Findings: Fable 5.2 says ready to merge. It found 0 Critical, 0 Important and 2 Minor findings, and it confirmed the four v2 fixes as correct on mysqli and pdo.
+  - Minor 1 (a possible InnoDB deadlock in the cleanup `DELETE` on first use, not verified): skipped. `race.sh norows` on oc40 (InnoDB) gave 1000. A `try`/`catch` would only hide an error.
+  - Minor 2 (the comment wording about the oldest row): skipped. No code change is necessary.
+  - No more review passes. The findings dropped to theoretical points.
