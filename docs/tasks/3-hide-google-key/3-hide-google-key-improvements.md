@@ -27,3 +27,10 @@ No permission prompt occurred in this task. No new `.claude/settings.json` entry
 - `.claude/agents/ote-build-test.md`: add one step. If the diff adds an id or a selector that contains a setting key, grep the oc3.0 and oc4.x packages for the `module_` form of each occurrence.
 
 This is the first time that I saw each friction point. A grep of earlier improvements files for `full.zip`, `gh issue view` and `no matches found` found no match.
+
+## Applied
+
+The user approved the two proposed edits. Both are in PR #32:
+
+- `project-workflows.md`: a new **Known Environment Gotchas** row for the `releases/v<version>/` layout.
+- `.claude/agents/ote-build-test.md`: a rewrite check for ids and selectors that contain a setting key, and a note to unzip the `.full.zip` first.
