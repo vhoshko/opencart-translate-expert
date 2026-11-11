@@ -12,6 +12,10 @@ class LibraryClientTranslateExpertCore
 	protected $_modulePrefix = null;
 	protected $_languages = null;
 	protected $_keyParamName = null;
+	protected $_charCountKey = 'client_translate_expert_char_count';
+	protected $_resetMonthKey = 'client_translate_expert_last_reset_char_month';
+	protected $_counterGroup = 'client_translate_expert_usage';
+	protected $_settingGroupColumn = null;
 
 	public function __construct($model, $debug = true)
 	{
@@ -29,6 +33,8 @@ class LibraryClientTranslateExpertCore
 		if (version_compare(VERSION, '3.0', '>='))
 		{
 			$this->_keyParamName = 'module_client_translate_expert_key';
+			$this->_charCountKey = 'module_client_translate_expert_char_count';
+			$this->_resetMonthKey = 'module_client_translate_expert_last_reset_char_month';
 		}
 
 		$this->_debug = $debug;
@@ -833,6 +839,107 @@ INNER JOIN (
 			. $message . PHP_EOL);
 	}
 	// common functions
+
+	// Monthly character counter.
+	// The counter rows live in their own setting group, so that editSetting() for the module
+	// settings never deletes them. The queries find the rows by store_id and key only,
+	// so rows that are still in the old group work too.
+	// Each write is a single SQL statement, so concurrent requests do not lose increments.
+
+	// Old OpenCart versions name the group column `group`, newer versions name it `code`.
+	private function settingGroupColumn()
+	{
+		if (is_null($this->_settingGroupColumn))
+		{
+			$query = $this->_model->db->query("SHOW COLUMNS FROM `" . DB_PREFIX . "setting` LIKE 'code'");
+			$this->_settingGroupColumn = $query->num_rows ? 'code' : 'group';
+		}
+		return $this->_settingGroupColumn;
+	}
+
+	private function getCounterValue($key)
+	{
+		$query = $this->_model->db->query("SELECT `value` FROM `" . DB_PREFIX . "setting` WHERE `store_id` = '0' AND `key` = '" . $this->_model->db->escape($key) . "' ORDER BY `setting_id` ASC LIMIT 1");
+		return $query->num_rows ? $query->row['value'] : null;
+	}
+
+	private function ensureCounterRow($key, $default)
+	{
+		$db = $this->_model->db;
+		if (is_null($this->getCounterValue($key)))
+		{
+			$db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = '0', `" . $this->settingGroupColumn() . "` = '" . $db->escape($this->_counterGroup) . "', `key` = '" . $db->escape($key) . "', `value` = '" . $db->escape($default) . "', `serialized` = '0'");
+			// Two requests can both find no row and both insert one. Keep the oldest row only.
+			// All updates change every row of the key, so the oldest row has all increments.
+			$db->query("DELETE `s` FROM `" . DB_PREFIX . "setting` `s` JOIN (SELECT MIN(`setting_id`) AS `keep_id` FROM `" . DB_PREFIX . "setting` WHERE `store_id` = '0' AND `key` = '" . $db->escape($key) . "') `k` WHERE `s`.`store_id` = '0' AND `s`.`key` = '" . $db->escape($key) . "' AND `s`.`setting_id` > `k`.`keep_id`");
+		}
+	}
+
+	private function setCounterValue($key, $value)
+	{
+		$this->_model->db->query("UPDATE `" . DB_PREFIX . "setting` SET `value` = '" . $this->_model->db->escape($value) . "' WHERE `store_id` = '0' AND `key` = '" . $this->_model->db->escape($key) . "'");
+		$this->_model->config->set($key, $value);
+	}
+
+	// Moves the counter rows out of the module settings group and creates missing rows.
+	// Call it before editSetting() for the module settings.
+	public function prepareCounterSettings()
+	{
+		$db = $this->_model->db;
+		$db->query("UPDATE `" . DB_PREFIX . "setting` SET `" . $this->settingGroupColumn() . "` = '" . $db->escape($this->_counterGroup) . "' WHERE `store_id` = '0' AND `key` IN ('" . $db->escape($this->_charCountKey) . "', '" . $db->escape($this->_resetMonthKey) . "')");
+		$this->ensureCounterRow($this->_charCountKey, '0');
+		$this->ensureCounterRow($this->_resetMonthKey, date('m'));
+	}
+
+	public function getCharCount()
+	{
+		$value = $this->getCounterValue($this->_charCountKey);
+		return is_numeric($value) ? (int)$value : 0;
+	}
+
+	// Adds $charCount to the stored count in one statement and returns the new count.
+	public function addCharCount($charCount)
+	{
+		$charCount = (int)$charCount;
+		$this->ensureCounterRow($this->_charCountKey, '0');
+		if ($charCount > 0)
+		{
+			$this->_model->db->query("UPDATE `" . DB_PREFIX . "setting` SET `value` = CASE WHEN `value` REGEXP '^[0-9]+$' THEN CAST(`value` AS UNSIGNED) + " . $charCount . " ELSE " . $charCount . " END WHERE `store_id` = '0' AND `key` = '" . $this->_model->db->escape($this->_charCountKey) . "'");
+		}
+		$newCharCount = $this->getCharCount();
+		$this->_model->config->set($this->_charCountKey, $newCharCount);
+		return $newCharCount;
+	}
+
+	public function resetCharCount($month)
+	{
+		$this->ensureCounterRow($this->_charCountKey, '0');
+		$this->ensureCounterRow($this->_resetMonthKey, $month);
+		$this->setCounterValue($this->_charCountKey, '0');
+		$this->setCounterValue($this->_resetMonthKey, $month);
+	}
+
+	// Resets the count if the stored month is not $month.
+	// One statement changes the month row and the count row, so only one request does the reset.
+	// A missing month row is created with $month, so a first use does not reset the count.
+	public function resetCharCountOnNewMonth($month)
+	{
+		$db = $this->_model->db;
+		$this->ensureCounterRow($this->_charCountKey, '0');
+		$this->ensureCounterRow($this->_resetMonthKey, $month);
+		$db->query("UPDATE `" . DB_PREFIX . "setting` `m` JOIN `" . DB_PREFIX . "setting` `c` ON `c`.`store_id` = '0' AND `c`.`key` = '" . $db->escape($this->_charCountKey) . "' SET `m`.`value` = '" . $db->escape($month) . "', `c`.`value` = '0' WHERE `m`.`store_id` = '0' AND `m`.`key` = '" . $db->escape($this->_resetMonthKey) . "' AND `m`.`value` <> '" . $db->escape($month) . "'");
+		if ($db->countAffected() > 0)
+		{
+			$this->_model->config->set($this->_resetMonthKey, $month);
+			$this->_model->config->set($this->_charCountKey, 0);
+		}
+	}
+
+	public function deleteCounterSettings()
+	{
+		$db = $this->_model->db;
+		$db->query("DELETE FROM `" . DB_PREFIX . "setting` WHERE `store_id` = '0' AND `key` IN ('" . $db->escape($this->_charCountKey) . "', '" . $db->escape($this->_resetMonthKey) . "')");
+	}
 
 	// installation
 	public function install()

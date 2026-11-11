@@ -1127,5 +1127,59 @@ function initModule()
 		makeLocalizationAnalizeRequest();
 	});
 
+	$('#te-cron-secret-generate').click(function() {
+		var cryptoApi = window.crypto || window.msCrypto;
+		var bytes = new Uint8Array(16);
+		cryptoApi.getRandomValues(bytes);
+		var secret = '';
+		for (var i = 0; i < bytes.length; i++) {
+			secret += ('0' + bytes[i].toString(16)).slice(-2);
+		}
+		$('#te-cron-secret').val(secret);
+	});
+
+	$('#te-cron-link').click(function() {
+		this.select();
+	});
+
+	$('#te-analization-language-from, #te-analization-language-to, #te-analization-mode, #te-analization-table, #te-analization-product-status-filter, #te-analization-product-quantity-filter, #te-analization-product-category-id-filter, #te-analization-product-stock-status-filter')
+		.on('change', updateTranslateExpertCronLink);
+	updateTranslateExpertCronLink();
+
 	showTranslatedCharCount();
+}
+
+function updateTranslateExpertCronLink()
+{
+	var panel = $('#te-cron-link-panel');
+	var baseUrl = panel.attr('data-cron-url');
+	if (!baseUrl) {
+		return;
+	}
+
+	var params = [
+		'langIdFrom=' + encodeURIComponent($('#te-analization-language-from').val()),
+		'langIdTo=' + encodeURIComponent($('#te-analization-language-to').val()),
+		'mode=' + encodeURIComponent($('#te-analization-mode').val())
+	];
+	var table = $('#te-analization-table').val();
+	if (table) {
+		params.push('table=' + encodeURIComponent(table));
+	}
+	if ($('#te-analization-product-status-filter').is(':checked')) {
+		params.push('product_status=1');
+	}
+	if ($('#te-analization-product-quantity-filter').is(':checked')) {
+		params.push('product_quantity=1');
+	}
+	var categoryId = $('#te-analization-product-category-id-filter').val();
+	if (categoryId) {
+		params.push('product_category_id=' + encodeURIComponent(categoryId));
+	}
+	var stockStatus = $('#te-analization-product-stock-status-filter').val();
+	if (stockStatus) {
+		params.push('stock_status=' + encodeURIComponent(stockStatus));
+	}
+
+	$('#te-cron-link').val(baseUrl + '&' + params.join('&'));
 }

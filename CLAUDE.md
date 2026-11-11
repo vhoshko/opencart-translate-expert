@@ -80,11 +80,19 @@ php tests/test_vh_google_translator.php YOUR_GOOGLE_API_KEY
 
 # Route filter unit tests (no API key needed)
 php tests/test_client_translate_expert_route_filter.php
+
+# Cron helper unit tests (no API key needed)
+php tests/test_client_translate_expert_cron_helper.php
+
+# Translate loop tests (row cap, empty results, duplicate texts, time limits, admin batch; no DB, no API key)
+php tests/test_client_translate_expert_translate_loop.php
 ```
 
 The `VHGoogleTranslator` tests cover language code mapping, format parameter preservation, batch processing and API integration.
 
 The `ClientTranslateExpertRouteFilter` tests cover the excluded-routes rules. Any PHP warning fails these tests.
+
+The `ClientTranslateExpertCronHelper` tests cover the cron secret rules, the request parameters and the setting key prefix. Any PHP warning fails these tests.
 
 ## Architecture
 
@@ -101,6 +109,10 @@ Libraries (sources/upload/system/library/):
     client_localization_translate_expert.php → OpenCart language file parsing/writing
     vh_google_translator.php            → Google Translate API wrapper with language code mapping
     client_translate_expert_route_filter.php → excluded-routes check (OCMOD header op and OC4 header events)
+    client_translate_expert_cron_helper.php → cron secret rules and request parameter parsing (no OpenCart dependencies)
+Store-front (catalog):
+    sources/upload/catalog/controller/extension/module/client_translate_expert_cron.php
+    → cron link: thin controller, passes GET to LibraryClientTranslateExpert::runCron() (secret, lock, one translation batch)
 Frontend:
     admin/view/javascript/client_translate_expert.js  → admin UI logic (tabs, AJAX calls, analysis)
     admin/view/template/extension/module/client_translate_expert.tpl → admin template
