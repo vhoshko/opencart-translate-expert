@@ -129,7 +129,9 @@ Some tasks touch a system that you do not control. Examples are the Google Cloud
 
 > What does this plan assume that system does, and what is the cheapest way to find out?
 
-Then find out. Use a throwaway probe, a single live call or the OpenCart source for that version. Write the answer down. The answer is evidence, and it outlives the session. A live Google API call needs a key that the user supplies. Never look for a key yourself.
+Then find out. Use a throwaway probe, a single live call or the OpenCart source for that version. Write the answer down. The answer is evidence, and it outlives the session. A live Google API call needs a key that the user supplies. Never look for a key yourself. If the task changes the translation loop (batching, counting, what gets written), ask the user for a key in Phase 0. One real run on a docker store replaces much stub-only verification.
+
+If the task adds an unattended job (cron, a queue, a long batch), ask the user in Phase 0 about run-size and time limits. Do not copy the limits of the interactive admin flow.
 
 Record each load-bearing assumption in the `## Assumptions` section of the plan. Mark each assumption as verified or not. Add the evidence, or the reason that you could not check it.
 
@@ -212,6 +214,8 @@ The non-negotiables for this repo:
 - The investigation summary
 - An instruction to make the changes and report what it did
 
+**Verify the report before you build on it.** An implementer report is a claim, not evidence. For each change that the report says is done, check it in the main context with one grep or file read. Do this before you dispatch `ote-build-test`.
+
 **Update the plan continuously.** When a step finishes, flip its checkbox to `[x]` at once. Add an inline `Findings:` note. Record gotchas, decisions and deferrals. The plan is a live audit trail.
 
 ## Phase 3 — Build + Test (subagent)
@@ -248,7 +252,8 @@ Dispatch `ote-code-reviewer` (`subagent_type: ote-code-reviewer`). The agent pin
 - The task description
 - The diff (`git diff origin/main...HEAD` plus untracked files, or `git diff HEAD` if nothing is committed)
 - The full path to write the review to: `docs/tasks/<slug>/<slug>-review.md`
-- Repo access: the agent inspects the repo and writes that one file, nothing else
+- Repo access: the agent inspects the repo and writes that one file, plus probe scripts under `docs/tasks/<slug>/tmp/` only
+- Which guards in the diff are safety nets for cases nobody has observed. The reviewer gives them proportionate attention, not worst-case scenario after scenario
 
 The reviewer must NOT see your reasoning.
 
@@ -276,6 +281,7 @@ Do this phase when every review finding has a decision, from the user or from yo
 **Apply fixes:**
 - For small fixes (1–3 findings, under 20 lines), apply them directly in the main context.
 - For larger fix sets, dispatch `ote-implementer`. Give it the specific findings to fix (numbered, with the review text) and the current code state. Tell it to apply fixes only, without a build or tests.
+- Before the verify loop, check each fix that the implementer reports as done with one grep or file read in the main context. A report has claimed a fix that was not in the file (task 4-cron-translation).
 
 **Verify loop.** Always dispatch `ote-build-test` after fixes. Use the same sequence as in Phase 3. Include a fresh version bump, because every build needs a new patch version.
 

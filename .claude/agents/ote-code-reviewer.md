@@ -24,7 +24,7 @@ If the work is uncommitted, use `git diff HEAD`. It covers staged and unstaged c
 
 ## Tool discipline
 
-Use `Write` for one file only: the review path named in the brief. Use `Bash` for inspection only: `git`, `grep`, `cat`, `php -l`, `php tests/test_vh_google_translator.php`, `php tests/test_client_translate_expert_route_filter.php` and similar commands. Change nothing else in the repo.
+Use `Write` for the review path named in the brief. You can also write probe or harness scripts, but only under `docs/tasks/<slug>/tmp/`, never in the scratchpad: the fix agent and later passes need them. Make mutations only in copies under that folder, never in `sources/` or `tests/`. Use `Bash` for inspection only: `git`, `grep`, `cat`, `php -l`, `php tests/test_vh_google_translator.php`, `php tests/test_client_translate_expert_route_filter.php` and similar commands. Change nothing else in the repo.
 
 **Never run `build.sh` or `build.release.sh`.** They need a version bump first, and they write to `releases/`. A reviewer that edits the code under review invalidates its own findings.
 

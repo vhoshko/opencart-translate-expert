@@ -24,3 +24,11 @@
 ## 5. Proposed edits to the workflow skills
 - **Seen twice → act.** `15-docker-test-environment` already asked to verify *reviewer* claims about build output; this task hit the same thing with an *implementer* claim. Proposal for `dev-workflow` Phase 5 (and Phase 2 for larger changes): "Before dispatching the verify build, check each fix the implementer reports as done with one grep or file read in the main context. A subagent report is a claim, not evidence." Not applied — needs the user's go-ahead.
 - `dev-workflow` Phase 4/5 dispatch briefs for reviewers: "write any harness or probe scripts to `docs/tasks/<slug>/tmp/`, not the scratchpad."
+
+## Applied (2026-11-12, user go-ahead)
+- `dev-workflow` Phase 2 and Phase 5: grep-verify each change an implementer reports before the verify build.
+- `dev-workflow` Phase 0 (external assumptions): ask for a Google key when the translation loop changes; ask about run-size and time limits for unattended jobs.
+- `dev-workflow` Phase 4 brief: reviewers may write probes only under `docs/tasks/<slug>/tmp/`; name the safety-net guards.
+- `ote-code-reviewer.md`: probe scripts and mutation copies go under `docs/tasks/<slug>/tmp/`.
+- `ote-build-test.md`: `finally`, `catch (\Throwable)` / `catch (\Error)` and array/class parameter hints are valid PHP 5.6, not hits; run every script in `tests/` (the list had only two).
+- Not applied: the permission allowlist candidates (no recurring prompts this task).
