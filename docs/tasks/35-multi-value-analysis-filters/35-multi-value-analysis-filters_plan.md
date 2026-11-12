@@ -139,3 +139,11 @@ The user asked why m1–m3 of review v3 were skipped. The summary to the user ha
   Findings: m5, checks for `has some`/`has every`, `xor` (not `b-xor`), `...` and `name: value` arguments (bracket-aware, so hashes and ternaries pass). m6, `..` becomes ` ~ ` before the function check, and `a . b()` is a method call. m7, the scanner reports `syntax unclosed comment`, `unclosed block or string` and `unclosed verbatim`, and still checks the names in an unclosed block. 29 checks pass. Proof: the 10 new cases on the scanner of `b6ff8dc` give 7 failures (the 7 defect cases) and 2 passes (the 2 false-positive guards).
 - [x] Bump version + build + tests
   Findings: build `04.01.0159` is green. Tests: 72 + 40 + 205 + 29 + 24 (6 skipped) passed.
+
+## Update 2026-11-12: review v4 findings m1–m3 in `docker/rebuild-stores.sh`
+Decision (user): fix m1, m2 and m3. m4 is covered by the m1 hint.
+- [x] m1: new `-n` option skips `git fetch` and `git pull`. Each git failure stops before the build with "Use -n to skip the git update." This also covers m4 (a folder that is not a git checkout).
+- [x] m2: the comment in the script and `docker/README.md` say to bump `_version.txt` in the commit, not on the host before a run.
+- [x] m3: a detached HEAD gets its own message. A branch with no upstream names the branch.
+- [x] Extra: `git pull --no-rebase --ff-only`. The container git config has `pull.rebase=true`, and the test showed that git then tried a rebase pull, even with `--ff-only`.
+  Findings: `tmp/test_rebuild_git.sh` ran 9 cases in throwaway repos with a stub `docker`: behind (pull and restart), `-n` (no pull), offline, a local `_version.txt` bump, diverged branches, detached HEAD, no upstream, not a git checkout (with and without `-n`) and usage. All gave the expected result. No version bump: `docker/` is not in the packages.
