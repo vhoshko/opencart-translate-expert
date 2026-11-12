@@ -97,7 +97,7 @@ The `ClientTranslateExpertRouteFilter` tests cover the excluded-routes rules. An
 
 The `ClientTranslateExpertCronHelper` tests cover the cron secret rules, the request parameters and the setting key prefix. Any PHP warning fails these tests.
 
-The OC4 Twig name test reads each `.twig` file under `sources/`. It fails on a filter, test, function or tag that Twig v3.4.2 (OpenCart 4.0.2.x) or Twig v3.18.0 (OpenCart 4.1.0.x) does not define. Such a name breaks the OC4 admin page with "Could not load template". The test skips comments and `verbatim` blocks, and it checks string interpolation.
+The OC4 Twig name test reads each `.twig` file under `sources/`. It fails on a filter, test, function or tag that Twig v3.4.2 (OpenCart 4.0.2.x) or Twig v3.18.0 (OpenCart 4.1.0.x) does not define. Such a name breaks the OC4 admin page with "Could not load template". It also fails on syntax that only Twig v3.18.0 accepts (`has some`, `has every`, `xor`, the `...` spread, `name: value` arguments) and on an unclosed comment, block, string or `verbatim` block. The test skips comments and `verbatim` blocks, and it checks string interpolation.
 
 ## Architecture
 

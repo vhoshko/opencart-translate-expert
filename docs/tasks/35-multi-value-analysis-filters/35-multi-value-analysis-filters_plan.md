@@ -132,4 +132,10 @@ The user asked why m1–m3 of review v3 were skipped. The summary to the user ha
 - [x] Docs: `CLAUDE.md` and `project-workflows.md` (test table and gotchas row, with a `dump()` warning).
 - [x] Bump version + build + tests
   Findings: build `04.01.0158` is green. Tests: 72 + 40 + 205 + 20 + 24 (6 skipped) passed.
-- [ ] Independent review v4 (Fable 5.2: the Twig name test and `docker/rebuild-stores.sh`) → `35-multi-value-analysis-filters-review-v4.md`
+- [x] Independent review v4 (Fable 5.2: the Twig name test and `docker/rebuild-stores.sh`) → `35-multi-value-analysis-filters-review-v4.md`
+  Findings: no Critical, no Important. The allow lists match both Twig sources. 49 edge inputs gave no PHP warning, and 19 valid inputs gave no false positive. The script handled 8 git conditions correctly. Minor: m1 (offline run stops, the skip is only in a comment), m2 (the `_version.txt` bump comment conflicts with the pull), m3 (wrong message on a detached HEAD), m4 (a folder that is not a git checkout stops), m5 (Twig 3.18-only syntax passes), m6 (`1..enum()` passes), m7 (an unclosed comment, block, string or verbatim block passes and hides the names after it).
+- [x] Address v4 findings
+  Decision (user): "fix what do you think we need to fix, but ignore all for git fetch/pull changes". m1–m4 (`docker/rebuild-stores.sh`) stay open. Fix m5, m6 and m7: each is a template that passes the test and then breaks OC 4.0.2.x.
+  Findings: m5, checks for `has some`/`has every`, `xor` (not `b-xor`), `...` and `name: value` arguments (bracket-aware, so hashes and ternaries pass). m6, `..` becomes ` ~ ` before the function check, and `a . b()` is a method call. m7, the scanner reports `syntax unclosed comment`, `unclosed block or string` and `unclosed verbatim`, and still checks the names in an unclosed block. 29 checks pass. Proof: the 10 new cases on the scanner of `b6ff8dc` give 7 failures (the 7 defect cases) and 2 passes (the 2 false-positive guards).
+- [x] Bump version + build + tests
+  Findings: build `04.01.0159` is green. Tests: 72 + 40 + 205 + 29 + 24 (6 skipped) passed.

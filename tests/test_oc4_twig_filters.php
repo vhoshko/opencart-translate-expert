@@ -16,6 +16,9 @@
  * skips string literals, counts brackets (so "}}" in a string or a nested hash does not end a
  * block) and also checks the code in "#{...}" string interpolation.
  *
+ * It also fails on syntax that only Twig v3.18.0 accepts (has some, has every, xor, the ... spread,
+ * name: value arguments) and on an unclosed comment, block, string or verbatim block.
+ *
  * Limits: a call of an imported macro without a dot (after {% from ... import name %}) is
  * reported as an unknown function. Such a false positive is safe: the test fails and shows the name.
  *
@@ -86,6 +89,11 @@ class Oc4TwigFiltersTest {
 		$unknown = array();
 		foreach (self::blocks($source) as $block) {
 			$code = $block['code'];
+			if ($block['type'] === 'error') {
+				// Twig rejects an unclosed comment, block, string or verbatim block.
+				$unknown[] = 'syntax ' . $code;
+				continue;
+			}
 			if ($block['type'] === 'tag') {
 				if (!preg_match('/^\s*([A-Za-z_][A-Za-z0-9_]*)(.*)$/s', $code, $m)) {
 					continue;
@@ -111,6 +119,25 @@ class Oc4TwigFiltersTest {
 	private static function unknownInExpression($code)
 	{
 		$unknown = array();
+
+		// Syntax that only Twig v3.18.0 accepts.
+		if (preg_match('/\bhas\s+(?:some|every)\b/', $code)) {
+			$unknown[] = 'syntax has some/every';
+		}
+		if (preg_match('/(?<![A-Za-z0-9_-])xor\b/', $code)) {
+			$unknown[] = 'syntax xor';
+		}
+		if (strpos($code, '...') !== false) {
+			$unknown[] = 'syntax spread (...)';
+		}
+		if (self::hasColonNamedArgument($code)) {
+			$unknown[] = 'syntax named argument with a colon';
+		}
+
+		// The range operator ".." is not a method dot: "1..enum()" calls enum(). A single dot with
+		// spaces ("a . b()") is a method call.
+		$code = preg_replace('/\s*\.\.\s*/', ' ~ ', $code);
+		$code = preg_replace('/\.\s+/', '.', $code);
 
 		preg_match_all('/\|\s*([A-Za-z_][A-Za-z0-9_]*)/', $code, $m);
 		foreach ($m[1] as $name) {
@@ -139,6 +166,33 @@ class Oc4TwigFiltersTest {
 	}
 
 	/**
+	 * True if a call has a named argument in the "name: value" form (Twig v3.12 and later).
+	 * The "name=value" form works in both versions. A hash key ({a: 1}) and a ternary (a ? b : c)
+	 * are not named arguments.
+	 */
+	private static function hasColonNamedArgument($code)
+	{
+		$stack = array();
+		$len = strlen($code);
+		for ($i = 0; $i < $len; $i++) {
+			$c = $code[$i];
+			if ($c === '(' || $c === '[' || $c === '{') {
+				$stack[] = $c;
+			} elseif ($c === ')' || $c === ']' || $c === '}') {
+				array_pop($stack);
+				continue;
+			} elseif ($c !== ',') {
+				continue;
+			}
+			// After "(" or "," directly inside parentheses.
+			if (end($stack) === '(' && preg_match('/\G\s*[A-Za-z_][A-Za-z0-9_]*\s*:/', $code, $m, 0, $i + 1)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Splits $source into Twig blocks. String literals in the code are replaced by '', and the
 	 * code of each "#{...}" interpolation is added as a separate expression block.
 	 *
@@ -157,7 +211,11 @@ class Oc4TwigFiltersTest {
 			$next = $source[$start + 1];
 			if ($next === '#') {
 				$end = strpos($source, '#}', $start + 2);
-				$i = $end === false ? $len : $end + 2;
+				if ($end === false) {
+					$blocks[] = array('type' => 'error', 'code' => 'unclosed comment');
+					break;
+				}
+				$i = $end + 2;
 				continue;
 			}
 			if ($next !== '{' && $next !== '%') {
@@ -165,7 +223,10 @@ class Oc4TwigFiltersTest {
 				continue;
 			}
 			$close = $next === '{' ? '}}' : '%}';
-			list($code, $extra, $i) = self::readCode($source, $start + 2, $close);
+			list($code, $extra, $i, $closed) = self::readCode($source, $start + 2, $close);
+			if (!$closed) {
+				$blocks[] = array('type' => 'error', 'code' => 'unclosed block or string');
+			}
 			$type = $next === '%' ? 'tag' : 'expr';
 			$code = ltrim($code, '-~');
 			$blocks[] = array('type' => $type, 'code' => rtrim($code, '-~'));
@@ -177,6 +238,7 @@ class Oc4TwigFiltersTest {
 				if (preg_match('/\{%-?~?\s*endverbatim\s*[-~]?%\}/', $source, $m, PREG_OFFSET_CAPTURE, $i)) {
 					$i = $m[0][1];
 				} else {
+					$blocks[] = array('type' => 'error', 'code' => 'unclosed verbatim');
 					$i = $len;
 				}
 			}
@@ -185,7 +247,8 @@ class Oc4TwigFiltersTest {
 	}
 
 	/**
-	 * @return array (code with string literals replaced by '', interpolation codes, offset after $close)
+	 * @return array (code with string literals replaced by '', interpolation codes, offset after $close,
+	 *                true if $close was found)
 	 */
 	private static function readCode($source, $i, $close)
 	{
@@ -203,6 +266,7 @@ class Oc4TwigFiltersTest {
 						continue;
 					}
 					if ($c === '"' && $source[$i] === '#' && $i + 1 < $len && $source[$i + 1] === '{') {
+						// An unclosed interpolation reaches the end of the source, so the outer block is unclosed too.
 						list($inner, $innerExtra, $i) = self::readCode($source, $i + 2, '}');
 						$extra[] = $inner;
 						$extra = array_merge($extra, $innerExtra);
@@ -215,7 +279,7 @@ class Oc4TwigFiltersTest {
 				continue;
 			}
 			if ($depth === 0 && substr($source, $i, strlen($close)) === $close) {
-				return array($code, $extra, $i + strlen($close));
+				return array($code, $extra, $i + strlen($close), true);
 			}
 			if ($c === '(' || $c === '[' || $c === '{') {
 				$depth++;
@@ -225,7 +289,7 @@ class Oc4TwigFiltersTest {
 			$code .= $c;
 			$i++;
 		}
-		return array($code, $extra, $len);
+		return array($code, $extra, $len, false);
 	}
 
 	private function testChecker()
@@ -250,6 +314,15 @@ class Oc4TwigFiltersTest {
 			array('{{ a|replace({"x": {"y": 1}})|string }}', array('filter string'), 'a nested hash does not end the block'),
 			array('{{ "#{x|string}" }}', array('filter string'), 'the code in a string interpolation is checked'),
 			array('{{- x|string -}}', array('filter string'), 'whitespace control is handled'),
+			array('{% if items has some v => v > 1 or a xor b or [...a] %}{% endif %}', array('syntax has some/every', 'syntax xor', 'syntax spread (...)'), 'Twig 3.18 operators fail'),
+			array('{% if a b-xor b %}{% endif %}', array(), 'the b-xor operator passes'),
+			array('{{ x|slice(start: 1) }} {{ range(1, step: 2) }}', array('syntax named argument with a colon'), 'a named argument with a colon fails'),
+			array('{{ x|slice(start=1) }} {{ f ? {a: 1} : (b ? c : d) }} {{ max({a: 1}, [2]) }}', array(), 'a name=value argument, a hash and a ternary pass'),
+			array('{{ 1..enum("X") }} {{ a . b() }}', array('function enum'), 'the .. range operator does not hide a function'),
+			array('{# no end', array('syntax unclosed comment'), 'an unclosed comment fails'),
+			array('{{ x }} {% if a x|string', array('syntax unclosed block or string', 'filter string'), 'an unclosed block fails, and its names are still checked'),
+			array('{{ "abc }} {{ x|string }}', array('syntax unclosed block or string'), 'an unclosed string fails'),
+			array('{% verbatim %}{{ x }}', array('syntax unclosed verbatim'), 'an unclosed verbatim block fails'),
 		);
 		foreach ($cases as $case) {
 			$this->check(self::unknownNames($case[0]), $case[1], $case[2]);
