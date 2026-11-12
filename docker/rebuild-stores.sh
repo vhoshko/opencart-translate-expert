@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Build the module, reinstall the Docker test stores from scratch and install
-# the module into them. See docker/README.md.
+# Update the checkout (git fetch and git pull --ff-only), build the module,
+# reinstall the Docker test stores from scratch and install the module into
+# them. See docker/README.md.
 #
 #   docker/rebuild-stores.sh                  # all stores
 #   docker/rebuild-stores.sh oc30             # one store (or several)
@@ -24,6 +25,7 @@ usage() {
 	exit 2
 }
 
+ORIG_ARGS=("$@")
 BUILD=1
 while getopts "sh" opt; do
 	case "$opt" in
@@ -38,6 +40,26 @@ STORES=("$@")
 for store in "${STORES[@]}"; do
 	[[ " ${ALL_STORES[*]} " == *" $store "* ]] || { echo "Unknown store: $store" >&2; usage; }
 done
+
+# Get the newest commits of the current branch first, so the build and the
+# stores use the pushed code. --ff-only stops the script instead of making a
+# merge commit when the local branch and the remote branch have diverged.
+# If the pull changed the commit, the script starts again, so a pulled change
+# to this script applies at once. REBUILD_STORES_PULLED prevents a second pull.
+if [ -z "${REBUILD_STORES_PULLED:-}" ]; then
+	echo "== updating the checkout ($(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD))"
+	before="$(git -C "$REPO_ROOT" rev-parse HEAD)"
+	git -C "$REPO_ROOT" fetch --prune
+	if git -C "$REPO_ROOT" rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
+		git -C "$REPO_ROOT" pull --ff-only
+	else
+		echo "The current branch has no upstream branch. Skipping git pull." >&2
+	fi
+	if [ "$(git -C "$REPO_ROOT" rev-parse HEAD)" != "$before" ]; then
+		echo "== the checkout changed, starting the script again"
+		REBUILD_STORES_PULLED=1 exec "$SCRIPT_DIR/rebuild-stores.sh" ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
+	fi
+fi
 
 if [ "$BUILD" -eq 1 ]; then
 	# build.release.sh uses _version.txt as is. Bump it first if the module

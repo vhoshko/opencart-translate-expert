@@ -28,7 +28,7 @@ docker compose -f docker/compose.yaml up -d --build oc30     # just one
 
 The first build takes a few minutes. Follow the install with `docker compose -f docker/compose.yaml logs -f oc30` and wait for `[opencart] ready`.
 
-To do everything in one go, run `docker/rebuild-stores.sh`. It runs `./build.release.sh`, recreates the stores (a fresh OpenCart install, so anything done in them is lost), waits for `[opencart] ready` and runs `install-module.sh` with its smoke checks on each store. It stops with the store's log if an install fails.
+To do everything in one go, run `docker/rebuild-stores.sh`. It first runs `git fetch` and `git pull --ff-only` for the current branch. If the pull brings new commits, the script starts again with the new code. It stops if the local branch and the remote branch have diverged. Then it runs `./build.release.sh`, recreates the stores (a fresh OpenCart install, so anything done in them is lost), waits for `[opencart] ready` and runs `install-module.sh` with its smoke checks on each store. It stops with the store's log if an install fails.
 
 ```bash
 docker/rebuild-stores.sh                 # build, then all eight stores
