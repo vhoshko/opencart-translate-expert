@@ -138,6 +138,7 @@
                     <option value="{{ table }}" {% if table|string in te_table %}selected="selected"{% endif %}>{{ table }}</option>
                     {% endfor %}
                   </select>
+                  <div class="mt-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-table">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-table">{{ button_clear_selection }}</button></div>
                   <div class="form-text">{{ help_multi_select }}</div>
                 </div>
               </div>
@@ -178,12 +179,14 @@
                     <option value="{{ category.category_id }}" {% if category.category_id|string in te_product_category_id %}selected="selected"{% endif %}>{{ category.name }}</option>
                     {% endfor %}
                   </select> {{ entry_table_product_category_id_filter }}
+                  <div class="mt-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-category-id-filter">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-category-id-filter">{{ button_clear_selection }}</button></div>
                   <div class="form-text">{{ help_multi_select }}</div><br>
                   <select id="te-analization-product-stock-status-filter" multiple="multiple" size="6" class="form-select mb-2">
                     {% for stock_status in stock_statuses %}
                     <option value="{{ stock_status.stock_status_id }}" {% if stock_status.stock_status_id|string in te_stock_status %}selected="selected"{% endif %}>{{ stock_status.name }}</option>
                     {% endfor %}
                   </select> {{ entry_table_product_stock_status_filter }}
+                  <div class="mt-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-stock-status-filter">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-stock-status-filter">{{ button_clear_selection }}</button></div>
                   <div class="form-text">{{ help_multi_select }}</div><br>
                 </div>
               </div>

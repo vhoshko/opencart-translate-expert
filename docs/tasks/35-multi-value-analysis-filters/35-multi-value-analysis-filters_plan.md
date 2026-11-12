@@ -74,3 +74,19 @@ Send each filter as one comma-separated string in all places: GET, POST, the `on
 - Reviews: v1 and v2 by Fable 5.2. The user picked the fixes: I1, M1, M2, M3, m1, m2 and m3. M4 and m4 were skipped.
 - Gotchas: `distinct` from the issue was not correct, because the `GROUP BY` already removes the duplicates. `removeDataFromDb()` is strict (`error_bad_filter`), but the other actions turn a bad list into "all".
 - Open: the store run result of the user is pending. One WIP commit (`481bd3b`) is pushed. The fixes after it are not committed. The commit, push and PR need the go-ahead of the user.
+
+## Update 2026-11-12: Select all and Clear selection buttons
+The user asked for 2 more items after PR #42 was open:
+- The `help_multi_select` text also tells how to use Shift and Ctrl+A (Cmd+A on Mac).
+- Each of the 3 multi-select filters gets a "Select all" button and a "Clear selection" button.
+
+Steps:
+- [x] Language strings (en-gb, ru-ru, uk-ua): new `help_multi_select` text, new `button_select_all` and `button_clear_selection`. The existing `button_clear` is for the debug log, so it is not used again.
+- [x] Controller `index()`: pass the 2 new strings to the template.
+- [x] Templates: a button pair under each select (`btn btn-default btn-xs` in the `.tpl`, `btn btn-outline-secondary btn-sm` in the `.oc4.twig`). Each button uses `data-te-target`, not `data-target`, so Bootstrap 3 does not act on it.
+- [x] JS: `initTranslateExpertMultiSelectButtons()` selects or clears all options and fires `change`. The `change` event updates the cron link.
+  Findings: the main context applied the edits with `tmp/apply_multiselect_buttons.py`. `php -l` and `node --check` pass. With "Select all", every name goes into the request. This gives the same rows as no selection. A new table that appears later is not included, and the URL is longer (finding M4 of review v1).
+- [x] Bump version + build + tests
+  Findings: build `04.01.0154` is green. Tests: 72 + 40 + 205 + 24 (6 skipped) passed. The strings, the buttons and `initTranslateExpertMultiSelectButtons` are in the OC 1.5, 2.2, 3.0 and 4.x packages.
+- [x] Independent review v3? (ask the user)
+  Decision (user): no review. Commit and push to PR #42.

@@ -188,6 +188,8 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['entry_cron_link'] = $this->language->get('entry_cron_link');
 		$data['help_cron_link'] = $this->language->get('help_cron_link');
 		$data['help_multi_select'] = $this->language->get('help_multi_select');
+		$data['button_select_all'] = $this->language->get('button_select_all');
+		$data['button_clear_selection'] = $this->language->get('button_clear_selection');
 		$data['error_cron_secret'] = $this->language->get('error_cron_secret');
 		$data['text_cron_secret_unsaved'] = $this->language->get('text_cron_secret_unsaved');
 

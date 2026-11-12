@@ -6,6 +6,7 @@ if (document.readyState == 'loading') {
 
 function initTranslateExpert() {
 
+	initTranslateExpertMultiSelectButtons();
 	initTranslateExpertCron();
 
 	if ((typeof document.js_const_client_translate_expert_is_enabled !== 'undefined')
@@ -1136,6 +1137,17 @@ function initModule()
 	});
 
 	showTranslatedCharCount();
+}
+
+// "Select all" and "Clear selection" buttons of the analysis multi-select filters.
+// The change event also updates the cron link.
+function initTranslateExpertMultiSelectButtons()
+{
+	$('.te-multi-select-all, .te-multi-select-clear').click(function() {
+		var select = $($(this).attr('data-te-target'));
+		select.find('option').prop('selected', $(this).hasClass('te-multi-select-all'));
+		select.change();
+	});
 }
 
 // Cron settings controls work also when the module status is disabled,

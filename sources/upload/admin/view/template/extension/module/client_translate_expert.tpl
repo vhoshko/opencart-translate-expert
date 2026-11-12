@@ -138,6 +138,7 @@
 							<option value="<?php echo $table; ?>" <?php if (in_array((string)$table, $te_table)) { echo 'selected="selected"'; } ?>><?php echo $table; ?></option>
 							<?php } ?>
 						</select>
+						<div style="margin-top: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-table"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-table"><?php echo $button_clear_selection; ?></button></div>
 						<span class="help-block"><?php echo $help_multi_select; ?></span>
 					</div>
 				  </div>
@@ -182,12 +183,14 @@
 							<?php } ?>
 							<?php } ?>
 						</select> <?php echo $entry_table_product_category_id_filter; ?>
+						<div style="margin-top: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-product-category-id-filter"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-product-category-id-filter"><?php echo $button_clear_selection; ?></button></div>
 						<span class="help-block"><?php echo $help_multi_select; ?></span><br>
 						<select id="te-analization-product-stock-status-filter" multiple="multiple" size="6" class="form-control">
 							<?php foreach ($stock_statuses as $stock_status) { ?>
 							<option value="<?php echo $stock_status['stock_status_id']; ?>" <?php if (in_array((string)$stock_status['stock_status_id'], $te_stock_status)) { echo 'selected="selected"'; } ?>><?php echo $stock_status['name']; ?></option>
 							<?php } ?>
 						</select> <?php echo $entry_table_product_stock_status_filter; ?>
+						<div style="margin-top: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-product-stock-status-filter"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-product-stock-status-filter"><?php echo $button_clear_selection; ?></button></div>
 						<span class="help-block"><?php echo $help_multi_select; ?></span><br>
 					</div>
 				  </div>
