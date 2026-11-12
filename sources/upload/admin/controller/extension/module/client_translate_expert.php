@@ -443,19 +443,23 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$this->load->model('extension/module/client_translate_expert');
 		$result = $this->model_extension_module_client_translate_expert->translate($text, $source, $target, $format);
 
+		// Count the characters as Google gets them (the library trims each text) and only for a successful call.
 		$translatedCharCount = 0;
 		if (is_array($text))
 		{
 			foreach($text as $textValue)
 			{
-				$translatedCharCount += mb_strlen($textValue);
+				$translatedCharCount += mb_strlen(trim($textValue), 'UTF-8');
 			}
 		}
 		else
 		{
-			$translatedCharCount = mb_strlen($text);
+			$translatedCharCount = mb_strlen(trim($text), 'UTF-8');
 		}
-		$this->storeTranslatedCharCount($translatedCharCount);
+		if (is_object($result) && !empty($result->success))
+		{
+			$this->storeTranslatedCharCount($translatedCharCount);
+		}
 
 		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
 		$this->response->setOutput(json_encode($result));

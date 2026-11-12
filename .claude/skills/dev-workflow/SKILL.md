@@ -135,6 +135,12 @@ If the task adds an unattended job (cron, a queue, a long batch), ask the user i
 
 Record each load-bearing assumption in the `## Assumptions` section of the plan. Mark each assumption as verified or not. Add the evidence, or the reason that you could not check it.
 
+**Key hygiene.** If the user gives an API key, do these steps:
+
+1. Pass the key to probes through an environment variable only. Never write it into a file.
+2. Pass the key to `ote-build-test` only as a prompt argument. Tell the agent not to repeat it in its report.
+3. Before each review and before a commit, search for the key: `grep -rl "<first 12 key characters>" .`. The result must be empty.
+
 **Skip** this step in two cases. The task touches nothing external. Or code that demonstrably works in production already establishes the behavior. In that case, cite that code as the evidence.
 
 ### Sanity check (subagent, background)
@@ -241,6 +247,8 @@ On a bug-fix task, do these steps when the suite is green:
 4. Confirm that the new test is among the failures, **and that it fails on the assertion you expect**.
 5. Restore the fix from the copies. Do not retype the code.
 6. Verify the restore with `git diff --stat` and a grep for whatever you used to disable the fix. Do this before you move on.
+
+If a mutation passes all tests, do not add a test at once. First check if later code makes the result the same. For example, a final flush after a `break` can send the rows that an earlier flush skipped. If the result is the same, record the mutation as equivalent in the Findings of the plan. Otherwise, add a test that fails with the mutation.
 
 The test scripts have no filter, so each script always runs its whole suite. Run the script inline (`php tests/test_vh_google_translator.php` or `php tests/test_client_translate_expert_route_filter.php`). Or run it through `ote-build-test` in **checks-only** mode. Never run a full build for this check, because a full build uses up a version number.
 

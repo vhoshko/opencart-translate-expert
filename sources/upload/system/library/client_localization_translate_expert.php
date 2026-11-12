@@ -222,7 +222,8 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 			$needToTranslateValueCount += $toTranslateCount;
 			foreach($toTranslate as $key => $toTranslateLine)
 			{
-				$needToTranslateCharCount += mb_strlen($toTranslateLine['text']);
+				// The admin controller html_entity_decode()s each text before the send and the count: use the same call.
+				$needToTranslateCharCount += mb_strlen(trim(html_entity_decode($toTranslateLine['text'])), 'UTF-8');
 			}
 		}
 
