@@ -66,7 +66,6 @@ $_['entry_debug_status']     = 'Debug mode status';
 $_['entry_table']     = 'Table';
 $_['entry_analization_language_from'] = 'The language from which to translate';
 $_['entry_analization_language_to'] = 'What language to translate';
-$_['entry_all_tables']     = 'All tables';
 $_['entry_table_deep']     = 'Deep analize';
 $_['entry_table_deep_description']     = 'Full analysis of the entire table (Turn off if the analysis takes a very long time)';
 
@@ -140,6 +139,7 @@ $_['js_const_analization_process_is_started'] = "Analyzation process is in progr
 
 // Error;
 $_['error_permission'] = 'You do not have permission to manage this module!';
+$_['error_bad_filter'] = 'The filter values are not valid. Reload the page and select the filters again.';
 $_['Error_name'] = 'The module name must be between 3 and 64 characters!';
 $_['error_width'] =' You must specify the width! ';
 $_['error_height'] =' You must specify the height! ';
@@ -163,4 +163,3 @@ $_['entry_table_product_status_filter'] = 'Product status filter, only active pr
 $_['entry_table_product_quantity_filter'] = 'Product quantity filter, only products with quantity > 0)';
 $_['entry_table_product_category_id_filter'] = 'Product category filter';
 $_['entry_table_product_stock_status_filter'] = 'Product stock status filter';
-$_['entry_filter_all'] = '';

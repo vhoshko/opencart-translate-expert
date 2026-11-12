@@ -75,6 +75,40 @@ class FakeModel
 	public $config;
 }
 
+class SqlDb extends FakeDb
+{
+	public $hasProductId = true;
+
+	public function query($sql)
+	{
+		if (strpos($sql, 'INFORMATION_SCHEMA.COLUMNS') !== false && $this->hasProductId)
+		{
+			$this->queries[] = $sql;
+			return (object)array('row' => array('1' => 1), 'rows' => array(array('1' => 1)), 'num_rows' => 1);
+		}
+		return parent::query($sql);
+	}
+}
+
+class RealSqlLibrary extends LibraryClientTranslateExpert
+{
+	public function __construct($model)
+	{
+		$this->_debug = false;
+		$this->_model = $model;
+	}
+
+	public function select($cat, $stock, $status = false, $quantity = false)
+	{
+		return $this->getTextToTranslateRows(1, 'oc_product_description', array('product_id'), 'name', 'both', 100, 0, 2, $status, $quantity, $cat, $stock);
+	}
+
+	public function remove($cat, $stock, $status = false, $quantity = false)
+	{
+		$this->removeDataFromTable(2, 'oc_product_description', 'name', $status, $quantity, $cat, $stock);
+	}
+}
+
 class StubTranslateLibrary extends LibraryClientTranslateExpert
 {
 	public $groups = array();
@@ -355,6 +389,7 @@ class TranslateLoopTest
 		$this->testFinalFlushFailureKeepsCount();
 		$this->testBatchSizeUsesSentLength();
 		$this->testZeroLengthTextIsSent();
+		$this->testRealSqlText();
 
 		restore_error_handler();
 
@@ -1009,6 +1044,57 @@ class TranslateLoopTest
 		$r = $lib->translateNextBatch($this->filters('oc_a'), 1);
 		$this->check($lib->apiCalls, 1, 'cron cap 1: the batch goes to the translate call');
 		$this->check($r->success, 0, 'cron cap 1: the run fails with a visible error');
+	}
+
+	private function lastSql($call, $hasProductId = true)
+	{
+		$db = new SqlDb();
+		$db->hasProductId = $hasProductId;
+		$model = new FakeModel();
+		$model->db = $db;
+		$model->config = new FakeConfig();
+		$lib = new RealSqlLibrary($model);
+		call_user_func($call, $lib);
+		$last = '';
+		foreach ($db->queries as $q)
+			if (stripos($q, 'INFORMATION_SCHEMA') === false && stripos($q, 'SET SESSION') === false)
+				$last = $q;
+		return strtolower(trim(preg_replace('/\s+/', ' ', $last)));
+	}
+
+	private function testRealSqlText()
+	{
+		echo "\nReal SQL text of the product filters:\n";
+		$p = strtolower(DB_PREFIX);
+		$existsFor = function ($ids) use ($p) {
+			return 'exists (select 1 from ' . $p . 'product_to_category ptc where ptc.product_id = t.product_id and ptc.category_id in (' . $ids . '))';
+		};
+		$methods = array('select', 'remove');
+		foreach ($methods as $m)
+		{
+			$sql = $this->lastSql(function ($lib) use ($m) { $lib->$m(array(), array(5, 6)); });
+			$this->check(strpos($sql, 'p.stock_status_id in (5,6)') !== false, true, "{$m}: stock list in the product join");
+			$sql = $this->lastSql(function ($lib) use ($m) { $lib->$m(array(10, 11), array()); });
+			$this->check(strpos($sql, $existsFor('10,11')) !== false, true, "{$m}: category list in exists");
+			$this->check(strpos($sql, 'join ' . $p . 'product_to_category') === false, true, "{$m}: no category join");
+			$sql = $this->lastSql(function ($lib) use ($m) { $lib->$m(array(), array()); });
+			$this->check(strpos($sql, 'exists') === false, true, "{$m}: empty lists have no exists");
+			$this->check(strpos($sql, 'join ' . $p . 'product p') === false, true, "{$m}: empty lists have no product join");
+			$sql = $this->lastSql(function ($lib) use ($m) { $lib->$m(array('10) or 1=1 -- '), array()); });
+			$this->check(strpos($sql, $existsFor('10')) !== false, true, "{$m}: hostile item is cut to 10");
+			$this->check(strpos($sql, 'or 1=1') === false, true, "{$m}: hostile text is not in the SQL");
+			$sql = $this->lastSql(function ($lib) use ($m) { $lib->$m(array(10, 11), array(5, 6)); }, false);
+			$this->check(strpos($sql, 'exists') === false, true, "{$m}: table without product_id has no exists");
+			$this->check(strpos($sql, 'join ' . $p . 'product p') === false, true, "{$m}: table without product_id has no product join");
+		}
+		$sql = $this->lastSql(function ($lib) { $lib->remove(array(10, 11), array()); });
+		$whereAt = strpos($sql, 'where t.language_id');
+		$existsAt = strpos($sql, $existsFor('10,11'));
+		$this->check($whereAt !== false && $existsAt !== false && $existsAt > $whereAt, true, 'remove: exists is in the WHERE');
+		$sql = $this->lastSql(function ($lib) { $lib->select(array(10, 11), array()); });
+		$whereAt = strpos($sql, 'where (l1.language_id');
+		$existsAt = strpos($sql, $existsFor('10,11'));
+		$this->check($whereAt !== false && $existsAt !== false && $existsAt > $whereAt, true, 'select: exists is in the WHERE');
 	}
 
 	private function check($actual, $expected, $label)

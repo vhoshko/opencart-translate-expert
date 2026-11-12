@@ -49,12 +49,28 @@ Send each filter as one comma-separated string in all places: GET, POST, the `on
 - [x] Language strings (en-gb, ru-ru, uk-ua): add `help_multi_select` ("Hold Ctrl to select more than one value. If nothing is selected, all values are used."). Update `help_cron_link` (selected tables, no selection means all tables).
 - [x] Bump version + build + test
   Findings: `ote-implementer` did the code steps. `LibraryClientTranslateExpert` extends `LibraryClientTranslateExpertCore`, so `normalizeList()`, `normalizeIdList()` and `selectTables()` are protected methods in the core. The controller has 3 private helpers (`readIdListParam`, `readTableListParam`, `readSessionList`). They are not routes. The tpl selects now have `form-control` (full width), so the filter label is below the select. I fixed one wrong comment in `translateNextBatch`. Build `04.01.0151` is green. Tests: 24 (6 skipped, no key) + 40 + 67 + 185 passed. The rewrites are correct in the OC 1.5, 2.2, 3.0 and 4.x packages. `build.sh` did not change. No DB-backed test exists for the new SQL, so the store run is the only SQL check.
-- [ ] WIP push of the branch for the store run (user approved)
-- [ ] Independent review (Fable 5.2) → `35-multi-value-analysis-filters-review.md`
-- [ ] Address review findings (the user picks which to fix or skip)
-- [ ] Bump version + build + tests (verify loop)
-- [ ] Re-review? (unreviewed fixes exist. Ask the user.)
-- [ ] Improvements pass → `35-multi-value-analysis-filters-improvements.md`
+- [x] WIP push of the branch for the store run (user approved)
+  Findings: one WIP commit (code + plan), pushed to `origin/feat/35-multi-value-analysis-filters`. The store run result is pending from the user.
+- [x] Independent review (Fable 5.2) → `35-multi-value-analysis-filters-review.md`
+  Findings: no Critical. I1 (no test of the SQL text), M1 (cron `table=,` means all tables), M2 (a bad id list widens the removal to all), M3 (unused `entry_all_tables` and `entry_filter_all`), M4 (long URL with thousands of categories). The reviewer checked the SQL on a throwaway MariaDB 10.11 (`tmp/probe_sql.php`). The `exists` choice is confirmed.
+- [x] Address review findings (the user picks which to fix or skip)
+  Findings: `ote-implementer` applied the 4 fixes. I1: `SqlDb` and `RealSqlLibrary` in the translate loop test call the real SQL methods. M1: both parsers return `false` for a non-empty value with no items. M2: new private `readStrictListParam()`, used only in `removeDataFromDb()`. M3: the 2 keys are removed from the controller and the 3 language files.
+  Decision (user): fix I1, M1, M2 and M3. Skip M4 (no change necessary). M2 changes the plan decision "an invalid id list becomes all" for `removeDataFromDb()` only: the removal returns `error_bad_filter`.
+- [x] Bump version + build + tests (verify loop)
+  Findings: build `04.01.0152` is green. Tests: 72 + 40 + 201 + 24 (6 skipped) passed. The new `load->language` call and `error_bad_filter` are correct in the OC 1.5, 2.2, 3.0 and 4.x packages.
+- [x] Re-review? (unreviewed fixes exist. Ask the user.)
+  Decision (user): yes.
+- [x] Independent review v2 (Fable 5.2, fix diff only) → `35-multi-value-analysis-filters-review-v2.md`
+  Findings: no Critical, no Important. I1, M1, M2 and M3 are closed. 6 of 7 SQL mutations fail the I1 test. Minor m1: an array parameter (`table[]=x`) still widened the removal to all. Minor m2: no test had a table without `product_id`. Minor m3: 2 docblocks were out of date. Minor m4: 3 overlapping test lines.
+- [x] Address v2 findings
+  Decision (user): fix m1, m2 and m3. Skip m4 (harmless). No third review: the findings dropped to edge cases and wording.
+  Findings: m1, `readStrictListParam()` returns `false` for a non-string value. m2, `SqlDb::$hasProductId` and 2 new checks for each method. The mutation that removes the `$tableHasProductId` guard now fails 2 checks (203 passed, 2 failed). The file was restored from a copy and has no diff from HEAD. m3, both `@return` lines updated.
+- [x] Bump version + build + tests (verify loop 2)
+  Findings: build `04.01.0153` is green. Tests: 72 + 40 + 205 + 24 (6 skipped) passed.
+- [x] Improvements pass → `35-multi-value-analysis-filters-improvements.md`
 
 ## Done
-<fill at the end>
+- Landed: the Table, Product category and Product stock status filters are multi-select on OC 1.5–4.x. Comma-separated lists go through the JS, the controller, the session, `selectTables()`, the SQL (`in (...)` and an `exists` semi-join) and the cron link. Final version: `04.01.0153`.
+- Reviews: v1 and v2 by Fable 5.2. The user picked the fixes: I1, M1, M2, M3, m1, m2 and m3. M4 and m4 were skipped.
+- Gotchas: `distinct` from the issue was not correct, because the `GROUP BY` already removes the duplicates. `removeDataFromDb()` is strict (`error_bad_filter`), but the other actions turn a bad list into "all".
+- Open: the store run result of the user is pending. One WIP commit (`481bd3b`) is pushed. The fixes after it are not committed. The commit, push and PR need the go-ahead of the user.

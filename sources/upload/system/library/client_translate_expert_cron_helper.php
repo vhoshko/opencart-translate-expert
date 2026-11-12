@@ -90,7 +90,7 @@ class ClientTranslateExpertCronHelper
 
 	/**
 	 * @param mixed $value Comma-separated positive integers
-	 * @return array|bool List of unique integers (empty list = no filter), or false if an item is not valid
+	 * @return array|bool List of unique integers ('' or null = empty list = no filter), or false if an item is not valid or a non-empty value has no items
 	 */
 	public static function parseIdList($value)
 	{
@@ -112,12 +112,12 @@ class ClientTranslateExpertCronHelper
 				return false;
 			$ids[] = $id;
 		}
-		return array_values(array_unique($ids));
+		return count($ids) > 0 ? array_values(array_unique($ids)) : false;
 	}
 
 	/**
 	 * @param mixed $value Comma-separated table names
-	 * @return array|bool List of unique names (empty list = no filter), or false if the value is not a string
+	 * @return array|bool List of unique names ('' or null = empty list = no filter), or false if the value is not a string or a non-empty value has no items
 	 */
 	public static function parseTableList($value)
 	{
@@ -133,7 +133,7 @@ class ClientTranslateExpertCronHelper
 			if ($item !== '')
 				$tables[] = $item;
 		}
-		return array_values(array_unique($tables));
+		return count($tables) > 0 ? array_values(array_unique($tables)) : false;
 	}
 
 	public static function settingKey($name, $version)

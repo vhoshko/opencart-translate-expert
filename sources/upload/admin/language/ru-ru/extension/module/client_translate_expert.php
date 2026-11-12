@@ -48,7 +48,6 @@ $_['entity_language'] = 'Язык';
 $_['entry_table']     = 'Таблица';
 $_['entry_analization_language_from'] = 'Язык с которого переводить';
 $_['entry_analization_language_to'] = 'Язык на какой переводить';
-$_['entry_all_tables']     = 'Все таблицы';
 $_['entry_table_deep']     = 'Глубокий анализ';
 $_['entry_table_deep_description']     = 'Полный анализ таблицы (Выключите, если анализ происходит очень долго)';
 
@@ -141,6 +140,7 @@ $_['js_const_analization_process_is_started'] = "Выполняется проц
 
 // Error
 $_['error_permission'] = 'У вас нет прав для управления этим модулем!';
+$_['error_bad_filter'] = 'Значения фильтров недопустимы. Перезагрузите страницу и выберите фильтры заново.';
 $_['error_name']       = 'Имя модуля должно быть от 3 до 64 символов!';
 $_['error_width']      = 'Необходимо указать ширину!';
 $_['error_height']     = 'Необходимо указать высоту!';
@@ -163,4 +163,3 @@ $_['entry_table_product_status_filter'] = 'Фильтр по статусу то
 $_['entry_table_product_quantity_filter'] = 'Фильтр количества товаров, только товары с количеством > 0)';
 $_['entry_table_product_category_id_filter'] = 'Фильтр по категории';
 $_['entry_table_product_stock_status_filter'] = 'Фильтр по состоянию товара на складе';
-$_['entry_filter_all'] = '';

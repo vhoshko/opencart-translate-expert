@@ -123,7 +123,12 @@ class ClientTranslateExpertCronHelperTest {
 		$this->check(ClientTranslateExpertCronHelper::parseTableList(''), array(), 'parseTableList: empty text is empty');
 		$this->check(ClientTranslateExpertCronHelper::parseTableList(5), false, 'parseTableList: integer is not valid');
 		$this->check(ClientTranslateExpertCronHelper::parseTableList(array('a')), false, 'parseTableList: array is not valid');
-		$this->check(ClientTranslateExpertCronHelper::parseTableList(' , '), array(), 'parseTableList: only separators are empty');
+		$this->check(ClientTranslateExpertCronHelper::parseTableList(','), false, 'parseTableList: only a comma is not valid');
+		$this->check(ClientTranslateExpertCronHelper::parseTableList(' '), false, 'parseTableList: only a space is not valid');
+		$this->check(ClientTranslateExpertCronHelper::parseIdList(','), false, 'parseIdList: only a comma is not valid');
+		$this->check(ClientTranslateExpertCronHelper::parseIdList(' , '), false, 'parseIdList: only separators are not valid');
+		$this->check(ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('table' => ','))), false, 'parseParams: table with only a comma is not valid');
+		$this->check(ClientTranslateExpertCronHelper::parseTableList(' , '), false, 'parseTableList: only separators are not valid');
 
 		$empty = ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('table' => '', 'product_category_id' => '', 'stock_status' => '')));
 		$this->check($empty['table'] === array() && $empty['product_category_id'] === array() && $empty['stock_status'] === array(), true, 'empty table, category and stock status are kept empty');
