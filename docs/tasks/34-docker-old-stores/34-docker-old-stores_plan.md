@@ -72,9 +72,19 @@ Design corrections:
 - [x] Independent review → `34-docker-old-stores-review.md` Findings: Fable. 1 Important (vQmod keeps `mods.cache` while it is newer than the XML, verified at `vqmod.php:241`), 7 Minor. The reviewer ran vQmod 2.6.6 on the 1.5.6.4 header: the new XML applies, the old XML aborts.
 - [x] Address review findings (the user picks which to fix or skip) Findings: the user chose to fix all 8. Install and update for 1.5 now delete `vqmod/mods.cache`, in the README and in the script. The vQmod check now reads `admin/index.php`. Other fixes: empty `OC_VERSION` guard, recreate hint, `build.sh` guard for the 1.5 searches, wording.
 - [x] Bump version + build + tests (verify loop) Findings: 04.01.0148, build green, 289 tests pass (6 skipped, no key), shellcheck 0 warnings. A copy of the 1.5 XML without `function index(` makes the new `build.sh` guard fail, so the guard works. The fixes have no host run yet.
-- [ ] Re-review? (ask the user)
-- [ ] Improvements pass → `34-docker-old-stores-improvements.md`
+- [x] Re-review? (ask the user). Findings: the user said yes. See the Update section.
+- [x] Improvements pass → `34-docker-old-stores-improvements.md`
 
 ## Done
 
-<fill at the end>
+- Landed: 4 new Docker stores (`oc15` with vQmod 2.6.6, `oc20`, `oc21`, `oc22`), the 1.5 package fix in `build.sh` (XML in `upload/vqmod/xml/`, 1.5 searches, quoted key, build guard), and install and update steps for each version in `README.md`. `install-module.sh` does the same steps. PR #41.
+- Final version: 04.01.0149. The host run (04.01.0147) passed on all 8 stores. The user checked a manual translation on the 4 new stores.
+- Gotcha: vQmod keeps `mods.cache` and `vqcache/vq2-*` while they are not older than the newest XML file. Install and update on 1.5 must delete both.
+- Deferred: the review fixes (0148, 0149) changed `entrypoint.sh` and `install-module.sh`, and no host run has tested them. The tag-archive SHA-256 for 1.5.6.4, 2.0.3.1 and 2.1.0.2 can change if GitHub changes the archive.
+
+## Update 2026-11-12 (review pass 2)
+
+- [x] Re-review → `34-docker-old-stores-review-v2.md`. Findings: Fable. Ready to merge. Fixes 2–8 close their findings. Minor 1: on a downgrade (`-p` with an older package), vQmod reuses the newer compiled header in `vqmod/vqcache/` (`vqmod.php:123`). Minor 2: one long comment line.
+- [x] Address pass-2 findings. Findings: the user chose to fix both. The script and the README now also delete `vqmod/vqcache/vq2-*` (file prefix from `vqmod.php:356`). The reviewer probe `tmp/probe2/run-stale-probe.sh` confirms the result. With `rm-cache` only, the admin loads the stale `?v=04.01.0147`. With `rm-cache-and-vqcache`, it loads the correct `?v=04.01.0146`.
+- [x] Bump version + build + tests (verify loop 2). Findings: 04.01.0149, build green, 289 tests pass (6 skipped, no key), shellcheck 0 warnings. No third review pass: pass 2 found only Minor issues.
+- PR: https://github.com/vhoshko/opencart-translate-expert/pull/41 (the user asked for it on 2026-11-12).

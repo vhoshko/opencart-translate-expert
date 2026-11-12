@@ -63,12 +63,12 @@ If vQmod is already installed, skip these steps.
 Install the module:
 
 1. Unzip `OpenCartTranslateExpertClient-oc1.5-….ocmod.zip`. Copy the contents of its `upload/` folder to the root folder of the store. This puts `vqmod/xml/OpenCartTranslateExpertClient.xml` in place.
-2. Delete the file `vqmod/mods.cache`, if it exists. vQmod then reads its XML files again on the next page load. Without this step, vQmod can keep its old cache: it reads the XML again only when an XML file is newer than `mods.cache`, and many copy tools keep the old file dates.
+2. Delete the file `vqmod/mods.cache` and the `vq2-*` files in `vqmod/vqcache/`, if they exist. vQmod then applies its XML files again on the next page load. Without this step, vQmod can keep its old caches: it reuses them while they are not older than the newest XML file, and many copy tools keep the old file dates.
 3. In the admin, open **Extensions > Modules**. Find **Translate Expert (Full)** and click **Install**, then **Edit**.
 
-Update: copy the `upload/` contents of the new package over the old files, then delete `vqmod/mods.cache` again. Do not uninstall the module: an uninstall deletes its settings. Packages before 04.01.0147 put the XML in `system/OpenCartTranslateExpertClient.ocmod.xml`, where vQmod does not read it. You can delete that file.
+Update: copy the `upload/` contents of the new package over the old files, then delete `vqmod/mods.cache` and the `vq2-*` files in `vqmod/vqcache/` again. Do not uninstall the module: an uninstall deletes its settings. Packages before 04.01.0147 put the XML in `system/OpenCartTranslateExpertClient.ocmod.xml`, where vQmod does not read it. You can delete that file.
 
-If the admin header does not load the module (no `client_translate_expert.js` in the page source), first delete `vqmod/mods.cache` and reload the page. If that does not help, look in `vqmod/logs/` for an error about `OpenCartTranslateExpertClient.xml`.
+If the admin header does not load the module (no `client_translate_expert.js` in the page source), first delete `vqmod/mods.cache` and the `vq2-*` files in `vqmod/vqcache/`, and reload the page. If that does not help, look in `vqmod/logs/` for an error about `OpenCartTranslateExpertClient.xml`.
 
 ### OpenCart 4.0 / 4.1
 

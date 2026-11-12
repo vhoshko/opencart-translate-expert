@@ -16,13 +16,15 @@
 # First run per store: full install.
 #   oc20-oc30   copy upload/ into the store, Modifications > Refresh,
 #               Extensions > Modules > Install
-#   oc15        copy upload/ into the store, delete vqmod/mods.cache (vQmod
-#               then applies vqmod/xml/OpenCartTranslateExpertClient.xml),
+#   oc15        copy upload/ into the store, delete vqmod/mods.cache and
+#               vqmod/vqcache/vq2-* (vQmod then applies
+#               vqmod/xml/OpenCartTranslateExpertClient.xml),
 #               Extensions > Modules > Install
 #   oc40, oc41  Extension Installer upload + install, Extensions > Modules > Install
 # Later runs: the module is already installed, so only the files are replaced
-# (plus a modification refresh on oc20-oc30, or deleting vqmod/mods.cache on oc15). Recreate the store for a clean
-# install: docker compose -f docker/compose.yaml down -v
+# (plus a modification refresh on oc20-oc30, or deleting the vQmod caches on
+# oc15). Recreate the store for a clean install:
+# docker compose -f docker/compose.yaml down -v
 #
 # Works with macOS bash 3.2: no associative arrays, no mapfile.
 set -euo pipefail
@@ -219,11 +221,13 @@ install_ocmod_store() {
 	log "files copied"
 
 	if is_oc15 "$STORE"; then
-		# README.md: delete vqmod/mods.cache. vQmod reads vqmod/xml/ again only
-		# when an XML file is newer than mods.cache, and docker cp keeps the
-		# file dates from the package.
-		docker exec "$CONTAINER" rm -f /var/www/html/vqmod/mods.cache || { fail "deleting vqmod/mods.cache failed"; return 1; }
-		log "vqmod/mods.cache deleted: vQmod reads its XML files on the next page load"
+		# README.md: delete vqmod/mods.cache and the compiled files in
+		# vqmod/vqcache/. vQmod reuses both while they are not older than the
+		# newest XML file, and docker cp keeps the file dates from the package
+		# (an older package with -p would keep the newer compiled header).
+		docker exec "$CONTAINER" sh -c 'rm -f /var/www/html/vqmod/mods.cache /var/www/html/vqmod/vqcache/vq2-*' \
+			|| { fail "deleting the vQmod caches failed"; return 1; }
+		log "vQmod caches deleted: vQmod applies its XML files on the next page load"
 	fi
 
 	login || return 1
