@@ -63,6 +63,24 @@
 					</div>
 				  </div>
 				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="te-cron-bulk-amount"><?php echo $entry_cron_bulk_amount; ?></label>
+					<div class="col-sm-10">
+					  <input type="number" min="1" max="100000" step="1" name="client_translate_expert_cron_bulk_amount" value="<?php echo (int)$client_translate_expert_cron_bulk_amount; ?>" id="te-cron-bulk-amount" class="form-control" />
+					  <span class="help-block"><?php echo $help_cron_bulk_amount; ?></span>
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="te-cron-secret"><?php echo $entry_cron_secret; ?></label>
+					<div class="col-sm-10">
+					  <div class="input-group">
+						<input type="text" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" maxlength="128" name="client_translate_expert_cron_secret" value="<?php echo htmlspecialchars($client_translate_expert_cron_secret, ENT_QUOTES, 'UTF-8'); ?>" placeholder="<?php echo $entry_cron_secret; ?>" id="te-cron-secret" class="form-control" />
+						<span class="input-group-btn"><button type="button" id="te-cron-secret-generate" class="btn btn-default"><?php echo $button_cron_secret_generate; ?></button></span>
+					  </div>
+					  <span class="help-block"><?php echo $help_cron_secret; ?></span>
+					  <div class="text-warning" id="te-cron-secret-unsaved" style="display:none"><?php echo $text_cron_secret_unsaved; ?></div>
+					</div>
+				  </div>
+				  <div class="form-group">
 					<label class="col-sm-2 control-label" for="input-client_translate_expert_show_char_count_globally"><?php echo $entry_server_show_translation_char_count_globally; ?></label>
 					<div class="col-sm-10">
 					  <input type="checkbox" name="client_translate_expert_show_char_count_globally" value="1" id="input-client_translate_expert_show_char_count_globally" <?php echo $client_translate_expert_show_char_count_globally == 1 ? 'checked="1"' : ''; ?>/> <?php echo $entry_server_show_translation_char_count_globally; ?>
@@ -171,6 +189,15 @@
 							<option value="<?php echo $stock_status['stock_status_id']; ?>" <?php if ($te_stock_status == $stock_status['stock_status_id']) { echo 'selected="selected"'; } ?>><?php echo $stock_status['name']; ?></option>
 							<?php } ?>
 						</select> <?php echo $entry_table_product_stock_status_filter; ?><br><br>
+					</div>
+				  </div>
+
+				  <div class="form-group" id="te-cron-link-panel" data-cron-url="<?php echo htmlspecialchars($te_cron_url, ENT_QUOTES, 'UTF-8'); ?>">
+					<label class="col-sm-2 control-label" for="te-cron-link"><?php echo $entry_cron_link; ?></label>
+					<div class="col-sm-10">
+					  <input type="text" readonly="readonly" id="te-cron-link" class="form-control" value="" <?php if (!$te_cron_secret_valid) { echo 'style="display:none"'; } ?> />
+					  <span class="help-block" <?php if (!$te_cron_secret_valid) { echo 'style="display:none"'; } ?> id="te-cron-link-help"><?php echo $help_cron_link; ?></span>
+					  <div class="text-danger" id="te-cron-link-error" <?php if ($te_cron_secret_valid) { echo 'style="display:none"'; } ?>><?php echo $error_cron_secret; ?></div>
 					</div>
 				  </div>
 

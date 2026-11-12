@@ -11,6 +11,20 @@ An OpenCart admin module (OCMOD extension) that provides translation management 
 - Character usage tracking against the Google API, with a configurable monthly reset
 - Supports OpenCart 1.5 through 4.1 (4.x: 4.0.2.x–4.1.0.x), across PHP 5.6, 7.0, 7.1+ and 8.x (OpenCart 4.0 requires PHP 8.0+, OpenCart 4.1 requires PHP 8.1+)
 
+## Cron translation
+
+The module can translate the database content from cron, without the admin page. In the module settings, set **Cron secret** (16 to 128 characters, letters, digits, `-` and `_`; the Generate button makes one) and **Rows per cron run**, then save. On the **Website content translation** tab, choose the languages, mode, table and product filters. Copy the **Cron link** and call it from cron:
+
+```
+*/10 * * * * wget -q -O - "<cron link>"
+```
+
+Each call translates one batch (up to the configured number of database rows) of all text columns of the selected table. If the table is "All tables", it goes through the tables in order. The answer is JSON: `{"done":false,"rows":100,"chars":5230,"table":"oc_product_description","error":""}`. If Google returns an empty translation for a text (for example `.`), the module keeps the source text as the translation. Errors: `forbidden` (HTTP 403), `disabled`, `bad_params`, `busy`, `translate_failed` (the answer has `message` and `details` with the cause). Only one run works at a time.
+
+Run size: **Rows per cron run** controls how much one run translates. A run stops after 15 minutes at most. The PHP `max_execution_time` of the host and the timeout of the scheduler (for example the default read timeout of `wget`) still apply, so choose a bulk amount that finishes in time.
+
+Limits: the secret is a part of the link, so it can appear in web server logs; the link does not work when the store is in maintenance mode; with "All tables" every run checks the finished tables again.
+
 ## Installation
 
 Download the OCMOD package for your OpenCart version from the [releases](releases) directory (or build it yourself, see below), then install it through **Extensions > Installer** in the OpenCart admin panel, and enable it under **Extensions > Modules > Translate Expert (Full)**.

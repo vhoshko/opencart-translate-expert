@@ -2,12 +2,18 @@
 
 if (defined('DIR_EXTENSION') && version_compare(VERSION, '4.0', '>=')) {
 	include_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert_core.php');
+	include_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert_cron_helper.php');
 } else {
 	include_once(DIR_SYSTEM . 'library/client_translate_expert_core.php');
+	include_once(DIR_SYSTEM . 'library/client_translate_expert_cron_helper.php');
 }
 
 class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 {
+	const CRON_TIME_LIMIT = 900;
+
+	protected $_lastBudget = null;
+
 	public function translate($text, $source, $target, $format)
 	{
 		$this->gebugLog('translate: ============START============', $startTime);
@@ -43,6 +49,234 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 	{
 		$this->gebugLog('translateTable: ============START============', $startTime);
 
+		$res = $this->translateTableWithBudget($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $this->createBatchBudget(0, 10, false));
+
+		$this->gebugLog('translateTable: ============FINISH============', $startTime);
+		return $res;
+	}
+
+	// Translates one batch for the cron link: up to $rowCap DB rows in the selected table,
+	// or in every table in order when $filters['table'] is empty. The WHERE of getTextToTranslateRows
+	// selects only untranslated rows, so the next call continues where this one stopped.
+	public function translateNextBatch($filters, $rowCap)
+	{
+		$this->gebugLog('translateNextBatch: ============START============', $startTime);
+
+		$budget = $this->createBatchBudget($rowCap, self::CRON_TIME_LIMIT, true);
+		$tables = $filters['table'] !== '' ? array($filters['table']) : $this->getTables();
+
+		$res = (object)array('success' => 1, 'done' => true, 'table' => '');
+		foreach($tables as $table)
+		{
+			$budget->table = $table;
+			$tableRes = $this->translateTableWithBudget($filters['langIdFrom'], $filters['mode'], $table, null, $filters['langIdTo'],
+				$filters['product_status'], $filters['product_quantity'], $filters['product_category_id'], $filters['stock_status'], $budget);
+			$res->table = $table;
+			if (!$tableRes->success)
+			{
+				$res->success = 0;
+				$res->message = $tableRes->message;
+				$res->details = isset($tableRes->additional_message) ? (string)$tableRes->additional_message : '';
+				$res->done = false;
+				break;
+			}
+			if (!$tableRes->done)
+			{
+				$res->done = false;
+				break;
+			}
+		}
+
+		$res->rows = $budget->rowsDone;
+		$res->chars = $budget->charsDone;
+
+		$this->gebugLog('translateNextBatch: ============FINISH============', $startTime);
+		return $res;
+	}
+
+	// Runs one cron batch. $get is the request GET array. The secret and the GET array never go to the debug log.
+	// Returns array('http_status' => int, 'body' => array) for the store-front controller.
+	public function runCron($get)
+	{
+		$this->_lastBudget = null;
+		$version = VERSION;
+		$secretKey = ClientTranslateExpertCronHelper::settingKey('client_translate_expert_cron_secret', $version);
+		$config = $this->_model->config;
+
+		$knownSecret = (string)$config->get($secretKey);
+		$givenSecret = isset($get['secret']) && is_string($get['secret']) ? $get['secret'] : '';
+		if (!ClientTranslateExpertCronHelper::isValidSecret($knownSecret)
+			|| !ClientTranslateExpertCronHelper::secretsMatch($knownSecret, $givenSecret))
+		{
+			return $this->cronError('forbidden', 403);
+		}
+
+		if (!$config->get(ClientTranslateExpertCronHelper::settingKey('client_translate_expert_status', $version)))
+			return $this->cronError('disabled');
+
+		$filters = ClientTranslateExpertCronHelper::parseParams($get);
+		if ($filters === false)
+			return $this->cronError('bad_params');
+
+		$this->_languages = $this->loadAllLanguages();
+		$languageIds = array();
+		foreach($this->_languages as $language)
+			$languageIds[] = (int)$language['language_id'];
+		if (!in_array($filters['langIdFrom'], $languageIds, true) || !in_array($filters['langIdTo'], $languageIds, true))
+			return $this->cronError('bad_params');
+
+		if ($filters['table'] !== '' && !in_array($filters['table'], $this->getTables(), true))
+			return $this->cronError('bad_params');
+
+		if ($filters['bulk_amount'] !== '')
+			$rowCap = $filters['bulk_amount'];
+		else
+			$rowCap = ClientTranslateExpertCronHelper::clampBulkAmount($config->get(ClientTranslateExpertCronHelper::settingKey('client_translate_expert_cron_bulk_amount', $version)));
+
+		$db = $this->_model->db;
+		$lockName = 'te_cron_' . md5(DB_DATABASE . DB_PREFIX);
+		$lockRow = $db->query("SELECT GET_LOCK('" . $db->escape($lockName) . "', 0) AS `lock_result`")->row;
+		if (!isset($lockRow['lock_result']) || (int)$lockRow['lock_result'] !== 1)
+			return $this->cronError('busy');
+
+		$this->gebugLog('runCron: ' . var_export(array('filters' => $filters, 'rowCap' => $rowCap), true));
+
+		if (function_exists('set_time_limit'))
+			@set_time_limit(0);
+		if (function_exists('ignore_user_abort'))
+			@ignore_user_abort(true);
+
+		try
+		{
+			if ($config->get(ClientTranslateExpertCronHelper::settingKey('client_translate_expert_reset_char_count_on_start_month', $version)))
+				$this->resetCharCountOnNewMonth(date('m'));
+
+			$res = $this->translateNextBatch($filters, $rowCap);
+			$charsDone = (int)$res->chars;
+
+			if (!$res->success)
+			{
+				$error = $this->cronError('translate_failed');
+				$error['body']['message'] = $this->hideSecret(isset($res->message) ? $res->message : '', $knownSecret);
+				$error['body']['details'] = $this->hideSecret(isset($res->details) ? $res->details : '', $knownSecret);
+				$error['body']['rows'] = (int)$res->rows;
+				$error['body']['chars'] = $charsDone;
+				$error['body']['table'] = (string)$res->table;
+				return $error;
+			}
+
+			return array('http_status' => 200, 'body' => array(
+				'done' => (bool)$res->done,
+				'rows' => (int)$res->rows,
+				'chars' => $charsDone,
+				'table' => (string)$res->table,
+				'error' => '',
+			));
+		}
+		catch (\Exception $e)
+		{
+			return $this->cronFailure($e, $knownSecret);
+		}
+		catch (\Throwable $e)
+		{
+			return $this->cronFailure($e, $knownSecret);
+		}
+		finally
+		{
+			try
+			{
+				$db->query("SELECT RELEASE_LOCK('" . $db->escape($lockName) . "')");
+			}
+			catch (\Exception $e)
+			{
+				// The lock is released anyway when the DB connection closes.
+			}
+		}
+	}
+
+	public function isValidCronSecret($secret)
+	{
+		return ClientTranslateExpertCronHelper::isValidSecret($secret);
+	}
+
+	protected function cronFailure($e, $knownSecret)
+	{
+		$message = $this->hideSecret($e->getMessage(), $knownSecret);
+		$this->gebugLog('runCron EXCEPTION: ' . $message);
+		$budget = $this->_lastBudget;
+		$error = $this->cronError('translate_failed');
+		$error['body']['message'] = $message;
+		$error['body']['details'] = '';
+		if (!is_null($budget))
+		{
+			$error['body']['rows'] = (int)$budget->rowsDone;
+			$error['body']['chars'] = (int)$budget->charsDone;
+			$error['body']['table'] = (string)$budget->table;
+		}
+		return $error;
+	}
+
+	protected function hideSecret($text, $secret)
+	{
+		$text = (string)$text;
+		return $secret !== '' ? str_replace($secret, '***', $text) : $text;
+	}
+
+	public function clampCronBulkAmount($value)
+	{
+		return ClientTranslateExpertCronHelper::clampBulkAmount($value);
+	}
+
+	protected function cronError($code, $httpStatus = 200)
+	{
+		return array('http_status' => $httpStatus, 'body' => array(
+			'done' => false,
+			'rows' => 0,
+			'chars' => 0,
+			'table' => '',
+			'error' => $code,
+		));
+	}
+
+	// The store-front language model returns enabled languages only. The cron must see all of them.
+	protected function loadAllLanguages()
+	{
+		$languages = array();
+		$rows = $this->_model->db->query("SELECT * FROM `" . DB_PREFIX . "language` ORDER BY `sort_order`, `name`")->rows;
+		foreach($rows as $row)
+			$languages[$row['code']] = $row;
+		return $languages;
+	}
+
+	protected function now()
+	{
+		return microtime(true);
+	}
+
+	protected function createBatchBudget($rowCap, $timeLimit, $countBatches)
+	{
+		$this->_lastBudget = (object)array(
+			'rowCap' => (int)$rowCap,
+			'timeLimit' => $timeLimit,
+			'countBatches' => $countBatches,
+			'rowsQueued' => 0,
+			'rowsDone' => 0,
+			'charsDone' => 0,
+			'start' => $this->now(),
+			'table' => '',
+		);
+		return $this->_lastBudget;
+	}
+
+	protected function addBatchChars($budget, $chars)
+	{
+		if ($budget->countBatches && $chars > 0)
+			$this->addCharCount($chars);
+		$budget->charsDone += $chars;
+	}
+
+	protected function translateTableWithBudget($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $budget)
+	{
 		if (is_null($mode))
 			$mode = 'both';
 
@@ -50,10 +284,8 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 
 		$tableResult = $this->getTableToTranslateAnalizationInfo($languageIdFrom, $tableName, $languages, $mode, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, false);
 
-		$translatedCharCount = 0;
 		$done = true;
 
-		$start = microtime(true);
 		if ($tableResult->tableTranslationIsSuppported)
 		{
 			foreach($tableResult->textColumnNames as $textColumnName)
@@ -68,6 +300,8 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 
 					$textsToTranslateLenght = 0;
 					$textRowsToTranslate = array();
+					$queuedKeys = array();
+					$droppedDuplicate = false;
 
 					$limit = self::TRANSLATION_ANALITIC_SQL_LIMIT;
 					$offset = 0;
@@ -83,30 +317,64 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 							if ($textToTranslateRow['language_id_to'] != $language['language_id'])
 								continue;
 
-
 							$textToTranslate = $textToTranslateRow['text_from'];
+
+							$queuedKey = md5($textToTranslate);
+							if (isset($queuedKeys[$queuedKey]))
+							{
+								// Same text in another group (e.g. no target row vs empty target row): it is
+								// written after its twin is flushed, so the run is not done until it is re-read.
+								$droppedDuplicate = true;
+								continue;
+							}
+
+							if ($budget->rowCap > 0 && $budget->rowsQueued > 0 && $budget->rowsQueued >= $budget->rowCap)
+							{
+								if ($textsToTranslateLenght > 0)
+								{
+									$translateRes = $this->translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textRowsToTranslate, $budget);
+									if (!$translateRes->success)
+										return (object)array('success' => 0, 'done' => 0, 'message' => $translateRes->message, 'additional_message' => isset($translateRes->additional_message) ? $translateRes->additional_message : '');
+
+									$offset = 0;
+									$this->addBatchChars($budget, $textsToTranslateLenght);
+									$textsToTranslateLenght = 0;
+									$textRowsToTranslate = array();
+									$queuedKeys = array();
+									$droppedDuplicate = false;
+								}
+								if ($budget->rowsQueued > 0 && $budget->rowsQueued >= $budget->rowCap)
+								{
+									$done = false;
+									break 2;
+								}
+							}
 
 							if (($textsToTranslateLenght > 0)
 								&& ($textsToTranslateLenght + mb_strlen($textToTranslate) > 5000))
 							{
-								$translateRes = $this->translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textRowsToTranslate);
+								$translateRes = $this->translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textRowsToTranslate, $budget);
 								if (!$translateRes->success)
 									return (object)array('success' => 0, 'done' => 0, 'message' => $translateRes->message, 'additional_message' => isset($translateRes->additional_message) ? $translateRes->additional_message : '');
 
 								$offset = 0;
-								$translatedCharCount += $textsToTranslateLenght;
+								$this->addBatchChars($budget, $textsToTranslateLenght);
 								$textsToTranslateLenght = 0;
 								$textRowsToTranslate = array();
+								$queuedKeys = array();
+								$droppedDuplicate = false;
 							}
 
 							$textsToTranslateLenght += mb_strlen($textToTranslate);
 							$textRowsToTranslate[] = $textToTranslateRow;
+							$queuedKeys[$queuedKey] = true;
+							$budget->rowsQueued += (int)$textToTranslateRow['value_count'];
 						}
 
-						if ($translatedCharCount > 0)
+						if ($budget->charsDone > 0)
 						{
-							$time_elapsed_secs = microtime(true) - $start;
-							if ($time_elapsed_secs > 10)
+							$time_elapsed_secs = $this->now() - $budget->start;
+							if ($time_elapsed_secs > $budget->timeLimit)
 							{
 								$done = false;
 								break;
@@ -116,16 +384,29 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 
 					if ($textsToTranslateLenght > 0)
 					{
-						$translateRes = $this->translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textRowsToTranslate);
+						$translateRes = $this->translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textRowsToTranslate, $budget);
 						if (!$translateRes->success)
 							return (object)array('success' => 0, 'done' => 0, 'message' => $translateRes->message, 'additional_message' => isset($translateRes->additional_message) ? $translateRes->additional_message : '');
-						$translatedCharCount += $textsToTranslateLenght;
+						$this->addBatchChars($budget, $textsToTranslateLenght);
 
-						$time_elapsed_secs = microtime(true) - $start;
-						if ($time_elapsed_secs > 10)
+						$time_elapsed_secs = $this->now() - $budget->start;
+						if ($time_elapsed_secs > $budget->timeLimit)
 						{
 							$done = false;
 							break;
+						}
+					}
+
+					if ($done && $droppedDuplicate)
+					{
+						$leftRows = $this->getTextToTranslateRows($languageIdFrom, $tableResult->table, $tableResult->pkColumnNames, $textColumnName, $mode, $limit, 0, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status);
+						foreach($leftRows as $leftRow)
+						{
+							if ($leftRow['language_id_to'] == $language['language_id'])
+							{
+								$done = false;
+								break;
+							}
 						}
 					}
 
@@ -142,30 +423,14 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 			}
 		}
 
-		$this->gebugLog('translateTable: ============FINISH============', $startTime);
 		return (object)array(
 			'success' => 1,
 			'done' => $done,
-			'translatedCharCount' => $translatedCharCount,
+			'translatedCharCount' => $budget->charsDone,
 		);
 	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	protected function translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textRowsToTranslate)
+	protected function translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textRowsToTranslate, $budget = null)
 	{
 		//var_dump($textRowsToTranslate);
 
@@ -217,6 +482,9 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 			$textToTranslateRow = $textRowsToTranslate[$i];
 			$textToTranslate = $textToTranslateRow['text_from'];
 			$translatedText = $translationResults->texts[$i];
+			// Google returns '' for some texts (e.g. '.'): keep the source text, as if it came back unchanged.
+			if (trim($translatedText) === '')
+				$translatedText = $textToTranslate;
 			if (trim(strtolower($textToTranslate)) == trim(strtolower($translatedText))
 				|| isset($textToTranslateRow['text_to']) && trim(strtolower($textToTranslateRow['text_to'])) == trim(strtolower($translatedText))
 			)
@@ -224,6 +492,8 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 				$this->insertSameTranslatedText($textToTranslateRow['language_id_from'], $textToTranslateRow['language_id_to'], $translatedText);
 			}
 			$this->insertTranslatedTableTextValue($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textToTranslateRow, $translatedText);
+			if (!is_null($budget))
+				$budget->rowsDone += (int)$textToTranslateRow['value_count'];
 		}
 
 		return (object)array('success' => '1');

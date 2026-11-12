@@ -28,6 +28,8 @@ Base path: `docs/tasks/<slug>/`
 | `sources/upload/admin/controller/extension/module/client_translate_expert.php` | Admin routes, settings, AJAX actions. `// OC4_EVENT_START` … `// OC4_EVENT_END` wrap the OC4-only code |
 | `sources/upload/admin/model/extension/module/client_translate_expert.php` | DB queries for table and column analysis |
 | `sources/upload/system/library/client_translate_expert_core.php` | Main translation logic, table analysis, batch processing |
+| `sources/upload/catalog/controller/extension/module/client_translate_expert_cron.php` | Store-front cron link. Thin controller that calls `LibraryClientTranslateExpert::runCron()`. The secret is the only protection |
+| `sources/upload/system/library/client_translate_expert_cron_helper.php` | Pure cron helpers (secret rules, request parameters, setting key). `tests/` tests it |
 | `sources/upload/system/library/vh_google_translator.php` | Google Translate API wrapper (`tests/` tests it) |
 | `sources/upload/admin/view/template/extension/module/client_translate_expert.tpl` | Admin template (PHP syntax) for OC 1.5–3.0. OC 3.0 also ships the `.tpl` and renders it as PHP, because `build.sh` makes the controller set `template_engine = template` |
 | `sources/upload/admin/view/template/extension/module/client_translate_expert.oc4.twig` | Admin template for OC 4.0 only |
@@ -44,6 +46,8 @@ Edit `sources/` only. `sources_release*/` and `releases/` are build output.
 | Unit tests | `php tests/test_vh_google_translator.php` | No API key needed |
 | Unit + integration tests | `php tests/test_vh_google_translator.php <GOOGLE_API_KEY>` | Use only a key that the user gives you |
 | Route filter unit tests | `php tests/test_client_translate_expert_route_filter.php` | No API key needed. Any PHP warning fails a test |
+| Cron helper unit tests | `php tests/test_client_translate_expert_cron_helper.php` | No API key needed. Any PHP warning fails a test |
+| Translate loop tests | `php tests/test_client_translate_expert_translate_loop.php` | No DB and no API key needed. Any PHP warning fails a test |
 | Bump version | `/bump-version` | Changes the patch part of `_version.txt` (`MM.mm.pppp`). **Do it before every build** |
 | Build per-version zips | `./build.sh` | Leaves zips in the root. Use the release build instead |
 | Release build | `./build.release.sh` | Puts the output in `releases/v<version>/`. **Run it after every change** (see `CLAUDE.md`) |

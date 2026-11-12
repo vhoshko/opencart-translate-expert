@@ -6,6 +6,8 @@ if (document.readyState == 'loading') {
 
 function initTranslateExpert() {
 
+	initTranslateExpertCron();
+
 	if ((typeof document.js_const_client_translate_expert_is_enabled !== 'undefined')
 		&& document.js_const_client_translate_expert_is_enabled)
 	{
@@ -1128,4 +1130,86 @@ function initModule()
 	});
 
 	showTranslatedCharCount();
+}
+
+// Cron settings controls work also when the module status is disabled,
+// so the admin can set up the secret and the link before enabling the module.
+function initTranslateExpertCron()
+{
+	if ($('#te-cron-secret').length == 0 && $('#te-cron-link-panel').length == 0) {
+		return;
+	}
+
+	$('#te-cron-secret-generate').click(function() {
+		var cryptoApi = window.crypto || window.msCrypto;
+		var bytes = new Uint8Array(16);
+		cryptoApi.getRandomValues(bytes);
+		var secret = '';
+		for (var i = 0; i < bytes.length; i++) {
+			secret += ('0' + bytes[i].toString(16)).slice(-2);
+		}
+		$('#te-cron-secret').val(secret);
+		updateTranslateExpertCronLink();
+	});
+
+	$('#te-cron-link').click(function() {
+		this.select();
+	});
+
+	$('#te-analization-language-from, #te-analization-language-to, #te-analization-mode, #te-analization-table, #te-analization-product-status-filter, #te-analization-product-quantity-filter, #te-analization-product-category-id-filter, #te-analization-product-stock-status-filter')
+		.on('change', updateTranslateExpertCronLink);
+	$('#te-cron-bulk-amount, #te-cron-secret').on('change input', updateTranslateExpertCronLink);
+	updateTranslateExpertCronLink();
+}
+
+function updateTranslateExpertCronLink()
+{
+	var panel = $('#te-cron-link-panel');
+	var baseUrl = panel.attr('data-cron-url');
+	if (!baseUrl) {
+		return;
+	}
+
+	var secretInput = $('#te-cron-secret');
+	var secret = $.trim(secretInput.val() || '');
+	var secretValid = /^[A-Za-z0-9_-]{16,128}$/.test(secret);
+	var secretUnsaved = secretInput.length > 0 && secret !== $.trim(secretInput.prop('defaultValue') || '');
+	$('#te-cron-secret-unsaved').toggle(secretUnsaved);
+	$('#te-cron-link, #te-cron-link-help').toggle(secretValid);
+	$('#te-cron-link-error').toggle(!secretValid);
+	if (!secretValid) {
+		$('#te-cron-link').val('');
+		return;
+	}
+
+	var params = [
+		'secret=' + encodeURIComponent(secret),
+		'langIdFrom=' + encodeURIComponent($('#te-analization-language-from').val()),
+		'langIdTo=' + encodeURIComponent($('#te-analization-language-to').val()),
+		'mode=' + encodeURIComponent($('#te-analization-mode').val())
+	];
+	var table = $('#te-analization-table').val();
+	if (table) {
+		params.push('table=' + encodeURIComponent(table));
+	}
+	if ($('#te-analization-product-status-filter').is(':checked')) {
+		params.push('product_status=1');
+	}
+	if ($('#te-analization-product-quantity-filter').is(':checked')) {
+		params.push('product_quantity=1');
+	}
+	var categoryId = $('#te-analization-product-category-id-filter').val();
+	if (categoryId) {
+		params.push('product_category_id=' + encodeURIComponent(categoryId));
+	}
+	var stockStatus = $('#te-analization-product-stock-status-filter').val();
+	if (stockStatus) {
+		params.push('stock_status=' + encodeURIComponent(stockStatus));
+	}
+	var bulkAmount = $.trim($('#te-cron-bulk-amount').val() || '');
+	if (/^[0-9]{1,9}$/.test(bulkAmount) && parseInt(bulkAmount, 10) > 0) {
+		params.push('bulk_amount=' + encodeURIComponent(parseInt(bulkAmount, 10)));
+	}
+
+	$('#te-cron-link').val(baseUrl + '&' + params.join('&'));
 }

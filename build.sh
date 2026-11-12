@@ -73,6 +73,11 @@ mkdir -p sources_release_22/upload/admin/controller/module
 mv sources_release_22/upload/admin/controller/extension/module/* sources_release_22/upload/admin/controller/module/
 rm -rf sources_release_22/upload/admin/controller/extension
 
+mkdir -p sources_release_22/upload/catalog/controller/module
+file_replace sources_release_22/upload/catalog/controller/extension/module/client_translate_expert_cron.php 'ControllerExtensionModuleClientTranslateExpertCron' 'ControllerModuleClientTranslateExpertCron'
+mv sources_release_22/upload/catalog/controller/extension/module/* sources_release_22/upload/catalog/controller/module/
+rm -rf sources_release_22/upload/catalog/controller/extension
+
 mkdir -p sources_release_22/upload/admin/model/module
 mv sources_release_22/upload/admin/model/extension/module/* sources_release_22/upload/admin/model/module/
 rm -rf sources_release_22/upload/admin/model/extension
@@ -124,7 +129,7 @@ file_replace sources_release_30/upload/admin/controller/extension/module/client_
 file_replace "sources_release_30/upload/admin/controller/extension/module/client_translate_expert.php" '\$this->response->setOutput(\$this->load->view' '$this->config->set('\''template_engine'\'', '\''template'\''); $this->response->setOutput($this->load->view'
 file_replace sources_release_30/upload/admin/controller/extension/module/client_translate_expert.php "'client_translate_expert'" "'module_client_translate_expert'"
 
-for setting in client_translate_expert_status client_translate_expert_key client_translate_expert_debug_status client_translate_expert_char_count client_translate_expert_reset_char_count_on_start_month client_translate_expert_show_char_count_globally client_translate_expert_last_reset_char_month client_translate_expert_excluded_routes; do
+for setting in client_translate_expert_status client_translate_expert_key client_translate_expert_debug_status client_translate_expert_char_count client_translate_expert_reset_char_count_on_start_month client_translate_expert_show_char_count_globally client_translate_expert_last_reset_char_month client_translate_expert_excluded_routes client_translate_expert_cron_secret client_translate_expert_cron_bulk_amount; do
     module_setting="module_${setting}"
     for f in \
         sources_release_30/upload/admin/controller/extension/module/client_translate_expert.php \
@@ -166,10 +171,12 @@ mkdir -p "$EXT_DIR/admin/view/javascript"
 mkdir -p "$EXT_DIR/admin/view/stylesheet"
 mkdir -p "$EXT_DIR/admin/view/image"
 mkdir -p "$EXT_DIR/system/library"
+mkdir -p "$EXT_DIR/catalog/controller/module"
 
 # Move controller and model
 mv sources_release_40/upload/admin/controller/extension/module/client_translate_expert.php "$EXT_DIR/admin/controller/module/client_translate_expert.php"
 mv sources_release_40/upload/admin/model/extension/module/client_translate_expert.php "$EXT_DIR/admin/model/module/client_translate_expert.php"
+mv sources_release_40/upload/catalog/controller/extension/module/client_translate_expert_cron.php "$EXT_DIR/catalog/controller/module/client_translate_expert_cron.php"
 
 # Move JS, stylesheets, images
 cp -r sources_release_40/upload/admin/view/javascript/* "$EXT_DIR/admin/view/javascript/" 2>/dev/null || true
@@ -184,7 +191,7 @@ for lang in en-gb uk-ua ru-ru; do
 done
 
 # Move library files
-for lib in client_translate_expert_core.php client_translate_expert.php client_localization_translate_expert.php vh_google_translator.php client_translate_expert_route_filter.php; do
+for lib in client_translate_expert_core.php client_translate_expert.php client_localization_translate_expert.php vh_google_translator.php client_translate_expert_route_filter.php client_translate_expert_cron_helper.php; do
     mv "sources_release_40/upload/system/library/${lib}" "$EXT_DIR/system/library/${lib}"
 done
 # Also copy google-cloud-translate if present
@@ -204,6 +211,7 @@ cp "sources/upload/admin/view/template/extension/module/client_translate_expert.
 rm -f sources_release_40/install.php
 
 # Clean up old structure directories (now empty or unneeded)
+rm -rf sources_release_40/upload/catalog
 rm -rf sources_release_40/upload/admin/controller/extension
 rm -rf sources_release_40/upload/admin/model/extension
 rm -rf sources_release_40/upload/admin/view/template/extension
@@ -226,6 +234,8 @@ OC4_LIB_MAIN="$EXT_DIR/system/library/client_translate_expert.php"
 OC4_LIB_LOC="$EXT_DIR/system/library/client_localization_translate_expert.php"
 OC4_LIB_GOOGLE="$EXT_DIR/system/library/vh_google_translator.php"
 OC4_LIB_ROUTE_FILTER="$EXT_DIR/system/library/client_translate_expert_route_filter.php"
+OC4_LIB_CRON_HELPER="$EXT_DIR/system/library/client_translate_expert_cron_helper.php"
+OC4_CATALOG_CRON="$EXT_DIR/catalog/controller/module/client_translate_expert_cron.php"
 
 # --- Add namespace declarations (insert after <?php on line 1) ---
 add_namespace() {
@@ -247,14 +257,18 @@ add_namespace "$OC4_LIB_MAIN" 'Opencart\\Extension\\ClientTranslateExpert\\Syste
 add_namespace "$OC4_LIB_LOC" 'Opencart\\Extension\\ClientTranslateExpert\\System\\Library'
 add_namespace "$OC4_LIB_GOOGLE" 'Opencart\\Extension\\ClientTranslateExpert\\System\\Library'
 add_namespace "$OC4_LIB_ROUTE_FILTER" 'Opencart\\Extension\\ClientTranslateExpert\\System\\Library'
+add_namespace "$OC4_LIB_CRON_HELPER" 'Opencart\\Extension\\ClientTranslateExpert\\System\\Library'
+add_namespace "$OC4_CATALOG_CRON" 'Opencart\\Catalog\\Controller\\Extension\\ClientTranslateExpert\\Module'
 
 # --- Update class extends for OC4 fully-qualified base classes ---
 file_replace "$OC4_CONTROLLER" 'extends Controller' 'extends \\Opencart\\System\\Engine\\Controller'
 file_replace "$OC4_MODEL" 'extends Model' 'extends \\Opencart\\System\\Engine\\Model'
+file_replace "$OC4_CATALOG_CRON" 'extends Controller' 'extends \\Opencart\\System\\Engine\\Controller'
 
 # --- Update class names to OC4 short-name convention (namespace disambiguates) ---
 file_replace "$OC4_CONTROLLER" 'ControllerExtensionModuleClientTranslateExpert' 'ClientTranslateExpert'
 file_replace "$OC4_MODEL" 'ModelExtensionModuleClientTranslateExpert' 'ClientTranslateExpert'
+file_replace "$OC4_CATALOG_CRON" 'ControllerExtensionModuleClientTranslateExpertCron' 'ClientTranslateExpertCron'
 
 # --- Remove PHP 5.x polyfills (hash_equals, boolval) — not needed for PHP 8.0+ ---
 # Delete from "// add missed functions" through the closing "}" of boolval block (up to blank line before class)
@@ -300,6 +314,7 @@ file_replace "$OC4_MODEL" "require_once(DIR_SYSTEM . 'library/client_localizatio
 
 # --- Update class instantiations in model to use namespaced classes ---
 file_replace "$OC4_MODEL" 'new LibraryClientTranslateExpert(' 'new \\Opencart\\Extension\\ClientTranslateExpert\\System\\Library\\LibraryClientTranslateExpert('
+file_replace "$OC4_CATALOG_CRON" 'new LibraryClientTranslateExpert(' 'new \\Opencart\\Extension\\ClientTranslateExpert\\System\\Library\\LibraryClientTranslateExpert('
 file_replace "$OC4_MODEL" 'new LocalizationLibraryClientTranslateExpert(' 'new \\Opencart\\Extension\\ClientTranslateExpert\\System\\Library\\LocalizationLibraryClientTranslateExpert('
 
 # --- Update class instantiation in core library for VHGoogleTranslator ---
@@ -399,7 +414,7 @@ done
 
 # --- Apply module_ prefix to settings in OC4 template (same as OC3) ---
 OC4_TEMPLATE="$EXT_DIR/admin/view/template/module/client_translate_expert.twig"
-for setting in client_translate_expert_status client_translate_expert_key client_translate_expert_debug_status client_translate_expert_char_count client_translate_expert_reset_char_count_on_start_month client_translate_expert_show_char_count_globally client_translate_expert_last_reset_char_month client_translate_expert_excluded_routes; do
+for setting in client_translate_expert_status client_translate_expert_key client_translate_expert_debug_status client_translate_expert_char_count client_translate_expert_reset_char_count_on_start_month client_translate_expert_show_char_count_globally client_translate_expert_last_reset_char_month client_translate_expert_excluded_routes client_translate_expert_cron_secret client_translate_expert_cron_bulk_amount; do
     module_setting="module_${setting}"
     file_replace "$OC4_TEMPLATE" "$setting" "$module_setting"
 done

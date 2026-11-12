@@ -55,6 +55,14 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			unset($this->request->post['client_translate_expert_last_reset_char_month']);
 			$this->load->model('extension/module/client_translate_expert');
 			$this->model_extension_module_client_translate_expert->prepareCounterSettings();
+			if (isset($this->request->post['client_translate_expert_cron_secret']))
+			{
+				$this->request->post['client_translate_expert_cron_secret'] = trim($this->request->post['client_translate_expert_cron_secret']);
+			}
+			if (isset($this->request->post['client_translate_expert_cron_bulk_amount']))
+			{
+				$this->request->post['client_translate_expert_cron_bulk_amount'] = $this->model_extension_module_client_translate_expert->clampCronBulkAmount($this->request->post['client_translate_expert_cron_bulk_amount']);
+			}
 			if (!isset($this->request->post['client_translate_expert_reset_char_count_on_start_month']))
 			{
 				$this->request->post['client_translate_expert_reset_char_count_on_start_month'] = 0;
@@ -172,6 +180,16 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['button_view'] = $this->language->get('button_view');
 		$data['button_show_key'] = $this->language->get('button_show_key');
 		$data['button_hide_key'] = $this->language->get('button_hide_key');
+		$data['button_cron_secret_generate'] = $this->language->get('button_cron_secret_generate');
+
+		$data['entry_cron_bulk_amount'] = $this->language->get('entry_cron_bulk_amount');
+		$data['help_cron_bulk_amount'] = $this->language->get('help_cron_bulk_amount');
+		$data['entry_cron_secret'] = $this->language->get('entry_cron_secret');
+		$data['help_cron_secret'] = $this->language->get('help_cron_secret');
+		$data['entry_cron_link'] = $this->language->get('entry_cron_link');
+		$data['help_cron_link'] = $this->language->get('help_cron_link');
+		$data['error_cron_secret'] = $this->language->get('error_cron_secret');
+		$data['text_cron_secret_unsaved'] = $this->language->get('text_cron_secret_unsaved');
 
 		$data['entry_table_product_filter'] = $this->language->get('entry_table_product_filter');
 		$data['entry_table_product_status_filter'] = $this->language->get('entry_table_product_status_filter');
@@ -250,6 +268,19 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			$data['client_translate_expert_key'] = $this->config->get('client_translate_expert_key');
 		}
 
+		if (isset($this->request->post['client_translate_expert_cron_secret'])) {
+			$data['client_translate_expert_cron_secret'] = $this->request->post['client_translate_expert_cron_secret'];
+		} else {
+			$data['client_translate_expert_cron_secret'] = (string)$this->config->get('client_translate_expert_cron_secret');
+		}
+
+		if (isset($this->request->post['client_translate_expert_cron_bulk_amount'])) {
+			$data['client_translate_expert_cron_bulk_amount'] = $this->request->post['client_translate_expert_cron_bulk_amount'];
+		} else {
+			$this->load->model('extension/module/client_translate_expert');
+			$data['client_translate_expert_cron_bulk_amount'] = $this->model_extension_module_client_translate_expert->clampCronBulkAmount($this->config->get('client_translate_expert_cron_bulk_amount'));
+		}
+
 		if (isset($this->request->post['client_translate_expert_show_char_count_globally'])) {
 			$data['client_translate_expert_show_char_count_globally'] = $this->request->post['client_translate_expert_show_char_count_globally'];
 		} else {
@@ -308,6 +339,15 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['categories'] = $this->model_catalog_category->getCategories($filter_data);
 
 		$this->load->model('extension/module/client_translate_expert');
+
+		$cronBaseUrl = HTTP_CATALOG;
+		if (defined('HTTPS_CATALOG') && !empty($this->request->server['HTTPS']) && $this->request->server['HTTPS'] != 'off')
+		{
+			$cronBaseUrl = HTTPS_CATALOG;
+		}
+		// The page JS adds the secret from the Cron secret field (saved or not) and the filters.
+		$data['te_cron_url'] = $cronBaseUrl . 'index.php?route=extension/module/client_translate_expert_cron';
+		$data['te_cron_secret_valid'] = $this->model_extension_module_client_translate_expert->isValidCronSecret((string)$data['client_translate_expert_cron_secret']);
 
 		$data['download_href'] = $this->url->link('extension/module/client_translate_expert/downloadDebugLog', 'token=' . $this->session->data['token'], true);
 		$data['clear_href'] = $this->url->link('extension/module/client_translate_expert/clearDebugLog', 'token=' . $this->session->data['token'], true);
