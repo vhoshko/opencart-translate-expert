@@ -113,3 +113,12 @@ The user reported this error on the OC 4.1 store (port 8041): "Error: Could not 
 - [x] Docs: `CLAUDE.md` Tests, `ote-build-test.md`, `project-workflows.md` (test table, new gotchas row, local PHP is 8.2, not 7.4).
 - [x] Bump version + build + tests
   Findings: build `04.01.0156` is green. Tests: 72 + 40 + 205 + 6 + 24 (6 skipped) passed. The oc4.x `client_translate_expert.twig` has no `|string`.
+
+## Update 2026-11-12: review v3
+- [x] Independent review v3 (Fable 5.2, all changes after review v2) → `35-multi-value-analysis-filters-review-v3.md`
+  Findings: the shipped code is clean. Every Twig construct in the `.oc4.twig` exists in Twig v3.4.2 and v3.18.0. The buttons, labels, i18n, m1–m3 fixes and workflow docs are correct. Important I1: the allowed list of `tests/test_oc4_twig_filters.php` came from v3.18.0 only. OC 4.0.2.0 and 4.0.2.3 ship Twig v3.4.2 (verified in `installed.json`), and v3.4.2 has no `find` and no `shuffle` (verified in `CoreExtension.php`). Minor m1–m4: the test checks only filters, rare syntax gives false negatives, a comment gives a safe false positive, and the docblock named only OC 4.1.
+- [x] Address v3 findings
+  Decision (user): fix I1. m1–m3 need no change. m4 is part of I1.
+  Findings: `find` and `shuffle` are removed from the list, a new checker case covers them (7 passed), and the test docblock, `CLAUDE.md` and `project-workflows.md` name both Twig versions.
+- [x] Bump version + build + tests
+  Findings: build `04.01.0157` is green. Tests: 72 + 40 + 205 + 7 + 24 (6 skipped) passed.

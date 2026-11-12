@@ -97,7 +97,7 @@ The `ClientTranslateExpertRouteFilter` tests cover the excluded-routes rules. An
 
 The `ClientTranslateExpertCronHelper` tests cover the cron secret rules, the request parameters and the setting key prefix. Any PHP warning fails these tests.
 
-The OC4 Twig filter test reads each `.twig` file under `sources/`. It fails on a filter that Twig v3.18.0 (the OpenCart 4.1 version) does not define. Such a filter breaks the OC4 admin page with "Could not load template".
+The OC4 Twig filter test reads each `.twig` file under `sources/`. It fails on a filter that Twig v3.4.2 (OpenCart 4.0.2.x) or Twig v3.18.0 (OpenCart 4.1.0.x) does not define. Such a filter breaks the OC4 admin page with "Could not load template".
 
 ## Architecture
 

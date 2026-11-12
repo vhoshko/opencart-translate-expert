@@ -5,19 +5,21 @@
  * Usage:
  *   php tests/test_oc4_twig_filters.php
  *
- * OpenCart 4.1.0.0 ships Twig v3.18.0. A filter that Twig does not define (for example |string)
+ * The oc4.x package covers OpenCart 4.0.2.x (Twig v3.4.2) and 4.1.0.x (Twig v3.18.0).
+ * A filter that Twig does not define (for example |string)
  * is a Twig SyntaxError, and OpenCart 4 shows it only as "Could not load template".
  * This test reads every .twig file under sources/ and fails on a filter that is not in the
- * Twig 3.18 core list. It does not need Twig. Any PHP warning or notice fails the run.
+ * core list of both Twig versions. It does not need Twig. Any PHP warning or notice fails the run.
  */
 
 class Oc4TwigFiltersTest {
-	// Filters of Twig v3.18.0 (src/Extension/CoreExtension.php and EscaperExtension.php).
+	// Filters that both Twig v3.4.2 and v3.18.0 define (src/Extension/CoreExtension.php and EscaperExtension.php).
+	// v3.18.0 also has 'find' and 'shuffle', but v3.4.2 (OpenCart 4.0.2.x) does not, so they are not in the list.
 	private static $knownFilters = array(
 		'abs', 'batch', 'capitalize', 'column', 'convert_encoding', 'date', 'date_modify', 'default',
-		'e', 'escape', 'filter', 'find', 'first', 'format', 'join', 'json_encode', 'keys', 'last',
+		'e', 'escape', 'filter', 'first', 'format', 'join', 'json_encode', 'keys', 'last',
 		'length', 'lower', 'map', 'merge', 'nl2br', 'number_format', 'raw', 'reduce', 'replace',
-		'reverse', 'round', 'shuffle', 'slice', 'sort', 'spaceless', 'split', 'striptags', 'title',
+		'reverse', 'round', 'slice', 'sort', 'spaceless', 'split', 'striptags', 'title',
 		'trim', 'upper', 'url_encode',
 	);
 
@@ -42,7 +44,7 @@ class Oc4TwigFiltersTest {
 	}
 
 	/**
-	 * @return string[] Names of the filters in the Twig blocks of $source that Twig 3.18 does not define
+	 * @return string[] Names of the filters in the Twig blocks of $source that Twig v3.4.2 or v3.18.0 does not define
 	 */
 	public static function unknownFilters($source)
 	{
@@ -67,6 +69,7 @@ class Oc4TwigFiltersTest {
 		$this->check(self::unknownFilters('{{ name|e }} {{ html|raw }} {{ a|replace({"x": "y"}) }}'), array(), 'known filters pass');
 		$this->check(self::unknownFilters('{% if table|string in te_table %}x{% endif %}'), array('string'), 'an unknown filter in a tag fails');
 		$this->check(self::unknownFilters("{{ value\n  | string }}"), array('string'), 'an unknown filter with spaces and a new line fails');
+		$this->check(self::unknownFilters('{{ items|shuffle }} {{ items|find(i => i) }}'), array('shuffle', 'find'), 'a Twig 3.18 filter that Twig 3.4.2 (OC 4.0.2.x) does not have fails');
 		$this->check(self::unknownFilters('{{ "a|string" }} <script>if (a || b) {}</script>'), array(), 'a pipe in a string or outside Twig is not a filter');
 	}
 
@@ -84,7 +87,7 @@ class Oc4TwigFiltersTest {
 		sort($files);
 		$this->check(count($files) > 0, true, 'at least one .twig file is found');
 		foreach ($files as $file) {
-			$this->check(self::unknownFilters(file_get_contents($file)), array(), substr($file, strlen($root) + 1) . ' uses only Twig 3.18 filters');
+			$this->check(self::unknownFilters(file_get_contents($file)), array(), substr($file, strlen($root) + 1) . ' uses only filters of Twig 3.4.2 and 3.18.0');
 		}
 	}
 
