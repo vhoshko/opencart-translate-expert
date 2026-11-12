@@ -122,3 +122,14 @@ The user reported this error on the OC 4.1 store (port 8041): "Error: Could not 
   Findings: `find` and `shuffle` are removed from the list, a new checker case covers them (7 passed), and the test docblock, `CLAUDE.md` and `project-workflows.md` name both Twig versions.
 - [x] Bump version + build + tests
   Findings: build `04.01.0157` is green. Tests: 72 + 40 + 205 + 7 + 24 (6 skipped) passed.
+
+## Update 2026-11-12: review v3 Minor findings
+The user asked why m1–m3 of review v3 were skipped. The summary to the user had overstated their cost and had left out the cheap options in the review. The user then chose the full fix (option 2).
+- [x] m1: `tests/test_oc4_twig_filters.php` also checks `is` tests, function calls and tag names, and the filters in `{% apply %}`. The allowed lists hold only the names that both Twig v3.4.2 and v3.18.0 define in the extensions that OpenCart loads (read in `src/Extension/*.php`, `src/TokenParser/*.php` and `src/ExpressionParser.php` of each version). Left out: tests `mapping` and `sequence`, functions `enum`, `enum_cases`, `dump` (OC 4.0.2.3 `twig.php` has `debug` false and adds no extension) and `template_from_string`, tags `guard`, `types` and `sandbox`.
+- [x] m2: a scanner like the Twig lexer replaces the block regex. It skips string literals and counts brackets, so `"}}"` and nested hashes do not end a block. It also checks the code in `#{...}` interpolation.
+- [x] m3: the scanner skips `{# #}` comments and `{% verbatim %}` blocks.
+  Findings: 20 checks pass. Proof: the template of `7d98a36` (with `|string`) fails. A copy with planted `is sequence`, `enum()` and `{% types %}` fails with exactly these 3 names. A scanner with no comment skip fails the comment check. The template and the test were restored from copies. A known limit, written in the docblock: a call of an imported macro without a dot is a false positive (the safe direction).
+- [x] Docs: `CLAUDE.md` and `project-workflows.md` (test table and gotchas row, with a `dump()` warning).
+- [x] Bump version + build + tests
+  Findings: build `04.01.0158` is green. Tests: 72 + 40 + 205 + 20 + 24 (6 skipped) passed.
+- [ ] Independent review v4 (Fable 5.2: the Twig name test and `docker/rebuild-stores.sh`) → `35-multi-value-analysis-filters-review-v4.md`
