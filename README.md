@@ -53,12 +53,10 @@ Update: copy the `upload/` contents of the new package over the old files, then 
 
 ### OpenCart 1.5
 
-OpenCart 1.5 has no OCMOD. The module changes the admin header with [vQmod](https://github.com/vqmod/vqmod) instead, so install vQmod first:
+OpenCart 1.5 has no OCMOD. The module changes the admin header with [vQmod](https://github.com/vqmod/vqmod) instead, so install vQmod first. If vQmod is already installed, skip these steps.
 
 1. Download `vqmod-2.6.x-opencart.zip` from the [vQmod releases](https://github.com/vqmod/vqmod/releases) and copy its `vqmod/` folder to the root folder of the store.
 2. Make `vqmod/`, `index.php` and `admin/index.php` writable by the web server. Open `http://<your store>/vqmod/install/` in a browser. It shows "VQMOD HAS BEEN INSTALLED ON YOUR SYSTEM!". Then delete the `vqmod/install/` folder.
-
-If vQmod is already installed, skip these steps.
 
 Install the module:
 
