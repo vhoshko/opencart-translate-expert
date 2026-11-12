@@ -9,6 +9,10 @@ cd /var/www/html
 # Exported: the uk-ua step below reads it with getenv().
 OC_VERSION="$(sed -n "s/^define('VERSION', '\([0-9.]*\)');.*/\1/p" index.php)"
 export OC_VERSION
+if [ -z "$OC_VERSION" ]; then
+	echo "[opencart] install failed: no define('VERSION', ...) in index.php" >&2
+	exit 1
+fi
 case "$OC_VERSION" in
 	1.5.*) OC_LINE=15 ;;
 	*)     OC_LINE=2plus ;;
@@ -72,7 +76,9 @@ if ! grep -q "DB_DATABASE" config.php 2>/dev/null; then
 			vq_out="$(cd vqmod/install && php index.php)"
 			case "$vq_out" in
 				*"VQMOD HAS BEEN INSTALLED"*) rm -rf vqmod/install ;;
-				*) echo "[opencart] install failed: vQmod: $vq_out" >&2; exit 1 ;;
+				*) echo "[opencart] install failed: vQmod: $vq_out" >&2
+				   echo "[opencart] the store is half installed; recreate the container to retry" >&2
+				   exit 1 ;;
 			esac
 		fi
 	fi

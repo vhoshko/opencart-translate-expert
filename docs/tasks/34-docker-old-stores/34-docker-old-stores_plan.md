@@ -53,7 +53,7 @@ Design corrections:
 - ✅ vQmod defaults an operation to `error="abort"` (`vqmod.php:823`). vQmod reads `vqmod/xml/*.xml` and reloads when a file or the folder mtime changes (`vqmod.php:222-235`). So an update needs only a file copy.
 - ✅ Routes: token parameter is `token` on 1.5–2.2. Login is a POST to `common/login` with a 302 that has `&token=`. Refresh is `extension/modification/refresh` on 2.0–2.2. Install is `extension/module/install&extension=X` on 1.5–2.2. The module page is `module/client_translate_expert`. The dashboard is `common/home` on 1.5. Evidence: research agent, `admin/controller/extension/module.php` and `modification.php` at each tag.
 - ✅ `oc_language`: 1.5 has a `filename` column (NOT NULL). 1.5–2.1 use `directory` for the language folder, 2.2 uses `code`. The second-language row: 1.5 → directory `ukrainian`, filename `english`. 2.0 and 2.1 → directory `ukrainian`. 2.2 → as today. Evidence: 1.5.6.4 `system/library/language.php:28-39`, `client_translate_expert_core.php:813-814`.
-- ❓ The module itself works on 1.5, 2.0, 2.1 and 2.2. Nobody ran these packages on a store before. Only a live run on the host proves it. If a smoke check fails, the fix can be in `sources/` or `build.sh`, and that can expand the scope. I cannot run Docker in this container.
+- ✅ The module installs on 1.5, 2.0, 2.1 and 2.2, and the 4 smoke checks pass. Evidence: the host run of 2026-11-12 (see Steps). Manual check by the user (2026-11-12) on oc15, oc20, oc21 and oc22: set the key, enable, save, translate. The translate button shows and the translation works. Table analysis was not reported. Before this run, nobody ran these packages on a store. Only a live run on the host proves it. If a smoke check fails, the fix can be in `sources/` or `build.sh`, and that can expand the scope. I cannot run Docker in this container.
 
 ## Steps
 
@@ -67,11 +67,11 @@ Design corrections:
 - [x] `docker/rebuild-stores.sh`: new stores.
 - [x] `README.md`: Installation and Update for each version (4.x, 2.0–3.0, 1.5 with vQmod). Findings: the method for 1.5–3.0 is a copy of `upload/`, the same as the script. "An uninstall deletes its settings" is verified: `admin/controller/extension/module.php` calls `deleteSetting` at 1.5.6.4:146 and 2.0.3.1:61.
 - [x] `docker/README.md`: new stores in the table and the text. Remove "OC 1.5 and OC 2.0–2.2 packages are not covered here". Findings: 1.5–2.1 also detect the browser language (`HTTP_ACCEPT_LANGUAGE` in `index.php`), so the note now says 1.5–3.0.
-- [ ] Bump version + build + test (`ote-build-test`). Also check the built oc1.5 package: XML in `upload/vqmod/xml/`, new searches, quoted key.
-- [ ] Live run on the host: push a WIP branch (ask first). The user runs `docker/rebuild-stores.sh oc15 oc20 oc21 oc22` and sends the output.
-- [ ] Independent review → `34-docker-old-stores-review.md`
-- [ ] Address review findings (the user picks which to fix or skip)
-- [ ] Bump version + build + tests (verify loop)
+- [x] Bump version + build + test (`ote-build-test`). Also check the built oc1.5 package: XML in `upload/vqmod/xml/`, new searches, quoted key. Findings: 04.01.0147, build green, 289 tests pass (6 integration tests skipped, no key), shellcheck 0 warnings, compose.yaml parses (js-yaml). The oc1.5 package checks pass. WIP commit pushed to `origin/chore/34-docker-old-stores`.
+- [x] Live run on the host: push a WIP branch (ask first). The user runs `docker/rebuild-stores.sh oc15 oc20 oc21 oc22` and sends the output. Findings (2026-11-12, 04.01.0147): `docker/rebuild-stores.sh` on the host. All 8 stores (oc15, oc20, oc21, oc22, oc23, oc30, oc40, oc41) pass all 4 smoke checks. On oc15, vQmod applies the new XML (check 2 passes).
+- [x] Independent review → `34-docker-old-stores-review.md` Findings: Fable. 1 Important (vQmod keeps `mods.cache` while it is newer than the XML, verified at `vqmod.php:241`), 7 Minor. The reviewer ran vQmod 2.6.6 on the 1.5.6.4 header: the new XML applies, the old XML aborts.
+- [x] Address review findings (the user picks which to fix or skip) Findings: the user chose to fix all 8. Install and update for 1.5 now delete `vqmod/mods.cache`, in the README and in the script. The vQmod check now reads `admin/index.php`. Other fixes: empty `OC_VERSION` guard, recreate hint, `build.sh` guard for the 1.5 searches, wording.
+- [x] Bump version + build + tests (verify loop) Findings: 04.01.0148, build green, 289 tests pass (6 skipped, no key), shellcheck 0 warnings. A copy of the 1.5 XML without `function index(` makes the new `build.sh` guard fail, so the guard works. The fixes have no host run yet.
 - [ ] Re-review? (ask the user)
 - [ ] Improvements pass → `34-docker-old-stores-improvements.md`
 

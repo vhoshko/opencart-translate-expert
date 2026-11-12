@@ -36,7 +36,8 @@ services:
   # GitHub's tag archive. GitHub does not promise that its bytes never change:
   # if the SHA-256 check fails, check the archive and update the hash.
   # OC 1.5 has no OCMOD; the store gets vQmod, which reads the module's XML.
-  # OC 1.5 needs the PHP 5 mysql extension, so PHP 5.6 is the newest it runs on.
+  # The OC 1.5 CLI installer checks for the PHP 5 mysql extension (the store
+  # itself runs on mysqli), so the oc15 store uses PHP 5.6.
   oc15:
     build:
       context: ./opencart

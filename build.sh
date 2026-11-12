@@ -127,6 +127,11 @@ file_replace sources_release_15/upload/system/OpenCartTranslateExpertClient.ocmo
 # vQmod reads only vqmod/xml/*.xml, so the 1.5 package ships the file there.
 mkdir -p sources_release_15/upload/vqmod/xml
 mv sources_release_15/upload/system/OpenCartTranslateExpertClient.ocmod.xml sources_release_15/upload/vqmod/xml/OpenCartTranslateExpertClient.xml
+OC15_XML=sources_release_15/upload/vqmod/xml/OpenCartTranslateExpertClient.xml
+if ! grep -qF '<![CDATA[function index(]]>' "$OC15_XML" || ! grep -qF '<![CDATA[<div id="header">]]>' "$OC15_XML"; then
+    echo "ERROR: OC 1.5 vQmod search rewrite failed in $OC15_XML" >&2
+    exit 1
+fi
 
 cd sources_release_15 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc1.5-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4.twig' && cd "$SCRIPT_DIR"
 

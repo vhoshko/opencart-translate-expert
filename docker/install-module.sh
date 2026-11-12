@@ -16,12 +16,12 @@
 # First run per store: full install.
 #   oc20-oc30   copy upload/ into the store, Modifications > Refresh,
 #               Extensions > Modules > Install
-#   oc15        copy upload/ into the store (vQmod applies
-#               vqmod/xml/OpenCartTranslateExpertClient.xml by itself),
+#   oc15        copy upload/ into the store, delete vqmod/mods.cache (vQmod
+#               then applies vqmod/xml/OpenCartTranslateExpertClient.xml),
 #               Extensions > Modules > Install
 #   oc40, oc41  Extension Installer upload + install, Extensions > Modules > Install
 # Later runs: the module is already installed, so only the files are replaced
-# (plus a modification refresh on oc20-oc30). Recreate the store for a clean
+# (plus a modification refresh on oc20-oc30, or deleting vqmod/mods.cache on oc15). Recreate the store for a clean
 # install: docker compose -f docker/compose.yaml down -v
 #
 # Works with macOS bash 3.2: no associative arrays, no mapfile.
@@ -208,8 +208,9 @@ excerpt() {
 install_ocmod_store() {
 	local pkg="$1" n resp
 	if is_oc15 "$STORE"; then
-		# README.md: vQmod must be installed before the module.
-		docker exec "$CONTAINER" test -f /var/www/html/vqmod/vqmod.php \
+		# README.md: vQmod must be installed before the module. Its installer
+		# adds VQMod::bootup() to admin/index.php.
+		docker exec "$CONTAINER" grep -q 'VQMod::bootup' /var/www/html/admin/index.php \
 			|| { fail "vQmod is not installed in the store (recreate it: docker/rebuild-stores.sh -s oc15)"; return 1; }
 	fi
 	unzip -q "$pkg" -d "$WORK/$STORE" || { fail "cannot unzip $(basename "$pkg")"; return 1; }
@@ -217,11 +218,16 @@ install_ocmod_store() {
 	docker exec "$CONTAINER" chown -R www-data:www-data /var/www/html || { fail "chown in the store failed"; return 1; }
 	log "files copied"
 
-	login || return 1
 	if is_oc15 "$STORE"; then
-		# vQmod has no refresh step: it rereads vqmod/xml/ when a file there changes.
-		log "vQmod applies vqmod/xml/OpenCartTranslateExpertClient.xml on the next page load"
-	else
+		# README.md: delete vqmod/mods.cache. vQmod reads vqmod/xml/ again only
+		# when an XML file is newer than mods.cache, and docker cp keeps the
+		# file dates from the package.
+		docker exec "$CONTAINER" rm -f /var/www/html/vqmod/mods.cache || { fail "deleting vqmod/mods.cache failed"; return 1; }
+		log "vqmod/mods.cache deleted: vQmod reads its XML files on the next page load"
+	fi
+
+	login || return 1
+	if ! is_oc15 "$STORE"; then
 		refresh_modifications || return 1
 	fi
 
