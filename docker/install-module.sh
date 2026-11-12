@@ -2,7 +2,9 @@
 # Install (or update) the built Translate Expert package into the running
 # Docker test stores, the way a store owner would, then run smoke checks.
 #
-#   docker/install-module.sh [-p <package.full.zip>] [-c] <oc23|oc30|oc40|oc41|all>
+#   docker/install-module.sh [-p <package.full.zip>] [-c] <store|all>
+#
+#   stores: oc15 oc20 oc21 oc22 oc23 oc30 oc40 oc41
 #
 #   -p  package to install (default: newest in releases/)
 #   -c  checks only: skip the install and only run the smoke checks
@@ -10,12 +12,16 @@
 # Without -p, the newest releases/v*/OpenCartTranslateExpertClient-v*.full.zip
 # is used (run ./build.release.sh first).
 #
+# The steps are the ones README.md (Installation) gives a store owner.
 # First run per store: full install.
-#   oc23, oc30  copy upload/ into the store, Modifications > Refresh,
+#   oc20-oc30   copy upload/ into the store, Modifications > Refresh,
+#               Extensions > Modules > Install
+#   oc15        copy upload/ into the store (vQmod applies
+#               vqmod/xml/OpenCartTranslateExpertClient.xml by itself),
 #               Extensions > Modules > Install
 #   oc40, oc41  Extension Installer upload + install, Extensions > Modules > Install
 # Later runs: the module is already installed, so only the files are replaced
-# (plus a modification refresh on oc23/oc30). Recreate the store for a clean
+# (plus a modification refresh on oc20-oc30). Recreate the store for a clean
 # install: docker compose -f docker/compose.yaml down -v
 #
 # Works with macOS bash 3.2: no associative arrays, no mapfile.
@@ -30,7 +36,7 @@ ADMIN_PASSWORD="admin"
 MODULE_CODE="client_translate_expert"
 
 usage() {
-	echo "Usage: $0 [-p <package.full.zip>] [-c] <oc23|oc30|oc40|oc41|all>" >&2
+	echo "Usage: $0 [-p <package.full.zip>] [-c] <oc15|oc20|oc21|oc22|oc23|oc30|oc40|oc41|all>" >&2
 	exit 2
 }
 
@@ -50,8 +56,8 @@ shift $((OPTIND - 1))
 [ $# -eq 1 ] || usage
 
 case "$1" in
-	all) STORES="oc23 oc30 oc40 oc41" ;;
-	oc23|oc30|oc40|oc41) STORES="$1" ;;
+	all) STORES="oc15 oc20 oc21 oc22 oc23 oc30 oc40 oc41" ;;
+	oc15|oc20|oc21|oc22|oc23|oc30|oc40|oc41) STORES="$1" ;;
 	*) usage ;;
 esac
 
@@ -73,6 +79,10 @@ fi
 
 store_port() {
 	case "$1" in
+		oc15) echo "${OC15_PORT:-8015}" ;;
+		oc20) echo "${OC20_PORT:-8020}" ;;
+		oc21) echo "${OC21_PORT:-8021}" ;;
+		oc22) echo "${OC22_PORT:-8022}" ;;
 		oc23) echo "${OC23_PORT:-8023}" ;;
 		oc30) echo "${OC30_PORT:-8030}" ;;
 		oc40) echo "${OC40_PORT:-8040}" ;;
@@ -83,6 +93,10 @@ store_port() {
 store_package() {
 	local f
 	case "$1" in
+		oc15) f="$(ls "$WORK"/full/*-oc1.5-*.ocmod.zip 2>/dev/null | head -n 1 || true)" ;;
+		oc20) f="$(ls "$WORK"/full/*-oc2.0-*.ocmod.zip 2>/dev/null | head -n 1 || true)" ;;
+		oc21) f="$(ls "$WORK"/full/*-oc2.1-*.ocmod.zip 2>/dev/null | head -n 1 || true)" ;;
+		oc22) f="$(ls "$WORK"/full/*-oc2.2-*.ocmod.zip 2>/dev/null | head -n 1 || true)" ;;
 		oc23) f="$(ls "$WORK"/full/*-oc2.3-*.ocmod.zip 2>/dev/null | head -n 1 || true)" ;;
 		oc30) f="$(ls "$WORK"/full/*-oc3.0-*.ocmod.zip 2>/dev/null | head -n 1 || true)" ;;
 		# One package serves OC 4.0 and 4.1. Older builds named its folder oc4.0.
@@ -96,9 +110,29 @@ is_oc4() {
 	case "$1" in oc40|oc41) return 0 ;; *) return 1 ;; esac
 }
 
-# OC 2.3 passes the admin session as ?token=, OC 3.0+ as ?user_token=.
+# OC 1.5 has no OCMOD: vQmod applies the module's XML.
+is_oc15() {
+	[ "$1" = "oc15" ]
+}
+
+# OC 1.5-2.2 keep modules at module/<code>; OC 2.3+ moved them to extension/.
+is_pre23() {
+	case "$1" in oc15|oc20|oc21|oc22) return 0 ;; *) return 1 ;; esac
+}
+
+# OC 1.5-2.3 pass the admin session as ?token=, OC 3.0+ as ?user_token=.
 token_param() {
-	if [ "$1" = "oc23" ]; then echo "token"; else echo "user_token"; fi
+	if is_pre23 "$1" || [ "$1" = "oc23" ]; then echo "token"; else echo "user_token"; fi
+}
+
+# OC 1.5 has no common/dashboard: its admin home page is common/home.
+dashboard_route() {
+	if is_oc15 "$1"; then echo "common/home"; else echo "common/dashboard"; fi
+}
+
+# Extensions > Modules > Install, for OC 1.5-3.0.
+module_install_route() {
+	if is_pre23 "$1"; then echo "extension/module/install"; else echo "extension/extension/module/install"; fi
 }
 
 # --- helpers ----------------------------------------------------------------
@@ -144,7 +178,7 @@ login() {
 
 refresh_modifications() {
 	local route
-	if [ "$STORE" = "oc23" ]; then route="extension/modification/refresh"; else route="marketplace/modification/refresh"; fi
+	if [ "$STORE" = "oc30" ]; then route="marketplace/modification/refresh"; else route="extension/modification/refresh"; fi
 	http -o /dev/null "$(admin_url "$route")" || { fail "modification refresh request failed"; return 1; }
 	log "modifications refreshed"
 }
@@ -169,23 +203,33 @@ excerpt() {
 	echo "$1" | head -c 300
 }
 
-# --- OC 2.3 / 3.0 -----------------------------------------------------------
+# --- OC 1.5 - 3.0 -----------------------------------------------------------
 
 install_ocmod_store() {
 	local pkg="$1" n resp
+	if is_oc15 "$STORE"; then
+		# README.md: vQmod must be installed before the module.
+		docker exec "$CONTAINER" test -f /var/www/html/vqmod/vqmod.php \
+			|| { fail "vQmod is not installed in the store (recreate it: docker/rebuild-stores.sh -s oc15)"; return 1; }
+	fi
 	unzip -q "$pkg" -d "$WORK/$STORE" || { fail "cannot unzip $(basename "$pkg")"; return 1; }
 	docker cp "$WORK/$STORE/upload/." "$CONTAINER:/var/www/html/" || { fail "copying files into the store failed"; return 1; }
 	docker exec "$CONTAINER" chown -R www-data:www-data /var/www/html || { fail "chown in the store failed"; return 1; }
 	log "files copied"
 
 	login || return 1
-	refresh_modifications || return 1
+	if is_oc15 "$STORE"; then
+		# vQmod has no refresh step: it rereads vqmod/xml/ when a file there changes.
+		log "vQmod applies vqmod/xml/OpenCartTranslateExpertClient.xml on the next page load"
+	else
+		refresh_modifications || return 1
+	fi
 
 	n="$(module_rows)" || { fail "database query failed"; return 1; }
 	if [ "$n" -gt 0 ]; then
 		log "module already installed: files updated"
 	else
-		resp="$(http -L "$(admin_url extension/extension/module/install "&extension=$MODULE_CODE")")" \
+		resp="$(http -L "$(admin_url "$(module_install_route "$STORE")" "&extension=$MODULE_CODE")")" \
 			|| { fail "Extensions > Modules > Install request failed"; return 1; }
 		check_install_output "$resp" || return 1
 		n="$(module_rows)" || { fail "database query failed"; return 1; }
@@ -281,6 +325,8 @@ smoke_check() {
 	local route body errs n events table ukua
 	if is_oc4 "$STORE"; then
 		route="extension/$MODULE_CODE/module/$MODULE_CODE"
+	elif is_pre23 "$STORE"; then
+		route="module/$MODULE_CODE"
 	else
 		route="extension/module/$MODULE_CODE"
 	fi
@@ -301,7 +347,7 @@ smoke_check() {
 	fi
 
 	# Check 2.
-	body="$(http "$(admin_url common/dashboard)")" || { fail "dashboard request failed"; return 1; }
+	body="$(http "$(admin_url "$(dashboard_route "$STORE")")")" || { fail "dashboard request failed"; return 1; }
 	if grep -q "$MODULE_CODE.js" <<<"$body"; then
 		log "PASS admin header loads $MODULE_CODE.js"
 	else

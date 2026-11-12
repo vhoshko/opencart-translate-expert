@@ -18,8 +18,8 @@ x-store-env: &store-env
 services:
   db:
     image: mariadb:10.6
-    # OC 2.3 does not reset sql_mode on connect, and its installer and admin
-    # write rows that strict mode rejects.
+    # OC 2.3 and older do not reset sql_mode on connect, and their installers
+    # and admins write rows that strict mode rejects.
     command: ["--sql-mode=", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_general_ci"]
     environment:
       MARIADB_ROOT_PASSWORD: root
@@ -31,6 +31,89 @@ services:
       interval: 5s
       timeout: 5s
       retries: 30
+
+  # OC 1.5.6.4, 2.0.3.1 and 2.1.0.2 have no release zip, so these stores use
+  # GitHub's tag archive. GitHub does not promise that its bytes never change:
+  # if the SHA-256 check fails, check the archive and update the hash.
+  # OC 1.5 has no OCMOD; the store gets vQmod, which reads the module's XML.
+  # OC 1.5 needs the PHP 5 mysql extension, so PHP 5.6 is the newest it runs on.
+  oc15:
+    build:
+      context: ./opencart
+      args:
+        PHP_IMAGE: php:5.6-apache
+        OC_URL: https://github.com/opencart/opencart/archive/refs/tags/1.5.6.4.zip
+        OC_SHA256: afde29ca67293d1943ceca0a122cfab472a57f9cc8dd50b0dd1a339fa3da8a24
+        OC_UPLOAD_DIR: opencart-1.5.6.4/upload
+        VQMOD_URL: https://github.com/vqmod/vqmod/releases/download/v2.6.6-opencart/vqmod-2.6.6-opencart.zip
+        VQMOD_SHA256: f10729ee98dc4d6697d860693aa16868acaafd57fef0b2538fd3f017b1860cab
+    image: ote-test/opencart:1.5.6.4
+    ports:
+      - "127.0.0.1:${OC15_PORT:-8015}:80"
+    environment:
+      <<: *store-env
+      DB_NAME: oc15
+      OC_HTTP_SERVER: http://localhost:${OC15_PORT:-8015}/
+    depends_on:
+      db:
+        condition: service_healthy
+
+  oc20:
+    build:
+      context: ./opencart
+      args:
+        PHP_IMAGE: php:5.6-apache
+        OC_URL: https://github.com/opencart/opencart/archive/refs/tags/2.0.3.1.zip
+        OC_SHA256: ea50be8daf72dbc93b720e34e264aef07d35d47a8c1d48f80b4f3073c77700e4
+        OC_UPLOAD_DIR: opencart-2.0.3.1/upload
+    image: ote-test/opencart:2.0.3.1
+    ports:
+      - "127.0.0.1:${OC20_PORT:-8020}:80"
+    environment:
+      <<: *store-env
+      DB_NAME: oc20
+      OC_HTTP_SERVER: http://localhost:${OC20_PORT:-8020}/
+    depends_on:
+      db:
+        condition: service_healthy
+
+  oc21:
+    build:
+      context: ./opencart
+      args:
+        PHP_IMAGE: php:5.6-apache
+        OC_URL: https://github.com/opencart/opencart/archive/refs/tags/2.1.0.2.zip
+        OC_SHA256: 4c2d581228372d0a133b9b74b7ed101dc33299c9f0adb35326826c48a4cb3ce1
+        OC_UPLOAD_DIR: opencart-2.1.0.2/upload
+    image: ote-test/opencart:2.1.0.2
+    ports:
+      - "127.0.0.1:${OC21_PORT:-8021}:80"
+    environment:
+      <<: *store-env
+      DB_NAME: oc21
+      OC_HTTP_SERVER: http://localhost:${OC21_PORT:-8021}/
+    depends_on:
+      db:
+        condition: service_healthy
+
+  oc22:
+    build:
+      context: ./opencart
+      args:
+        PHP_IMAGE: php:5.6-apache
+        OC_URL: https://github.com/opencart/opencart/releases/download/2.2.0.0/2.2.0.0-compiled.zip
+        OC_SHA256: fdf0beb0ceedb8f7818a10a0b55359f808f1794d8d9db656f2b4fede3cf2d648
+        OC_UPLOAD_DIR: 2.2.0.0-compiled/upload
+    image: ote-test/opencart:2.2.0.0
+    ports:
+      - "127.0.0.1:${OC22_PORT:-8022}:80"
+    environment:
+      <<: *store-env
+      DB_NAME: oc22
+      OC_HTTP_SERVER: http://localhost:${OC22_PORT:-8022}/
+    depends_on:
+      db:
+        condition: service_healthy
 
   oc23:
     build:
