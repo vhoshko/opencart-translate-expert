@@ -102,7 +102,7 @@ docker compose -f docker/compose.yaml down        # stop, keep the database volu
 docker compose -f docker/compose.yaml down -v     # stop and delete everything
 ```
 
-Each store's files live in its container, not in a volume. If a store container is recreated (for example by `up --build`), it reinstalls OpenCart into its database from scratch (with `uk-ua` added again, and everything translated into it gone), and the module has to be installed again.
+Each store's files live in its container, not in a volume. If a store container is recreated (for example by `up --build`), it drops every table in its database and reinstalls OpenCart from scratch (with `uk-ua` added again, and everything translated into it gone), and the module has to be installed again.
 
 ## Notes
 

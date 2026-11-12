@@ -24,6 +24,28 @@ if ! grep -q "DB_DATABASE" config.php 2>/dev/null; then
 		sleep 2
 	done
 
+	# A recreated store reinstalls into a database that still has the old
+	# tables. The 1.5.6.4 and 2.0.3.1 installers do not drop all of them
+	# first (1.5.6.4 creates oc_profile* without DROP TABLE IF EXISTS, 2.0.3.1
+	# has no DROP at all), so their CREATE TABLE fails. Drop every table, so
+	# each store gets a clean install, module tables included.
+	echo "[opencart] dropping old tables in ${DB_NAME}..."
+	php <<'PHP'
+<?php
+mysqli_report(MYSQLI_REPORT_OFF);
+function fail($message) {
+	file_put_contents('php://stderr', "[opencart] install failed: dropping old tables: " . $message . "\n");
+	exit(1);
+}
+$db = @mysqli_connect(getenv('DB_HOST'), getenv('DB_USER'), getenv('DB_PASSWORD'), getenv('DB_NAME'));
+if (!$db) fail(mysqli_connect_error());
+$tables = mysqli_query($db, 'SHOW TABLES');
+if (!$tables) fail(mysqli_error($db));
+while ($row = mysqli_fetch_row($tables)) {
+	if (!mysqli_query($db, 'DROP TABLE `' . str_replace('`', '``', $row[0]) . '`')) fail(mysqli_error($db));
+}
+PHP
+
 	# OC 4.x refuses to install unless both config files already exist.
 	[ -f config.php ] || cp config-dist.php config.php
 	[ -f admin/config.php ] || cp admin/config-dist.php admin/config.php

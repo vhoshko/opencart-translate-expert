@@ -78,7 +78,8 @@ Design corrections:
 ## Done
 
 - Landed: 4 new Docker stores (`oc15` with vQmod 2.6.6, `oc20`, `oc21`, `oc22`), the 1.5 package fix in `build.sh` (XML in `upload/vqmod/xml/`, 1.5 searches, quoted key, build guard), and install and update steps for each version in `README.md`. `install-module.sh` does the same steps. PR #41.
-- Final version: 04.01.0149. The host run (04.01.0147) passed on all 8 stores. The user checked a manual translation on the 4 new stores.
+- Final version: 04.01.0150 (after host run 2, see the last Update). The host run (04.01.0147) passed on all 8 stores. The user checked a manual translation on the 4 new stores.
+- Gotcha: the 1.5.6.4 and 2.0.3.1 installers do not drop all old tables, so a reinstall into a used database fails. The entrypoint drops all tables first.
 - Gotcha: vQmod keeps `mods.cache` and `vqcache/vq2-*` while they are not older than the newest XML file. Install and update on 1.5 must delete both.
 - Deferred: the review fixes (0148, 0149) changed `entrypoint.sh` and `install-module.sh`, and no host run has tested them. The tag-archive SHA-256 for 1.5.6.4, 2.0.3.1 and 2.1.0.2 can change if GitHub changes the archive.
 
@@ -88,3 +89,10 @@ Design corrections:
 - [x] Address pass-2 findings. Findings: the user chose to fix both. The script and the README now also delete `vqmod/vqcache/vq2-*` (file prefix from `vqmod.php:356`). The reviewer probe `tmp/probe2/run-stale-probe.sh` confirms the result. With `rm-cache` only, the admin loads the stale `?v=04.01.0147`. With `rm-cache-and-vqcache`, it loads the correct `?v=04.01.0146`.
 - [x] Bump version + build + tests (verify loop 2). Findings: 04.01.0149, build green, 289 tests pass (6 skipped, no key), shellcheck 0 warnings. No third review pass: pass 2 found only Minor issues.
 - PR: https://github.com/vhoshko/opencart-translate-expert/pull/41 (the user asked for it on 2026-11-12).
+
+## Update 2026-11-12 (host run 2)
+
+- [x] Host run of `docker/rebuild-stores.sh` (all stores, existing database volume). Findings: `oc15` failed after `installing OpenCart 1.5.6.4`. `rebuild-stores.sh` showed only the `[opencart]` lines, so the installer error was hidden. Cause, found from the SQL files: on a reinstall into a database that has the old tables, `CREATE TABLE` fails. 1.5.6.4 creates `oc_profile`, `oc_profile_description` and `oc_product_profile` without `DROP TABLE IF EXISTS` (115 creates, 112 drops). 2.0.3.1 has 123 creates and 0 drops. 2.1.0.2 and 2.2.0.0 drop all tables. The first host run passed because the 4 databases were new.
+- [x] Fix: `entrypoint.sh` drops every table in the store's database before the install. `rebuild-stores.sh` prints the last 20 log lines on a failure.
+- [x] Bump version + build + tests (verify loop 3). Findings: 04.01.0150, build green, 289 tests pass (6 skipped, no key), shellcheck 0 warnings, both PHP heredocs in `entrypoint.sh` pass `php -l`. This fix has no independent review.
+- [ ] Host run 3 by the user

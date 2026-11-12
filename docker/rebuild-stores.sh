@@ -64,6 +64,9 @@ while [ ${#pending[@]} -gt 0 ]; do
 			|| [ -z "$("${COMPOSE[@]}" ps -q --status running "$store")" ]; then
 			echo "[$store] install failed:" >&2
 			grep '\[opencart\]' <<<"$logs" >&2 || true
+			# The installer's own error is not an [opencart] line.
+			echo "[$store] last log lines:" >&2
+			tail -n 20 <<<"$logs" >&2 || true
 			exit 1
 		else
 			still+=("$store")

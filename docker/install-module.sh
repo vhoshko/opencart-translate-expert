@@ -364,9 +364,10 @@ smoke_check() {
 		fail "admin header does not load $MODULE_CODE.js"
 	fi
 
-	# Check 3. The table alone is weak evidence: OpenCart's own reinstall (a
-	# recreated container) does not drop it. So also check the extension row
-	# and, on 4.x, the two header events install() registers.
+	# Check 3. The table alone is weak evidence (on a store installed before
+	# the entrypoint dropped old tables, it can be left over from an earlier
+	# install). So also check the extension row and, on 4.x, the two header
+	# events install() registers.
 	n="$(module_rows)" || { fail "database query failed"; return 1; }
 	if is_oc4 "$STORE"; then
 		events="$(sql "SELECT COUNT(*) FROM oc_event WHERE code IN ('client_translate_expert_header_controller','client_translate_expert_header_view')")" \
