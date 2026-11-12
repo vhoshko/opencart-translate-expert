@@ -86,6 +86,9 @@ php tests/test_client_translate_expert_cron_helper.php
 
 # Translate loop tests (row cap, empty results, duplicate texts, time limits, admin batch; no DB, no API key)
 php tests/test_client_translate_expert_translate_loop.php
+
+# OC4 Twig filter check (static, no Twig needed)
+php tests/test_oc4_twig_filters.php
 ```
 
 The `VHGoogleTranslator` tests cover language code mapping, format parameter preservation, batch processing and API integration.
@@ -93,6 +96,8 @@ The `VHGoogleTranslator` tests cover language code mapping, format parameter pre
 The `ClientTranslateExpertRouteFilter` tests cover the excluded-routes rules. Any PHP warning fails these tests.
 
 The `ClientTranslateExpertCronHelper` tests cover the cron secret rules, the request parameters and the setting key prefix. Any PHP warning fails these tests.
+
+The OC4 Twig filter test reads each `.twig` file under `sources/`. It fails on a filter that Twig v3.18.0 (the OpenCart 4.1 version) does not define. Such a filter breaks the OC4 admin page with "Could not load template".
 
 ## Architecture
 

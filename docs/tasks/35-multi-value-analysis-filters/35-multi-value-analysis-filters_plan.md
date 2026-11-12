@@ -97,3 +97,19 @@ The user asked for this order in each multi-select filter: title, buttons, multi
   Findings: the main context applied the change with `tmp/reorder_multiselect.py`. `php -l` on the `.tpl` passes.
 - [x] Bump version + build + tests
   Findings: build `04.01.0155` is green. Tests: 72 + 40 + 205 + 24 (6 skipped) passed. The new order is correct in the templates of all 7 packages (OC 1.5–3.0 `.tpl` and the OC 4.x `.twig`).
+
+## Update 2026-11-12: OC 4.1 "Could not load template"
+The user reported this error on the OC 4.1 store (port 8041): "Error: Could not load template extension/client_translate_expert/module/client_translate_expert! File: /var/www/html/system/library/template/twig.php Line: 121".
+- Root cause (✅ verified):
+  - OC 4.1.0.0 `system/library/template/twig.php` turns each `\Twig\Error\SyntaxError` into this text (the `catch` at line 120-121, read with the OpenCart core source probe).
+  - OC 4.1.0.0 ships `twig/twig` `v3.18.0` (`system/storage/vendor/composer/installed.json`).
+  - Twig v3.18.0 defines no `string` filter (`src/Extension/*.php`).
+  - The `.oc4.twig` of this branch used `|string` 3 times (`... |string in te_...`). Review v1, review v2 and the builds did not find it, because no step compiles Twig.
+- Not needed: Twig `in` uses `CoreExtension::compare()`, so `"15"` and `15` are equal. The controller gives the template lists of strings.
+- A local compile with the downloaded Twig 3.18 was stopped by the sandbox classifier ("Code from External"). The static test below replaces it.
+- [x] Fix: remove `|string` in `client_translate_expert.oc4.twig` (3 lines).
+- [x] Regression test: new `tests/test_oc4_twig_filters.php`. It reads the Twig blocks of each `.twig` file under `sources/` and fails on a filter that is not in the Twig v3.18.0 list. The list matches `src/Extension/*.php` of v3.18.0.
+  Findings: the test fails on the template of `HEAD` (`got array('string')`) and passes with the fix (6 passed). The template was restored from a copy.
+- [x] Docs: `CLAUDE.md` Tests, `ote-build-test.md`, `project-workflows.md` (test table, new gotchas row, local PHP is 8.2, not 7.4).
+- [x] Bump version + build + tests
+  Findings: build `04.01.0156` is green. Tests: 72 + 40 + 205 + 6 + 24 (6 skipped) passed. The oc4.x `client_translate_expert.twig` has no `|string`.
