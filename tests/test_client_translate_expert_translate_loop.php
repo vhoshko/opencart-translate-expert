@@ -75,6 +75,40 @@ class FakeModel
 	public $config;
 }
 
+class SqlDb extends FakeDb
+{
+	public $hasProductId = true;
+
+	public function query($sql)
+	{
+		if (strpos($sql, 'INFORMATION_SCHEMA.COLUMNS') !== false && $this->hasProductId)
+		{
+			$this->queries[] = $sql;
+			return (object)array('row' => array('1' => 1), 'rows' => array(array('1' => 1)), 'num_rows' => 1);
+		}
+		return parent::query($sql);
+	}
+}
+
+class RealSqlLibrary extends LibraryClientTranslateExpert
+{
+	public function __construct($model)
+	{
+		$this->_debug = false;
+		$this->_model = $model;
+	}
+
+	public function select($cat, $stock, $status = false, $quantity = false)
+	{
+		return $this->getTextToTranslateRows(1, 'oc_product_description', array('product_id'), 'name', 'both', 100, 0, 2, $status, $quantity, $cat, $stock);
+	}
+
+	public function remove($cat, $stock, $status = false, $quantity = false)
+	{
+		$this->removeDataFromTable(2, 'oc_product_description', 'name', $status, $quantity, $cat, $stock);
+	}
+}
+
 class StubTranslateLibrary extends LibraryClientTranslateExpert
 {
 	public $groups = array();
@@ -348,12 +382,14 @@ class TranslateLoopTest
 		$this->testDuplicateTextGroups();
 		$this->testTimeCheckAfterFinalFlush();
 		$this->testCronReleaseLockThrows();
+		$this->testTableListFilter();
 		$this->testCountUsesTextSentToGoogle();
 		$this->testSameCheckUsesSqlRule();
 		$this->testAdminFailureKeepsCount();
 		$this->testFinalFlushFailureKeepsCount();
 		$this->testBatchSizeUsesSentLength();
 		$this->testZeroLengthTextIsSent();
+		$this->testRealSqlText();
 
 		restore_error_handler();
 
@@ -363,8 +399,8 @@ class TranslateLoopTest
 
 	private function filters($table)
 	{
-		return array('langIdFrom' => 1, 'langIdTo' => 2, 'mode' => 'both', 'table' => $table,
-			'product_status' => false, 'product_quantity' => false, 'product_category_id' => '', 'stock_status' => '');
+		return array('langIdFrom' => 1, 'langIdTo' => 2, 'mode' => 'both', 'table' => is_array($table) ? $table : ($table === '' ? array() : array($table)),
+			'product_status' => false, 'product_quantity' => false, 'product_category_id' => array(), 'stock_status' => array());
 	}
 
 	private function runAll($lib, $cap, $table, $maxRuns = 80)
@@ -836,6 +872,44 @@ class TranslateLoopTest
 		$this->check($r->done, false, 'cron: the final flush passes 900 s, so not done');
 	}
 
+	private function testTableListFilter()
+	{
+		echo "\nTable list filter:\n";
+		$lib = new StubTranslateLibrary();
+		$lib->tablesList = array('oc_a', 'oc_b', 'oc_c');
+		$lib->add('oc_a', 2, 20);
+		$lib->add('oc_b', 2, 20);
+		$lib->add('oc_c', 2, 20);
+		$r = $lib->translateNextBatch($this->filters(array('oc_c', 'oc_unknown', 'oc_a')), 1000);
+		$this->check($r->done, true, 'selected tables finish');
+		$this->check($r->rows, 4, 'only the two known selected tables are translated');
+		$this->check($r->table, 'oc_c', 'order follows getTables, so oc_c is last');
+		$this->check($lib->left(), 2, 'the table that is not selected stays');
+
+		$lib = new StubTranslateLibrary();
+		$lib->tablesList = array('oc_a', 'oc_b');
+		$lib->add('oc_a', 2, 20);
+		$r = $lib->translateNextBatch($this->filters(array('oc_unknown')), 1000);
+		$this->check($r->rows, 0, 'a filter with only unknown tables translates nothing');
+		$this->check($lib->left(), 2, 'no table is widened to all');
+
+		$lib = $this->cronLib();
+		$lib->tablesList = array('oc_a', 'oc_b');
+		$lib->add('oc_a', 2, 20);
+		$lib->add('oc_b', 2, 20);
+		$get = $this->cronGet();
+		$get['table'] = 'oc_a,oc_unknown';
+		$r = $lib->runCron($get);
+		$this->check($r['body']['error'], 'bad_params', 'cron: an unknown table in the list is bad_params');
+		$this->check($lib->left(), 4, 'cron: nothing is translated');
+
+		$get['table'] = 'oc_a,oc_b';
+		$r = $lib->runCron($get);
+		$this->check($r['body']['error'], '', 'cron: a list of two known tables works');
+		$this->check($r['body']['rows'], 4, 'cron: both tables are translated');
+		$this->check($r['body']['done'], true, 'cron: done');
+	}
+
 	private function testCronReleaseLockThrows()
 	{
 		echo "\nrunCron when RELEASE_LOCK throws:\n";
@@ -970,6 +1044,57 @@ class TranslateLoopTest
 		$r = $lib->translateNextBatch($this->filters('oc_a'), 1);
 		$this->check($lib->apiCalls, 1, 'cron cap 1: the batch goes to the translate call');
 		$this->check($r->success, 0, 'cron cap 1: the run fails with a visible error');
+	}
+
+	private function lastSql($call, $hasProductId = true)
+	{
+		$db = new SqlDb();
+		$db->hasProductId = $hasProductId;
+		$model = new FakeModel();
+		$model->db = $db;
+		$model->config = new FakeConfig();
+		$lib = new RealSqlLibrary($model);
+		call_user_func($call, $lib);
+		$last = '';
+		foreach ($db->queries as $q)
+			if (stripos($q, 'INFORMATION_SCHEMA') === false && stripos($q, 'SET SESSION') === false)
+				$last = $q;
+		return strtolower(trim(preg_replace('/\s+/', ' ', $last)));
+	}
+
+	private function testRealSqlText()
+	{
+		echo "\nReal SQL text of the product filters:\n";
+		$p = strtolower(DB_PREFIX);
+		$existsFor = function ($ids) use ($p) {
+			return 'exists (select 1 from ' . $p . 'product_to_category ptc where ptc.product_id = t.product_id and ptc.category_id in (' . $ids . '))';
+		};
+		$methods = array('select', 'remove');
+		foreach ($methods as $m)
+		{
+			$sql = $this->lastSql(function ($lib) use ($m) { $lib->$m(array(), array(5, 6)); });
+			$this->check(strpos($sql, 'p.stock_status_id in (5,6)') !== false, true, "{$m}: stock list in the product join");
+			$sql = $this->lastSql(function ($lib) use ($m) { $lib->$m(array(10, 11), array()); });
+			$this->check(strpos($sql, $existsFor('10,11')) !== false, true, "{$m}: category list in exists");
+			$this->check(strpos($sql, 'join ' . $p . 'product_to_category') === false, true, "{$m}: no category join");
+			$sql = $this->lastSql(function ($lib) use ($m) { $lib->$m(array(), array()); });
+			$this->check(strpos($sql, 'exists') === false, true, "{$m}: empty lists have no exists");
+			$this->check(strpos($sql, 'join ' . $p . 'product p') === false, true, "{$m}: empty lists have no product join");
+			$sql = $this->lastSql(function ($lib) use ($m) { $lib->$m(array('10) or 1=1 -- '), array()); });
+			$this->check(strpos($sql, $existsFor('10')) !== false, true, "{$m}: hostile item is cut to 10");
+			$this->check(strpos($sql, 'or 1=1') === false, true, "{$m}: hostile text is not in the SQL");
+			$sql = $this->lastSql(function ($lib) use ($m) { $lib->$m(array(10, 11), array(5, 6)); }, false);
+			$this->check(strpos($sql, 'exists') === false, true, "{$m}: table without product_id has no exists");
+			$this->check(strpos($sql, 'join ' . $p . 'product p') === false, true, "{$m}: table without product_id has no product join");
+		}
+		$sql = $this->lastSql(function ($lib) { $lib->remove(array(10, 11), array()); });
+		$whereAt = strpos($sql, 'where t.language_id');
+		$existsAt = strpos($sql, $existsFor('10,11'));
+		$this->check($whereAt !== false && $existsAt !== false && $existsAt > $whereAt, true, 'remove: exists is in the WHERE');
+		$sql = $this->lastSql(function ($lib) { $lib->select(array(10, 11), array()); });
+		$whereAt = strpos($sql, 'where (l1.language_id');
+		$existsAt = strpos($sql, $existsFor('10,11'));
+		$this->check($whereAt !== false && $existsAt !== false && $existsAt > $whereAt, true, 'select: exists is in the WHERE');
 	}
 
 	private function check($actual, $expected, $label)

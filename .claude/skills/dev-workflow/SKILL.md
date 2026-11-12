@@ -143,6 +143,8 @@ Record each load-bearing assumption in the `## Assumptions` section of the plan.
 
 If the task writes install or update steps for an add-on that has a cache, read the cache-invalidation code of the add-on first. Examples are vQmod (`vqmod/mods.cache`, `vqmod/vqcache/`) and the OCMOD modification cache. A copy tool can keep old file dates, so a cache can stay valid after an update.
 
+If the task changes SQL, run the real query on a throwaway MariaDB instance. The container has MariaDB, and the unit tests use a stub DB. See the MariaDB row in **Known Environment Gotchas** of `project-workflows.md`.
+
 **Skip** this step in two cases. The task touches nothing external. Or code that demonstrably works in production already establishes the behavior. In that case, cite that code as the evidence.
 
 ### Sanity check (subagent, background)
@@ -254,7 +256,7 @@ If a mutation passes all tests, do not add a test at once. First check if later 
 
 The test scripts have no filter, so each script always runs its whole suite. Run the script inline (`php tests/test_vh_google_translator.php` or `php tests/test_client_translate_expert_route_filter.php`). Or run it through `ote-build-test` in **checks-only** mode. Never run a full build for this check, because a full build uses up a version number.
 
-This applies only where a test exists. Today the tests are for `VHGoogleTranslator` (`tests/test_vh_google_translator.php`) and `ClientTranslateExpertRouteFilter` (`tests/test_client_translate_expert_route_filter.php`). For code without a test harness, say so in the Findings of the plan. Do not claim regression coverage.
+This applies only where a test exists. The test scripts are in `tests/`. The **Tests** section of `CLAUDE.md` lists them. For code without a test harness, say so in the Findings of the plan. Do not claim regression coverage.
 
 ## Phase 4 — Independent review (subagent)
 
@@ -264,6 +266,7 @@ Dispatch `ote-code-reviewer` (`subagent_type: ote-code-reviewer`). The agent pin
 - The full path to write the review to: `docs/tasks/<slug>/<slug>-review.md`
 - Repo access: the agent inspects the repo and writes that one file, plus probe scripts under `docs/tasks/<slug>/tmp/` only
 - Which guards in the diff are safety nets for cases nobody has observed. The reviewer gives them proportionate attention, not worst-case scenario after scenario
+- If the diff changes SQL, an instruction to run the real query on a throwaway MariaDB instance (see Phase 0)
 
 The reviewer must NOT see your reasoning.
 
@@ -291,6 +294,7 @@ Do this phase when every review finding has a decision, from the user or from yo
 **Apply fixes:**
 - For small fixes (1–3 findings, under 20 lines), apply them directly in the main context.
 - For larger fix sets, dispatch `ote-implementer`. Give it the specific findings to fix (numbered, with the review text) and the current code state. Tell it to apply fixes only, without a build or tests.
+- If a fix adds an input guard, name each input form that the guard must handle: a string, an array and a missing value. A guard for one form only leaves a gap (task 35-multi-value-analysis-filters: the string guard did not cover `table[]=x`).
 - Before the verify loop, check each fix that the implementer reports as done with one grep or file read in the main context. A report has claimed a fix that was not in the file (task 4-cron-translation).
 
 **Verify loop.** Always dispatch `ote-build-test` after fixes. Use the same sequence as in Phase 3. Include a fresh version bump, because every build needs a new patch version.

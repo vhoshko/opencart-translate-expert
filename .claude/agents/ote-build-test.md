@@ -75,6 +75,7 @@ php tests/test_vh_google_translator.php
 php tests/test_client_translate_expert_route_filter.php
 php tests/test_client_translate_expert_cron_helper.php
 php tests/test_client_translate_expert_translate_loop.php
+php tests/test_oc4_twig_filters.php
 ```
 
 Run every script in `tests/`, including scripts that are not in this list. Report the counts of each script. Each script always runs its whole suite. It has no filter. To prove that one new test fails, run the suite. Then confirm that the expected test is among the failures.

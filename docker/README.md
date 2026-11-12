@@ -28,15 +28,16 @@ docker compose -f docker/compose.yaml up -d --build oc30     # just one
 
 The first build takes a few minutes. Follow the install with `docker compose -f docker/compose.yaml logs -f oc30` and wait for `[opencart] ready`.
 
-To do everything in one go, run `docker/rebuild-stores.sh`. It runs `./build.release.sh`, recreates the stores (a fresh OpenCart install, so anything done in them is lost), waits for `[opencart] ready` and runs `install-module.sh` with its smoke checks on each store. It stops with the store's log if an install fails.
+To do everything in one go, run `docker/rebuild-stores.sh`. It first runs `git fetch` and `git pull --ff-only` for the current branch. If the pull brings new commits, the script starts again with the new code. It stops before the build if a git step fails: no network, diverged branches, a local change that the pull would overwrite, or a folder that is not a git checkout. On a detached HEAD or a branch with no upstream, it skips the pull. Use `-n` to skip the git step, for example offline or to test changes that are only on this machine. Then it runs `./build.release.sh`, recreates the stores (a fresh OpenCart install, so anything done in them is lost), waits for `[opencart] ready` and runs `install-module.sh` with its smoke checks on each store. It stops with the store's log if an install fails.
 
 ```bash
 docker/rebuild-stores.sh                 # build, then all eight stores
 docker/rebuild-stores.sh oc30            # build, then just one
 docker/rebuild-stores.sh -s oc23 oc40    # skip the build, use the newest release
+docker/rebuild-stores.sh -n oc41         # skip git fetch and git pull
 ```
 
-`build.release.sh` uses `_version.txt` as it is, so bump it first if the module sources changed since the last build (see CLAUDE.md). The wait times out after 600 seconds; set `READY_TIMEOUT` to change that.
+`build.release.sh` uses `_version.txt` as it is. Bump the version in the commit that changes the module sources (see CLAUDE.md). Do not bump it on this machine before a run: pushed commits change `_version.txt` too, so a local bump stops the `git pull`. If you test local changes, bump the version and run with `-n`. The wait times out after 600 seconds; set `READY_TIMEOUT` to change that.
 
 The stores listen on `127.0.0.1` only, so they are not reachable from the network. Ports can be changed with `OC15_PORT`, `OC20_PORT`, `OC21_PORT`, `OC22_PORT`, `OC23_PORT`, `OC30_PORT`, `OC40_PORT` and `OC41_PORT`. Set the same variable for `install-module.sh`:
 
