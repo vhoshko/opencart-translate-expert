@@ -33,10 +33,11 @@ apt_install() {
 
 case "$PHP_VERSION" in
 	5.6.*)
-		# OC 2.3 installer requires mcrypt (bundled with PHP up to 7.1).
+		# OC 2.0-2.3 installers require mcrypt (bundled with PHP up to 7.1).
+		# The OC 1.5 installer checks for the old mysql extension (PHP 5 only).
 		apt_install libpng-dev libjpeg-dev libfreetype6-dev libmcrypt-dev
 		docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
-		docker-php-ext-install -j"$(nproc)" gd mysqli mcrypt
+		docker-php-ext-install -j"$(nproc)" gd mysqli mysql mcrypt
 		;;
 	*)
 		# OC 3.0 needs openssl (built in); OC 4.0/4.1 installers need zip.

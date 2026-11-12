@@ -27,7 +27,55 @@ Limits: the secret is a part of the link, so it can appear in web server logs; t
 
 ## Installation
 
-Download the OCMOD package for your OpenCart version from the [releases](releases) directory (or build it yourself, see below), then install it through **Extensions > Installer** in the OpenCart admin panel, and enable it under **Extensions > Modules > Translate Expert (Full)**.
+Download the `.full.zip` from the [releases](releases) directory (or build it yourself, see below) and unzip it. It holds one package per OpenCart version:
+
+| OpenCart | Package |
+|----------|---------|
+| 1.5.x    | `OpenCartTranslateExpertClient-oc1.5-….ocmod.zip` (needs vQmod) |
+| 2.0.x    | `OpenCartTranslateExpertClient-oc2.0-….ocmod.zip` |
+| 2.1.x    | `OpenCartTranslateExpertClient-oc2.1-….ocmod.zip` |
+| 2.2.x    | `OpenCartTranslateExpertClient-oc2.2-….ocmod.zip` |
+| 2.3.x    | `OpenCartTranslateExpertClient-oc2.3-….ocmod.zip` |
+| 3.0.x    | `OpenCartTranslateExpertClient-oc3.0-….ocmod.zip` |
+| 4.0.2.x, 4.1.0.x | `client_translate_expert.ocmod.zip` in the `…-oc4.x-…` folder |
+
+The [Docker test stores](docker/README.md) install the module with these same steps (`docker/install-module.sh`).
+
+### OpenCart 2.0 – 3.0
+
+Install:
+
+1. Unzip the package for your version. Copy the contents of its `upload/` folder to the root folder of the store (the folder with `index.php`, `admin/` and `system/`). Keep the folder structure.
+2. In the admin, open **Extensions > Modifications** and click **Refresh**. This applies `system/OpenCartTranslateExpertClient.ocmod.xml` to the admin header.
+3. Open the module list (2.0–2.2: **Extensions > Modules**; 2.3 and 3.0: **Extensions > Extensions**, type **Modules**). Find **Translate Expert (Full)** and click **Install**, then **Edit**.
+
+Update: copy the `upload/` contents of the new package over the old files, then click **Refresh** in **Extensions > Modifications** again. Do not uninstall the module: an uninstall deletes its settings.
+
+### OpenCart 1.5
+
+OpenCart 1.5 has no OCMOD. The module changes the admin header with [vQmod](https://github.com/vqmod/vqmod) instead, so install vQmod first. If vQmod is already installed, skip these steps.
+
+1. Download `vqmod-2.6.x-opencart.zip` from the [vQmod releases](https://github.com/vqmod/vqmod/releases) and copy its `vqmod/` folder to the root folder of the store.
+2. Make `vqmod/`, `index.php` and `admin/index.php` writable by the web server. Open `http://<your store>/vqmod/install/` in a browser. It shows "VQMOD HAS BEEN INSTALLED ON YOUR SYSTEM!". Then delete the `vqmod/install/` folder.
+
+Install the module:
+
+1. Unzip `OpenCartTranslateExpertClient-oc1.5-….ocmod.zip`. Copy the contents of its `upload/` folder to the root folder of the store. This puts `vqmod/xml/OpenCartTranslateExpertClient.xml` in place.
+2. Delete the file `vqmod/mods.cache` and the `vq2-*` files in `vqmod/vqcache/`, if they exist. vQmod then applies its XML files again on the next page load. Without this step, vQmod can keep its old caches: it reuses them while they are not older than the newest XML file, and many copy tools keep the old file dates.
+3. In the admin, open **Extensions > Modules**. Find **Translate Expert (Full)** and click **Install**, then **Edit**.
+
+Update: copy the `upload/` contents of the new package over the old files, then delete `vqmod/mods.cache` and the `vq2-*` files in `vqmod/vqcache/` again. Do not uninstall the module: an uninstall deletes its settings. Packages before 04.01.0147 put the XML in `system/OpenCartTranslateExpertClient.ocmod.xml`, where vQmod does not read it. You can delete that file.
+
+If the admin header does not load the module (no `client_translate_expert.js` in the page source), first delete `vqmod/mods.cache` and the `vq2-*` files in `vqmod/vqcache/`, and reload the page. If that does not help, look in `vqmod/logs/` for an error about `OpenCartTranslateExpertClient.xml`.
+
+### OpenCart 4.0 / 4.1
+
+Install:
+
+1. In the admin, open **Extensions > Installer**. Upload `client_translate_expert.ocmod.zip` (from the `…-oc4.x-…` folder) and click **Install** in the list of installed extensions.
+2. Open **Extensions > Extensions**, type **Modules**. Find **Translate Expert (Full)** and click **Install**, then **Edit**.
+
+Update: unzip the new `client_translate_expert.ocmod.zip` and copy its contents over the files in `extension/client_translate_expert/` on the server. First delete the old contents of that folder, so that files a newer version removed do not stay. Do not uninstall the module: an uninstall deletes its settings.
 
 ## Building from source
 
@@ -55,7 +103,7 @@ php tests/test_vh_google_translator.php YOUR_GOOGLE_API_KEY
 
 ### Test stores (Docker)
 
-`docker/` runs OpenCart 2.3, 3.0, 4.0 and 4.1 stores locally and installs the built package into them:
+`docker/` runs OpenCart 1.5, 2.0, 2.1, 2.2, 2.3, 3.0, 4.0 and 4.1 stores locally and installs the built package into them:
 
 ```bash
 ./build.release.sh

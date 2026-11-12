@@ -117,8 +117,21 @@ file_replace sources_release_15/upload/admin/controller/module/client_translate_
 file_replace sources_release_15/upload/system/OpenCartTranslateExpertClient.ocmod.xml 'path="admin/controller/common/header\.php"' 'path="admin/controller/common/" name="header.php"'
 file_replace sources_release_15/upload/system/OpenCartTranslateExpertClient.ocmod.xml 'path="admin/view/template/common/header\.tpl"' 'path="admin/view/template/common/" name="header.tpl"'
 file_replace sources_release_15/upload/system/OpenCartTranslateExpertClient.ocmod.xml '\$data\[' '$this->data['
-file_replace sources_release_15/upload/system/OpenCartTranslateExpertClient.ocmod.xml '<!--OC15-TE-->' '<?php if (version_compare(VERSION, "2.0", "<") \&\& strpos($bWn9UzpZeym_SERVER[REQUEST_URI], "module/client_translate_expert") !== false) { ?><script src="view/stylesheet/oc15/te/jquery-2.1.1.min.js" charset="utf-8"></script><script src="view/stylesheet/oc15/te/bootstrap.min.js" charset="utf-8"></script><link type="text/css" rel="stylesheet" href="view/stylesheet/oc15/te/bootstrap.css"><link type="text/css" rel="stylesheet" href="view/stylesheet/oc15/te/font-awesome.min.css"><?php } ?>'
+# OC 1.5 has no OCMOD: vQmod applies this file. A vQmod search that misses
+# aborts the whole mod, so the searches must match the 1.5 header exactly:
+# 1.5 has "protected function index()" and "<div id=\"header\">".
+file_replace sources_release_15/upload/system/OpenCartTranslateExpertClient.ocmod.xml 'public function index(' 'function index('
+file_replace sources_release_15/upload/system/OpenCartTranslateExpertClient.ocmod.xml '<header ' '<div id="header">'
+file_replace sources_release_15/upload/system/OpenCartTranslateExpertClient.ocmod.xml '<!--OC15-TE-->' '<?php if (version_compare(VERSION, "2.0", "<") \&\& strpos($bWn9UzpZeym_SERVER["REQUEST_URI"], "module/client_translate_expert") !== false) { ?><script src="view/stylesheet/oc15/te/jquery-2.1.1.min.js" charset="utf-8"></script><script src="view/stylesheet/oc15/te/bootstrap.min.js" charset="utf-8"></script><link type="text/css" rel="stylesheet" href="view/stylesheet/oc15/te/bootstrap.css"><link type="text/css" rel="stylesheet" href="view/stylesheet/oc15/te/font-awesome.min.css"><?php } ?>'
 file_replace sources_release_15/upload/system/OpenCartTranslateExpertClient.ocmod.xml 'bWn9UzpZeym' ''
+# vQmod reads only vqmod/xml/*.xml, so the 1.5 package ships the file there.
+mkdir -p sources_release_15/upload/vqmod/xml
+mv sources_release_15/upload/system/OpenCartTranslateExpertClient.ocmod.xml sources_release_15/upload/vqmod/xml/OpenCartTranslateExpertClient.xml
+OC15_XML=sources_release_15/upload/vqmod/xml/OpenCartTranslateExpertClient.xml
+if ! grep -qF '<![CDATA[function index(]]>' "$OC15_XML" || ! grep -qF '<![CDATA[<div id="header">]]>' "$OC15_XML"; then
+    echo "ERROR: OC 1.5 vQmod search rewrite failed in $OC15_XML" >&2
+    exit 1
+fi
 
 cd sources_release_15 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc1.5-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4.twig' && cd "$SCRIPT_DIR"
 

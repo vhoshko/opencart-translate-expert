@@ -5,33 +5,104 @@ set -eu
 
 cd /var/www/html
 
+# The release, from the store's own index.php: define('VERSION', '1.5.6.4');
+# Exported: the uk-ua step below reads it with getenv().
+OC_VERSION="$(sed -n "s/^define('VERSION', '\([0-9.]*\)');.*/\1/p" index.php)"
+export OC_VERSION
+if [ -z "$OC_VERSION" ]; then
+	echo "[opencart] install failed: no define('VERSION', ...) in index.php" >&2
+	exit 1
+fi
+case "$OC_VERSION" in
+	1.5.*) OC_LINE=15 ;;
+	*)     OC_LINE=2plus ;;
+esac
+
 if ! grep -q "DB_DATABASE" config.php 2>/dev/null; then
 	echo "[opencart] waiting for database ${DB_HOST}/${DB_NAME}..."
 	until php -r 'exit(@mysqli_connect(getenv("DB_HOST"), getenv("DB_USER"), getenv("DB_PASSWORD"), getenv("DB_NAME")) ? 0 : 1);'; do
 		sleep 2
 	done
 
+	# A recreated store reinstalls into a database that still has the old
+	# tables. The 1.5.6.4 and 2.0.3.1 installers do not drop all of them
+	# first (1.5.6.4 creates oc_profile* without DROP TABLE IF EXISTS, 2.0.3.1
+	# has no DROP at all), so their CREATE TABLE fails. Drop every table, so
+	# each store gets a clean install, module tables included.
+	echo "[opencart] dropping old tables in ${DB_NAME}..."
+	php <<'PHP'
+<?php
+mysqli_report(MYSQLI_REPORT_OFF);
+function fail($message) {
+	file_put_contents('php://stderr', "[opencart] install failed: dropping old tables: " . $message . "\n");
+	exit(1);
+}
+$db = @mysqli_connect(getenv('DB_HOST'), getenv('DB_USER'), getenv('DB_PASSWORD'), getenv('DB_NAME'));
+if (!$db) fail(mysqli_connect_error());
+$tables = mysqli_query($db, 'SHOW TABLES');
+if (!$tables) fail(mysqli_error($db));
+while ($row = mysqli_fetch_row($tables)) {
+	if (!mysqli_query($db, 'DROP TABLE `' . str_replace('`', '``', $row[0]) . '`')) fail(mysqli_error($db));
+}
+PHP
+
 	# OC 4.x refuses to install unless both config files already exist.
 	[ -f config.php ] || cp config-dist.php config.php
 	[ -f admin/config.php ] || cp admin/config-dist.php admin/config.php
 
-	echo "[opencart] installing into ${DB_NAME} (${OC_HTTP_SERVER})..."
-	php install/cli_install.php install \
-		--db_hostname "$DB_HOST" \
-		--db_username "$DB_USER" \
-		--db_password "$DB_PASSWORD" \
-		--db_database "$DB_NAME" \
-		--db_driver mysqli \
-		--db_port 3306 \
-		--db_prefix oc_ \
-		--username "$OC_ADMIN_USER" \
-		--password "$OC_ADMIN_PASSWORD" \
-		--email "$OC_ADMIN_EMAIL" \
-		--http_server "$OC_HTTP_SERVER"
+	echo "[opencart] installing OpenCart ${OC_VERSION} into ${DB_NAME} (${OC_HTTP_SERVER})..."
+	if [ "$OC_LINE" = "15" ]; then
+		# OC 1.5 names its options differently and needs --agree_tnc.
+		php install/cli_install.php install \
+			--db_host "$DB_HOST" \
+			--db_user "$DB_USER" \
+			--db_password "$DB_PASSWORD" \
+			--db_name "$DB_NAME" \
+			--db_prefix oc_ \
+			--username "$OC_ADMIN_USER" \
+			--password "$OC_ADMIN_PASSWORD" \
+			--email "$OC_ADMIN_EMAIL" \
+			--agree_tnc yes \
+			--http_server "$OC_HTTP_SERVER"
+	else
+		# OC 2.0 has no --db_port and ignores it.
+		php install/cli_install.php install \
+			--db_hostname "$DB_HOST" \
+			--db_username "$DB_USER" \
+			--db_password "$DB_PASSWORD" \
+			--db_database "$DB_NAME" \
+			--db_driver mysqli \
+			--db_port 3306 \
+			--db_prefix oc_ \
+			--username "$OC_ADMIN_USER" \
+			--password "$OC_ADMIN_PASSWORD" \
+			--email "$OC_ADMIN_EMAIL" \
+			--http_server "$OC_HTTP_SERVER"
+	fi
 
 	if ! grep -q "DB_DATABASE" config.php; then
 		echo "[opencart] install failed: config.php was not written" >&2
 		exit 1
+	fi
+
+	if [ "$OC_LINE" = "15" ]; then
+		# The OC 1.5 installer writes DB_DRIVER 'mysql' into both config files.
+		# PHP 5.6 prints "Deprecated" for every mysql_connect(); mysqli works.
+		sed -i "s/define('DB_DRIVER', 'mysql');/define('DB_DRIVER', 'mysqli');/" config.php admin/config.php
+
+		# vQmod (copied in by the Dockerfile) patches index.php and
+		# admin/index.php. Its installer loads its helper class by a relative
+		# path, so run it from its own folder.
+		if [ -d vqmod/install ]; then
+			echo "[opencart] installing vQmod..."
+			vq_out="$(cd vqmod/install && php index.php)"
+			case "$vq_out" in
+				*"VQMOD HAS BEEN INSTALLED"*) rm -rf vqmod/install ;;
+				*) echo "[opencart] install failed: vQmod: $vq_out" >&2
+				   echo "[opencart] the store is half installed; recreate the container to retry" >&2
+				   exit 1 ;;
+			esac
+		fi
 	fi
 
 	# A second language, so the module has something to translate into. Only
@@ -56,12 +127,28 @@ $found = mysqli_query($db, "SELECT 1 FROM `oc_language` WHERE `code` = 'uk-ua'")
 if (!$found) fail(mysqli_error($db));
 if (mysqli_num_rows($found) > 0) exit(0);
 
-// OC 2.3 and 3.0 have image and directory columns; OC 4.x has extension instead.
-$columns = mysqli_query($db, "SHOW COLUMNS FROM `oc_language` LIKE 'directory'");
-if (!$columns) fail(mysqli_error($db));
-if (mysqli_num_rows($columns) > 0) {
-	$sql = "INSERT INTO `oc_language` (`name`, `code`, `locale`, `image`, `directory`, `sort_order`, `status`)"
-		. " VALUES ('Українська', 'uk-ua', 'uk-ua,uk_UA.UTF-8,uk_UA,ukrainian', 'ua.png', 'uk-ua', 2, 1)";
+function has_column($db, $column) {
+	$found = mysqli_query($db, "SHOW COLUMNS FROM `oc_language` LIKE '" . $column . "'");
+	if (!$found) fail(mysqli_error($db));
+	return mysqli_num_rows($found) > 0;
+}
+
+// OC 1.5-3.0 have image and directory columns; OC 4.x has extension instead.
+// OC 1.5-2.1 load language files from `directory` (english, ukrainian), so
+// the row names the folder that the module's 1.5-2.1 packages ship. OC 2.2+
+// load them by `code`. A missing catalog folder falls back to the default.
+// OC 1.5 also has `filename`: the main language file, which must exist, so
+// it points at the stock english.php.
+if (has_column($db, 'directory')) {
+	$version = getenv('OC_VERSION');
+	$directory = version_compare($version, '2.2', '<') ? 'ukrainian' : 'uk-ua';
+	if (has_column($db, 'filename')) {
+		$sql = "INSERT INTO `oc_language` (`name`, `code`, `locale`, `image`, `directory`, `filename`, `sort_order`, `status`)"
+			. " VALUES ('Українська', 'uk-ua', 'uk-ua,uk_UA.UTF-8,uk_UA,ukrainian', 'ua.png', '" . $directory . "', 'english', 2, 1)";
+	} else {
+		$sql = "INSERT INTO `oc_language` (`name`, `code`, `locale`, `image`, `directory`, `sort_order`, `status`)"
+			. " VALUES ('Українська', 'uk-ua', 'uk-ua,uk_UA.UTF-8,uk_UA,ukrainian', 'ua.png', '" . $directory . "', 2, 1)";
+	}
 } else {
 	$sql = "INSERT INTO `oc_language` (`name`, `code`, `locale`, `extension`, `sort_order`, `status`)"
 		. " VALUES ('Українська', 'uk-ua', 'uk-ua,uk', '', 2, 1)";
