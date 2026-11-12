@@ -90,3 +90,10 @@ Steps:
   Findings: build `04.01.0154` is green. Tests: 72 + 40 + 205 + 24 (6 skipped) passed. The strings, the buttons and `initTranslateExpertMultiSelectButtons` are in the OC 1.5, 2.2, 3.0 and 4.x packages.
 - [x] Independent review v3? (ask the user)
   Decision (user): no review. Commit and push to PR #42.
+
+## Update 2026-11-12: order of the filter parts
+The user asked for this order in each multi-select filter: title, buttons, multi-select control.
+- [x] Templates (`.tpl` and `.oc4.twig`): the button row moved above the select (`margin-bottom: 5px` in the `.tpl`, `mb-1` in the `.oc4.twig`). The category and stock status titles (`entry_table_product_category_id_filter`, `entry_table_product_stock_status_filter`) moved from after the select to a `<label for=...>` above the buttons. The Table title stays in the left label column. The hint stays below the select.
+  Findings: the main context applied the change with `tmp/reorder_multiselect.py`. `php -l` on the `.tpl` passes.
+- [x] Bump version + build + tests
+  Findings: build `04.01.0155` is green. Tests: 72 + 40 + 205 + 24 (6 skipped) passed. The new order is correct in the templates of all 7 packages (OC 1.5–3.0 `.tpl` and the OC 4.x `.twig`).
