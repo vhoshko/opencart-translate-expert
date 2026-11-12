@@ -6,6 +6,8 @@ if (document.readyState == 'loading') {
 
 function initTranslateExpert() {
 
+	initTranslateExpertCron();
+
 	if ((typeof document.js_const_client_translate_expert_is_enabled !== 'undefined')
 		&& document.js_const_client_translate_expert_is_enabled)
 	{
@@ -1127,6 +1129,17 @@ function initModule()
 		makeLocalizationAnalizeRequest();
 	});
 
+	showTranslatedCharCount();
+}
+
+// Cron settings controls work also when the module status is disabled,
+// so the admin can set up the secret and the link before enabling the module.
+function initTranslateExpertCron()
+{
+	if ($('#te-cron-secret').length == 0 && $('#te-cron-link-panel').length == 0) {
+		return;
+	}
+
 	$('#te-cron-secret-generate').click(function() {
 		var cryptoApi = window.crypto || window.msCrypto;
 		var bytes = new Uint8Array(16);
@@ -1147,8 +1160,6 @@ function initModule()
 		.on('change', updateTranslateExpertCronLink);
 	$('#te-cron-bulk-amount, #te-cron-secret').on('change input', updateTranslateExpertCronLink);
 	updateTranslateExpertCronLink();
-
-	showTranslatedCharCount();
 }
 
 function updateTranslateExpertCronLink()
