@@ -45,11 +45,11 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		return $res;
 	}
 
-	public function translateTable($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status)
+	public function translateTable($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id)
 	{
 		$this->gebugLog('translateTable: ============START============', $startTime);
 
-		$res = $this->translateTableWithBudget($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $this->createBatchBudget(0, 10, false));
+		$res = $this->translateTableWithBudget($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $this->createBatchBudget(0, 10, false));
 
 		$this->gebugLog('translateTable: ============FINISH============', $startTime);
 		return $res;
@@ -70,7 +70,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		{
 			$budget->table = $table;
 			$tableRes = $this->translateTableWithBudget($filters['langIdFrom'], $filters['mode'], $table, null, $filters['langIdTo'],
-				$filters['product_status'], $filters['product_quantity'], $filters['product_category_id'], $filters['stock_status'], $budget);
+				$filters['product_status'], $filters['product_quantity'], $filters['product_category_id'], $filters['stock_status'], $filters['manufacturer_id'], $budget);
 			$res->table = $table;
 			if (!$tableRes->success)
 			{
@@ -194,6 +194,11 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		}
 	}
 
+	public function getListMaxItems()
+	{
+		return ClientTranslateExpertCronHelper::LIST_MAX_ITEMS;
+	}
+
 	public function parseIdList($value)
 	{
 		return ClientTranslateExpertCronHelper::parseIdList($value);
@@ -285,14 +290,14 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		$budget->charsDone += $chars;
 	}
 
-	protected function translateTableWithBudget($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $budget)
+	protected function translateTableWithBudget($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $budget)
 	{
 		if (is_null($mode))
 			$mode = 'both';
 
 		$languages = $this->getLanguages();
 
-		$tableResult = $this->getTableToTranslateAnalizationInfo($languageIdFrom, $tableName, $languages, $mode, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, false);
+		$tableResult = $this->getTableToTranslateAnalizationInfo($languageIdFrom, $tableName, $languages, $mode, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, false);
 
 		$done = true;
 
@@ -317,7 +322,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 					$offset = 0;
 					while (true)
 					{
-						$textToTranslateRows = $this->getTextToTranslateRows($languageIdFrom, $tableResult->table, $tableResult->pkColumnNames, $textColumnName, $mode, $limit, $offset, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status);
+						$textToTranslateRows = $this->getTextToTranslateRows($languageIdFrom, $tableResult->table, $tableResult->pkColumnNames, $textColumnName, $mode, $limit, $offset, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
 						if (count($textToTranslateRows) == 0)
 							break;
 						$offset += count($textToTranslateRows);
@@ -342,7 +347,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 							{
 								if (count($textRowsToTranslate) > 0)
 								{
-									$translateRes = $this->translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textRowsToTranslate, $budget);
+									$translateRes = $this->translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $textRowsToTranslate, $budget);
 									if (!$translateRes->success)
 										return (object)array('success' => 0, 'done' => 0, 'message' => $translateRes->message, 'additional_message' => isset($translateRes->additional_message) ? $translateRes->additional_message : '', 'translatedCharCount' => $budget->charsDone);
 
@@ -363,7 +368,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 							if ((count($textRowsToTranslate) > 0)
 								&& ($textsToTranslateLenght + $this->getBillableCharCount($textToTranslate) > 5000))
 							{
-								$translateRes = $this->translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textRowsToTranslate, $budget);
+								$translateRes = $this->translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $textRowsToTranslate, $budget);
 								if (!$translateRes->success)
 									return (object)array('success' => 0, 'done' => 0, 'message' => $translateRes->message, 'additional_message' => isset($translateRes->additional_message) ? $translateRes->additional_message : '', 'translatedCharCount' => $budget->charsDone);
 
@@ -394,7 +399,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 
 					if (count($textRowsToTranslate) > 0)
 					{
-						$translateRes = $this->translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textRowsToTranslate, $budget);
+						$translateRes = $this->translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $textRowsToTranslate, $budget);
 						if (!$translateRes->success)
 							return (object)array('success' => 0, 'done' => 0, 'message' => $translateRes->message, 'additional_message' => isset($translateRes->additional_message) ? $translateRes->additional_message : '', 'translatedCharCount' => $budget->charsDone);
 						$this->addBatchChars($budget, $textsToTranslateLenght);
@@ -409,7 +414,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 
 					if ($done && $droppedDuplicate)
 					{
-						$leftRows = $this->getTextToTranslateRows($languageIdFrom, $tableResult->table, $tableResult->pkColumnNames, $textColumnName, $mode, $limit, 0, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status);
+						$leftRows = $this->getTextToTranslateRows($languageIdFrom, $tableResult->table, $tableResult->pkColumnNames, $textColumnName, $mode, $limit, 0, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
 						foreach($leftRows as $leftRow)
 						{
 							if ($leftRow['language_id_to'] == $language['language_id'])
@@ -440,7 +445,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		);
 	}
 
-	protected function translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textRowsToTranslate, $budget = null)
+	protected function translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $textRowsToTranslate, $budget = null)
 	{
 		//var_dump($textRowsToTranslate);
 
@@ -502,7 +507,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 			{
 				$this->insertSameTranslatedText($textToTranslateRow['language_id_from'], $textToTranslateRow['language_id_to'], $translatedText);
 			}
-			$this->insertTranslatedTableTextValue($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textToTranslateRow, $translatedText);
+			$this->insertTranslatedTableTextValue($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $textToTranslateRow, $translatedText);
 			if (!is_null($budget))
 				$budget->rowsDone += (int)$textToTranslateRow['value_count'];
 		}
@@ -511,7 +516,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 	}
 
 	protected function getTableToTranslateAnalizationInfo($languageIdFrom, $table, $languages, $mode = null, $langIdToParam = null,
-		$product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null,
+		$product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null,
 		$calcCounts = true, $continueAfterColumn = null, $offset = 0)
 	{
 		$columns = $this->getColumns($table);
@@ -594,7 +599,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 				while ($nextExists)
 				{
 					$textToTranslateRows = $this->getTextToTranslateRows($languageIdFrom, $table, $pkColumnNames, $textColumnName, $mode, $limit + 1, $offset,
-						$langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status);
+						$langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
 					if (count($textToTranslateRows) == 0)
 						break;
 
@@ -666,7 +671,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		);
 	}
 
-	protected function getTablesToTranslateAnalizationInfo($languageIdFrom, $languageIdTo, $mode = null, $filterTable = '', $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null,
+	protected function getTablesToTranslateAnalizationInfo($languageIdFrom, $languageIdTo, $mode = null, $filterTable = '', $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null,
 		$continueAfterTable = null, $continueAfterColumn = null, $continueOffset = 0
 	) {
 		$start = microtime(true);
@@ -707,7 +712,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 				}
 			}
 
-			$tableResult = $this->getTableToTranslateAnalizationInfo($languageIdFrom, $table, $languages, $mode, $languageIdTo, $product_status, $product_quantity, $product_category_id, $stock_status,
+			$tableResult = $this->getTableToTranslateAnalizationInfo($languageIdFrom, $table, $languages, $mode, $languageIdTo, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id,
 				true, $continueAfterColumn, $continueOffset);
 
 			$continueAfterColumn = null;
@@ -775,7 +780,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 	}
 
 	protected function getTextToTranslateRows($languageIdFrom, $tableName, $pkColumnNames, $textColumnName, $mode, $limit, $offset,
-		$langIdToParam = null, $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $text_from_filter = null)
+		$langIdToParam = null, $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null, $text_from_filter = null)
 	{
 		$this->gebugLog('getTextToTranslateRows: ============START============', $startTime);
 
@@ -786,7 +791,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 			foreach($languages as $code => $language)
 			{
 				$newRows = $this->getTextToTranslateRows($languageIdFrom, $tableName, $pkColumnNames, $textColumnName, $mode, $limit, $offset,
-					$language['language_id'], $product_status, $product_quantity, $product_category_id, $stock_status);
+					$language['language_id'], $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
 				$index = count($res);
 				foreach($newRows as $number => $newRow)
 				{
@@ -831,13 +836,15 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		$tableHasProductId = $this->tableHasFIeld($tableName, 'product_id');
 
 		$stockIds = $this->normalizeIdList($stock_status);
+		$manufacturerIds = $this->normalizeIdList($manufacturer_id);
 		$categoryIds = $this->normalizeIdList($product_category_id);
 
-		$productJoin = $tableHasProductId && ($product_status || $product_quantity || count($stockIds) > 0)
+		$productJoin = $tableHasProductId && ($product_status || $product_quantity || count($stockIds) > 0 || count($manufacturerIds) > 0)
 			? "join ".DB_PREFIX."product p on p.product_id = t.product_id"
 				. ($product_status ? " and p.status" : "")
 				. ($product_quantity ? " and p.quantity > 0" : "")
 				. (count($stockIds) > 0 ? " and p.stock_status_id in (" . implode(',', $stockIds) . ")" : "")
+				. (count($manufacturerIds) > 0 ? " and p.manufacturer_id in (" . implode(',', $manufacturerIds) . ")" : "")
 			: "";
 		$categoryCondition = $tableHasProductId && count($categoryIds) > 0
 			? " and exists (select 1 from ".DB_PREFIX."product_to_category ptc where ptc.product_id = t.product_id and ptc.category_id in (" . implode(',', $categoryIds) . "))"
@@ -884,20 +891,22 @@ limit {$limit} offset {$offset}
 		return $columns;
 	}
 
-	protected function removeDataFromTable($langIdToParam, $tableName, $textColumnName, $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null)
+	protected function removeDataFromTable($langIdToParam, $tableName, $textColumnName, $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null)
 	{
 		$this->gebugLog('removeDataFromTable: ============START============', $startTime);
 
 		$tableHasProductId = $this->tableHasFIeld($tableName, 'product_id');
 
 		$stockIds = $this->normalizeIdList($stock_status);
+		$manufacturerIds = $this->normalizeIdList($manufacturer_id);
 		$categoryIds = $this->normalizeIdList($product_category_id);
 
-		$productJoin = $tableHasProductId && ($product_status || $product_quantity || count($stockIds) > 0)
+		$productJoin = $tableHasProductId && ($product_status || $product_quantity || count($stockIds) > 0 || count($manufacturerIds) > 0)
 			? "join ".DB_PREFIX."product p on p.product_id = t.product_id"
 				. ($product_status ? " and p.status" : "")
 				. ($product_quantity ? " and p.quantity > 0" : "")
 				. (count($stockIds) > 0 ? " and p.stock_status_id in (" . implode(',', $stockIds) . ")" : "")
+				. (count($manufacturerIds) > 0 ? " and p.manufacturer_id in (" . implode(',', $manufacturerIds) . ")" : "")
 			: "";
 		$categoryCondition = $tableHasProductId && count($categoryIds) > 0
 			? " and exists (select 1 from ".DB_PREFIX."product_to_category ptc where ptc.product_id = t.product_id and ptc.category_id in (" . implode(',', $categoryIds) . "))"

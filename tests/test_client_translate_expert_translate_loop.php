@@ -73,6 +73,7 @@ class FakeModel
 {
 	public $db;
 	public $config;
+	public $language;
 }
 
 class SqlDb extends FakeDb
@@ -98,14 +99,36 @@ class RealSqlLibrary extends LibraryClientTranslateExpert
 		$this->_model = $model;
 	}
 
-	public function select($cat, $stock, $status = false, $quantity = false)
+	public function select($cat, $stock, $manufacturer = array(), $status = false, $quantity = false)
 	{
-		return $this->getTextToTranslateRows(1, 'oc_product_description', array('product_id'), 'name', 'both', 100, 0, 2, $status, $quantity, $cat, $stock);
+		return $this->getTextToTranslateRows(1, 'oc_product_description', array('product_id'), 'name', 'both', 100, 0, 2, $status, $quantity, $cat, $stock, $manufacturer);
 	}
 
-	public function remove($cat, $stock, $status = false, $quantity = false)
+	public function remove($cat, $stock, $manufacturer = array(), $status = false, $quantity = false)
 	{
-		$this->removeDataFromTable(2, 'oc_product_description', 'name', $status, $quantity, $cat, $stock);
+		$this->removeDataFromTable(2, 'oc_product_description', 'name', $status, $quantity, $cat, $stock, $manufacturer);
+	}
+}
+
+class ButtonLanguage
+{
+	public function get($key)
+	{
+		return $key === 'title_translate_table_confirmation' ? 'CONFIRM' : 'L_' . $key;
+	}
+}
+
+class ButtonLibrary extends LibraryClientTranslateExpert
+{
+	public function __construct($model)
+	{
+		$this->_debug = false;
+		$this->_model = $model;
+	}
+
+	public function button($cat, $stock, $manufacturer)
+	{
+		return $this->buildHtmlTranslateTableButton(1, 'oc_product_description', 'Title', 'both', 5, 'name', 2, false, false, $cat, $stock, $manufacturer, array('code' => 'uk'));
 	}
 }
 
@@ -184,12 +207,12 @@ class StubTranslateLibrary extends LibraryClientTranslateExpert
 		);
 	}
 
-	protected function getTableToTranslateAnalizationInfo($languageIdFrom, $table, $languages, $mode = null, $langIdToParam = null, $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $calcCounts = true, $continueAfterColumn = null, $offset = 0)
+	protected function getTableToTranslateAnalizationInfo($languageIdFrom, $table, $languages, $mode = null, $langIdToParam = null, $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null, $calcCounts = true, $continueAfterColumn = null, $offset = 0)
 	{
 		return (object)array('tableTranslationIsSuppported' => true, 'textColumnNames' => array('name'), 'table' => $table, 'pkColumnNames' => array('id'));
 	}
 
-	protected function getTextToTranslateRows($languageIdFrom, $tableName, $pkColumnNames, $textColumnName, $mode, $limit, $offset, $langIdToParam = null, $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $text_from_filter = null)
+	protected function getTextToTranslateRows($languageIdFrom, $tableName, $pkColumnNames, $textColumnName, $mode, $limit, $offset, $langIdToParam = null, $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null, $text_from_filter = null)
 	{
 		$rows = array();
 		foreach ($this->groups as $g)
@@ -238,7 +261,7 @@ class StubTranslateLibrary extends LibraryClientTranslateExpert
 		$this->sameCalls[] = array($languageIdFrom, $languageIdTo, $text);
 	}
 
-	protected function insertTranslatedTableTextValue($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $row, $translatedText)
+	protected function insertTranslatedTableTextValue($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $row, $translatedText)
 	{
 		$this->writeCount++;
 		if ($this->throwAtWrite == $this->writeCount)
@@ -357,6 +380,7 @@ class TranslateLoopTest
 		});
 
 		$this->testRowCap();
+		$this->testButtonOnclickArguments();
 		$this->testSmallCap();
 		$this->testBudgetSharedAcrossTables();
 		$this->testRepeatedRunsFinish();
@@ -400,7 +424,7 @@ class TranslateLoopTest
 	private function filters($table)
 	{
 		return array('langIdFrom' => 1, 'langIdTo' => 2, 'mode' => 'both', 'table' => is_array($table) ? $table : ($table === '' ? array() : array($table)),
-			'product_status' => false, 'product_quantity' => false, 'product_category_id' => array(), 'stock_status' => array());
+			'product_status' => false, 'product_quantity' => false, 'product_category_id' => array(), 'stock_status' => array(), 'manufacturer_id' => array());
 	}
 
 	private function runAll($lib, $cap, $table, $maxRuns = 80)
@@ -553,7 +577,7 @@ class TranslateLoopTest
 		$n = 0;
 		do
 		{
-			$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+			$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null, null);
 			$sum += $r->translatedCharCount;
 			$n++;
 		}
@@ -648,7 +672,7 @@ class TranslateLoopTest
 		$lib->callCost = $cost;
 		if ($cron)
 			return $lib->translateNextBatch($this->filters('oc_a'), 100000);
-		return $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		return $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null, null);
 	}
 
 	private function testTimeLimits()
@@ -740,7 +764,7 @@ class TranslateLoopTest
 
 		$lib = new StubTranslateLibrary();
 		$lib->add('oc_a', 250, 60);
-		$lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null, null);
 		$this->check($lib->counted, array(), 'admin translateTable does not count by itself');
 	}
 
@@ -830,10 +854,10 @@ class TranslateLoopTest
 		$lib = new StubTranslateLibrary();
 		$lib->independentWrites = true;
 		$lib->addTwins('oc_a', 'twin text 2');
-		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null, null);
 		$this->check($r->done, false, 'admin first call is not done');
 		$this->check($lib->left(), 1, 'one group is left after the first admin call');
-		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null, null);
 		$this->check($r->done, true, 'admin second call is done');
 		$this->check($lib->left(), 0, 'nothing is left after the second admin call');
 
@@ -851,7 +875,7 @@ class TranslateLoopTest
 		$lib = new StubTranslateLibrary();
 		$lib->add('oc_a', 1, 20);
 		$lib->callCost = 20;
-		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null, null);
 		$this->check($lib->apiCalls, 1, 'admin: one call');
 		$this->check($lib->left(), 0, 'admin: the row is written');
 		$this->check($r->done, false, 'admin: the final flush passes 10 s, so not done');
@@ -963,7 +987,7 @@ class TranslateLoopTest
 
 		$lib = $this->billableFixture();
 		$analysis = $lib->realAnalysisCount('oc_a');
-		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null, null);
 		$this->check($r->translatedCharCount, $analysis, 'admin counter equals the analysis count');
 		$this->check($r->translatedCharCount, $lib->sentTrimmedChars, 'admin counter equals the characters sent');
 	}
@@ -978,7 +1002,7 @@ class TranslateLoopTest
 		$lib->addText('oc_a', 'СУПЕР ЦІНА');
 		$lib->addText('oc_a', 'Apple');
 		$lib->translations = array('10 %' => '10%', 'СУПЕР ЦІНА' => 'Супер ціна', 'Apple' => 'Яблуко');
-		$lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null, null);
 		$texts = array();
 		foreach ($lib->sameCalls as $c)
 			$texts[] = $c[2];
@@ -994,7 +1018,7 @@ class TranslateLoopTest
 		$lib = new StubTranslateLibrary();
 		$lib->add('oc_a', 3, 3000);
 		$lib->failAtCall = 2;
-		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null, null);
 		$this->check($r->success, 0, 'the request fails');
 		$this->check(isset($r->translatedCharCount) ? $r->translatedCharCount : null, 3000, 'the first batch is in translatedCharCount');
 	}
@@ -1006,7 +1030,7 @@ class TranslateLoopTest
 		$lib = new StubTranslateLibrary();
 		$lib->add('oc_a', 3, 3000);
 		$lib->failAtCall = 3;
-		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null, null);
 		$this->check($r->success, 0, 'the request fails');
 		$this->check(isset($r->translatedCharCount) ? $r->translatedCharCount : null, 6000, 'the first two batches are in translatedCharCount');
 	}
@@ -1019,7 +1043,7 @@ class TranslateLoopTest
 		// 3000 + 4800 characters in the DB, 600 + 1200 characters after the decode.
 		$lib->addText('oc_a', str_repeat('&amp;', 600));
 		$lib->addText('oc_a', str_repeat('&lt;', 1200));
-		$lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null, null);
 		$this->check($lib->apiCalls, 1, 'two texts of 600 + 1200 sent characters go in one Google call');
 		$this->check($lib->left(), 0, 'both texts are written');
 	}
@@ -1032,7 +1056,7 @@ class TranslateLoopTest
 		$lib = new StubTranslateLibrary();
 		$lib->trimLikeReal = true;
 		$lib->addText('oc_a', "\x0B");
-		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null, null);
 		$this->check($lib->apiCalls, 1, 'admin: the batch goes to the translate call');
 		$this->check($r->success, 0, 'admin: the request fails with a visible error');
 
@@ -1062,6 +1086,19 @@ class TranslateLoopTest
 		return strtolower(trim(preg_replace('/\s+/', ' ', $last)));
 	}
 
+	private function testButtonOnclickArguments()
+	{
+		echo "\nButton onclick arguments:\n";
+		if (!defined('HTTP_SERVER'))
+			define('HTTP_SERVER', 'http://localhost/admin/');
+		$model = new FakeModel();
+		$model->language = new ButtonLanguage();
+		$lib = new ButtonLibrary($model);
+		$html = $lib->button(array(11, 12), array(5), array(7, 8));
+		$this->check(strpos($html, '"11,12", "5", "7,8", "CONFIRM")') !== false, true, 'doTranslateTableExpert: category, stock status, manufacturer, confirmation');
+		$this->check(strpos($html, '"11,12", "5", "7,8"); return false;') !== false, true, 'analizeTableDetail: category, stock status, manufacturer');
+	}
+
 	private function testRealSqlText()
 	{
 		echo "\nReal SQL text of the product filters:\n";
@@ -1083,6 +1120,14 @@ class TranslateLoopTest
 			$sql = $this->lastSql(function ($lib) use ($m) { $lib->$m(array('10) or 1=1 -- '), array()); });
 			$this->check(strpos($sql, $existsFor('10')) !== false, true, "{$m}: hostile item is cut to 10");
 			$this->check(strpos($sql, 'or 1=1') === false, true, "{$m}: hostile text is not in the SQL");
+			$sql = $this->lastSql(function ($lib) use ($m) { $lib->$m(array(), array(), array(7, 8)); });
+			$this->check(strpos($sql, 'join ' . $p . 'product p on p.product_id = t.product_id') !== false, true, "{$m}: manufacturer list alone makes the product join");
+			$this->check(strpos($sql, 'p.manufacturer_id in (7,8)') !== false, true, "{$m}: manufacturer list in the product join");
+			$sql = $this->lastSql(function ($lib) use ($m) { $lib->$m(array(), array(), array('7) or 1=1 -- ')); });
+			$this->check(strpos($sql, 'p.manufacturer_id in (7)') !== false, true, "{$m}: hostile manufacturer item is cut to 7");
+			$this->check(strpos($sql, 'or 1=1') === false, true, "{$m}: hostile manufacturer text is not in the SQL");
+			$sql = $this->lastSql(function ($lib) use ($m) { $lib->$m(array(), array(), array(7, 8)); }, false);
+			$this->check(strpos($sql, 'manufacturer_id') === false, true, "{$m}: table without product_id has no manufacturer filter");
 			$sql = $this->lastSql(function ($lib) use ($m) { $lib->$m(array(10, 11), array(5, 6)); }, false);
 			$this->check(strpos($sql, 'exists') === false, true, "{$m}: table without product_id has no exists");
 			$this->check(strpos($sql, 'join ' . $p . 'product p') === false, true, "{$m}: table without product_id has no product join");

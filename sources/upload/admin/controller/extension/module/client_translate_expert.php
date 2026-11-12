@@ -188,6 +188,12 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['entry_cron_link'] = $this->language->get('entry_cron_link');
 		$data['help_cron_link'] = $this->language->get('help_cron_link');
 		$data['help_multi_select'] = $this->language->get('help_multi_select');
+		$this->load->model('extension/module/client_translate_expert');
+		$data['te_multi_select_max'] = (int)$this->model_extension_module_client_translate_expert->getListMaxItems();
+		$data['te_cron_link_max_length'] = 4000;
+		$data['help_multi_select_limit'] = sprintf($this->language->get('help_multi_select_limit'), $data['te_multi_select_max']);
+		$data['button_select_first'] = sprintf($this->language->get('button_select_first'), $data['te_multi_select_max']);
+		$data['warning_cron_link_long'] = sprintf($this->language->get('warning_cron_link_long'), $data['te_cron_link_max_length']);
 		$data['button_select_all'] = $this->language->get('button_select_all');
 		$data['button_clear_selection'] = $this->language->get('button_clear_selection');
 		$data['error_cron_secret'] = $this->language->get('error_cron_secret');
@@ -198,6 +204,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['entry_table_product_quantity_filter'] = $this->language->get('entry_table_product_quantity_filter');
 		$data['entry_table_product_category_id_filter'] = $this->language->get('entry_table_product_category_id_filter');
 		$data['entry_table_product_stock_status_filter'] = $this->language->get('entry_table_product_stock_status_filter');
+		$data['entry_table_product_manufacturer_filter'] = $this->language->get('entry_table_product_manufacturer_filter');
 
 		if (isset($this->error['warning'])) {
 			$data['error_warning'] = $this->error['warning'];
@@ -322,6 +329,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['te_product_quantity'] = isset($this->session->data['te_product_quantity']) ? $this->session->data['te_product_quantity'] : null;
 		$data['te_product_category_id'] = $this->readSessionList('te_product_category_id');
 		$data['te_stock_status'] = $this->readSessionList('te_stock_status');
+		$data['te_manufacturer_id'] = $this->readSessionList('te_manufacturer_id');
 
 		$data['translate_expert_version'] = $this->getCurrentVersion();
 		$data['php_version'] = phpversion();
@@ -331,6 +339,8 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 		$this->load->model('localisation/stock_status');
 		$data['stock_statuses'] = $this->model_localisation_stock_status->getStockStatuses();
+		$this->load->model('catalog/manufacturer');
+		$data['manufacturers'] = $this->model_catalog_manufacturer->getManufacturers();
 
 		$this->load->model('catalog/category');
 		$filter_data = array(
@@ -466,20 +476,6 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$this->response->setOutput(json_encode($result));
 	}
 
-	private function readIdListParam($source, $key) {
-		$raw = isset($source[$key]) && is_string($source[$key]) ? html_entity_decode($source[$key]) : '';
-		$this->load->model('extension/module/client_translate_expert');
-		$list = $this->model_extension_module_client_translate_expert->parseIdList($raw);
-		return $list === false ? array() : $list;
-	}
-
-	private function readTableListParam($source, $key) {
-		$raw = isset($source[$key]) && is_string($source[$key]) ? html_entity_decode($source[$key]) : '';
-		$this->load->model('extension/module/client_translate_expert');
-		$list = $this->model_extension_module_client_translate_expert->parseTableList($raw);
-		return $list === false ? array() : $list;
-	}
-
 	private function readStrictListParam($source, $key, $isTable) {
 		if (isset($source[$key]) && !is_string($source[$key])) {
 			return false;
@@ -489,6 +485,12 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		return $isTable
 			? $this->model_extension_module_client_translate_expert->parseTableList($raw)
 			: $this->model_extension_module_client_translate_expert->parseIdList($raw);
+	}
+
+	private function badFilterResponse() {
+		$this->load->language('extension/module/client_translate_expert');
+		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
+		$this->response->setOutput(json_encode(array('success' => false, 'message' => $this->language->get('error_bad_filter'))));
 	}
 
 	private function readSessionList($key) {
@@ -511,11 +513,17 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$langIdTo = isset($this->request->post['langIdTo']) ? html_entity_decode($this->request->post['langIdTo']) : null;
 		$product_status = isset($this->request->post['product_status']) ? boolval(html_entity_decode($this->request->post['product_status'])) : false;
 		$product_quantity = isset($this->request->post['product_quantity']) ? boolval(html_entity_decode($this->request->post['product_quantity'])) : false;
-		$product_category_id = $this->readIdListParam($this->request->post, 'product_category_id');
-		$stock_status = $this->readIdListParam($this->request->post, 'stock_status');
+		$product_category_id = $this->readStrictListParam($this->request->post, 'product_category_id', false);
+		$stock_status = $this->readStrictListParam($this->request->post, 'stock_status', false);
+		$manufacturer_id = $this->readStrictListParam($this->request->post, 'manufacturer_id', false);
+
+		if ($product_category_id === false || $stock_status === false || $manufacturer_id === false) {
+			$this->badFilterResponse();
+			return;
+		}
 
 		$this->load->model('extension/module/client_translate_expert');
-		$result = $this->model_extension_module_client_translate_expert->translateTable($langIdFrom, $mode, $tableName, $textColumnName, $langIdTo, $product_status, $product_quantity, $product_category_id, $stock_status);
+		$result = $this->model_extension_module_client_translate_expert->translateTable($langIdFrom, $mode, $tableName, $textColumnName, $langIdTo, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
 
 		if (isset($result->translatedCharCount))
 		{
@@ -534,11 +542,17 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$langIdTo = isset($this->request->post['langIdTo']) ? html_entity_decode($this->request->post['langIdTo']) : null;
 		$product_status = isset($this->request->post['product_status']) ? boolval(html_entity_decode($this->request->post['product_status'])) : false;
 		$product_quantity = isset($this->request->post['product_quantity']) ? boolval(html_entity_decode($this->request->post['product_quantity'])) : false;
-		$product_category_id = $this->readIdListParam($this->request->post, 'product_category_id');
-		$stock_status = $this->readIdListParam($this->request->post, 'stock_status');
+		$product_category_id = $this->readStrictListParam($this->request->post, 'product_category_id', false);
+		$stock_status = $this->readStrictListParam($this->request->post, 'stock_status', false);
+		$manufacturer_id = $this->readStrictListParam($this->request->post, 'manufacturer_id', false);
+
+		if ($product_category_id === false || $stock_status === false || $manufacturer_id === false) {
+			$this->badFilterResponse();
+			return;
+		}
 
 		$this->load->model('extension/module/client_translate_expert');
-		$result = $this->model_extension_module_client_translate_expert->analizeTableDetail($langIdFrom, $mode, $tableName, $textColumnName, $langIdTo, $product_status, $product_quantity, $product_category_id, $stock_status);
+		$result = $this->model_extension_module_client_translate_expert->analizeTableDetail($langIdFrom, $mode, $tableName, $textColumnName, $langIdTo, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
 
 		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
 		$this->response->setOutput(json_encode($result));
@@ -548,11 +562,17 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$langIdFrom = isset($this->request->get['langIdFrom']) ? html_entity_decode($this->request->get['langIdFrom']) : null;
 		$langIdTo = isset($this->request->get['langIdTo']) ? html_entity_decode($this->request->get['langIdTo']) : null;
 		$mode = isset($this->request->get['mode']) ? html_entity_decode($this->request->get['mode']) : null;
-		$table = $this->readTableListParam($this->request->get, 'table');
+		$table = $this->readStrictListParam($this->request->get, 'table', true);
 		$product_status = isset($this->request->get['product_status']) ? boolval(html_entity_decode($this->request->get['product_status'])) : false;
 		$product_quantity = isset($this->request->get['product_quantity']) ? boolval(html_entity_decode($this->request->get['product_quantity'])) : false;
-		$product_category_id = $this->readIdListParam($this->request->get, 'product_category_id');
-		$stock_status = $this->readIdListParam($this->request->get, 'stock_status');
+		$product_category_id = $this->readStrictListParam($this->request->get, 'product_category_id', false);
+		$stock_status = $this->readStrictListParam($this->request->get, 'stock_status', false);
+		$manufacturer_id = $this->readStrictListParam($this->request->get, 'manufacturer_id', false);
+
+		if ($product_category_id === false || $stock_status === false || $manufacturer_id === false || $table === false) {
+			$this->badFilterResponse();
+			return;
+		}
 
 		$continueAfterTable = isset($this->request->get['continue_after_table']) ? html_entity_decode($this->request->get['continue_after_table']) : null;
 		$continueAfterColumn = isset($this->request->get['continue_after_column']) ? html_entity_decode($this->request->get['continue_after_column']) : null;
@@ -567,9 +587,10 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$this->session->data['te_product_quantity'] = $product_quantity;
 		$this->session->data['te_product_category_id'] = $product_category_id;
 		$this->session->data['te_stock_status'] = $stock_status;
+		$this->session->data['te_manufacturer_id'] = $manufacturer_id;
 
 		$this->load->model('extension/module/client_translate_expert');
-		$result = $this->model_extension_module_client_translate_expert->analize($langIdFrom, $langIdTo, $mode, $table, $product_status, $product_quantity, $product_category_id, $stock_status,
+		$result = $this->model_extension_module_client_translate_expert->analize($langIdFrom, $langIdTo, $mode, $table, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id,
 			$continueAfterTable, $continueAfterColumn, $continueOffset);
 
 		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
@@ -583,11 +604,10 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$product_quantity = isset($this->request->get['product_quantity']) ? boolval(html_entity_decode($this->request->get['product_quantity'])) : false;
 		$product_category_id = $this->readStrictListParam($this->request->get, 'product_category_id', false);
 		$stock_status = $this->readStrictListParam($this->request->get, 'stock_status', false);
+		$manufacturer_id = $this->readStrictListParam($this->request->get, 'manufacturer_id', false);
 
-		if ($table === false || $product_category_id === false || $stock_status === false) {
-			$this->load->language('extension/module/client_translate_expert');
-			$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
-			$this->response->setOutput(json_encode(array('success' => false, 'message' => $this->language->get('error_bad_filter'))));
+		if ($table === false || $product_category_id === false || $stock_status === false || $manufacturer_id === false) {
+			$this->badFilterResponse();
 			return;
 		}
 
@@ -598,10 +618,11 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$this->session->data['te_product_quantity'] = $product_quantity;
 		$this->session->data['te_product_category_id'] = $product_category_id;
 		$this->session->data['te_stock_status'] = $stock_status;
+		$this->session->data['te_manufacturer_id'] = $manufacturer_id;
 
 		$this->load->model('extension/module/client_translate_expert');
 
-		$result = $this->model_extension_module_client_translate_expert->removeDataFromDb($langIdTo, $table, $product_status, $product_quantity, $product_category_id, $stock_status);
+		$result = $this->model_extension_module_client_translate_expert->removeDataFromDb($langIdTo, $table, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
 
 		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
 		$this->response->setOutput(json_encode($result));

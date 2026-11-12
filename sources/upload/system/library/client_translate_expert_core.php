@@ -43,7 +43,7 @@ class LibraryClientTranslateExpertCore
 	// translation
 
 
-	public function analizeTableDetail($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status)
+	public function analizeTableDetail($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id)
 	{
 		$this->gebugLog('analizeTableDetail: ============START============', $startTime);
 
@@ -54,7 +54,7 @@ class LibraryClientTranslateExpertCore
 
 		$languages = $this->getLanguages();
 
-		$tableResult = $this->getTableToTranslateAnalizationInfo($languageIdFrom, $tableName, $languages, $mode, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, false);
+		$tableResult = $this->getTableToTranslateAnalizationInfo($languageIdFrom, $tableName, $languages, $mode, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, false);
 
 		$translatedCharCount = 0;
 		$done = true;
@@ -83,7 +83,7 @@ class LibraryClientTranslateExpertCore
 					while (true)
 					{
 						$textToTranslateRows = $this->getTextToTranslateRows($languageIdFrom, $tableResult->table, $tableResult->pkColumnNames, $textColumnName,
-							$mode, $limit, $offset, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status);
+							$mode, $limit, $offset, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
 						if (count($textToTranslateRows) == 0)
 							break;
 						$offset += count($textToTranslateRows);
@@ -142,12 +142,12 @@ class LibraryClientTranslateExpertCore
 		);
 	}
 
-	public function analize($languageIdFrom, $languageIdTo, $mode = null, $filterTable = '', $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null,
+	public function analize($languageIdFrom, $languageIdTo, $mode = null, $filterTable = '', $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null,
 		$continueAfterTable = null, $continueAfterColumn = null, $continueOffset = 0)
 	{
 		$this->gebugLog('analize: ============START============', $startTime);
 
-		$analizeInfo = $this->getTablesToTranslateAnalizationInfo($languageIdFrom, $languageIdTo, $mode, $filterTable, $product_status, $product_quantity, $product_category_id, $stock_status, $continueAfterTable, $continueAfterColumn, $continueOffset);
+		$analizeInfo = $this->getTablesToTranslateAnalizationInfo($languageIdFrom, $languageIdTo, $mode, $filterTable, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $continueAfterTable, $continueAfterColumn, $continueOffset);
 
 		$start = microtime(true);
 
@@ -174,7 +174,7 @@ class LibraryClientTranslateExpertCore
 			$titleTable = str_replace(array('{table}'), array($tableResult->table), $this->_model->language->get('title_translate_table'));
 			$tableButtonId = $tableResult->table . '_globalCharCount';
 			$tableButton = $this->buildHtmlTranslateTableButton($languageIdFrom, $tableResult->table, $titleTable, $mode, $tableResult->tableCharCount, null, null,
-				$product_status, $product_quantity, $product_category_id, $stock_status, null, $tableButtonId);
+				$product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, null, $tableButtonId);
 			$tableResultHeaderHTML[] = str_replace(array('{table}'), array($tableResult->table), $this->_model->language->get('message_analize_table_head_info'));
 			$tableResultHeaderHTML[count($tableResultHeaderHTML) - 1] = "
 				<div class='{$nameColClass}'>{$tableResultHeaderHTML[count($tableResultHeaderHTML) - 1]}</div>
@@ -187,7 +187,7 @@ class LibraryClientTranslateExpertCore
 					continue;
 				$tableLangButtonId = $tableResult->table . '_CharCount_' . $value['code'];
 				$countStr = $this->buildHtmlTranslateTableButton($languageIdFrom, $tableResult->table, $titleTable, $mode, $value['char_count'], null, $langIdTo,
-					$product_status, $product_quantity, $product_category_id, $stock_status, $value, $tableLangButtonId);
+					$product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $value, $tableLangButtonId);
 				$tableResultHeaderHTML[count($tableResultHeaderHTML) - 1] .= "<div class='{$langColClass}'>{$countStr}</div>";
 			}
 			$tableResultHeaderHTML[count($tableResultHeaderHTML) - 1] = "<div class='row'>{$tableResultHeaderHTML[count($tableResultHeaderHTML) - 1]}</div>";
@@ -203,7 +203,7 @@ class LibraryClientTranslateExpertCore
 					$titleTableColumn = str_replace(array('{table}', '{textColumnName}'), array($tableResult->table, $textColumnName), $this->_model->language->get('title_translate_table_column'));
 					$columnButtonId = $tableResult->table . '_' . $textColumnName . '_globalCharCount';
 					$columnCountStr = $this->buildHtmlTranslateTableButton($languageIdFrom, $tableResult->table, $titleTableColumn, $mode, $tableResult->tableFieldCharCounts[$textColumnName], $textColumnName, null,
-						$product_status, $product_quantity, $product_category_id, $stock_status, null, $columnButtonId);
+						$product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, null, $columnButtonId);
 					$tableResultColumnHTML[] = str_replace(array('{table}', '{textColumnName}'), array($tableResult->table, $textColumnName), $this->_model->language->get('message_analize_field_head_info'));
 					$tableResultColumnHTML[count($tableResultColumnHTML) - 1] = "
 						<div class='{$nameColClass}'>{$tableResultColumnHTML[count($tableResultColumnHTML) - 1]}</div>
@@ -214,7 +214,7 @@ class LibraryClientTranslateExpertCore
 							continue;
 						$columnLangButtonId = $tableResult->table . '_' . $textColumnName . '_CharCount_' . $value['code'];
 						$countStr = $this->buildHtmlTranslateTableButton($languageIdFrom, $tableResult->table, $titleTableColumn, $mode, $value['char_count'], $textColumnName, $langIdTo,
-							$product_status, $product_quantity, $product_category_id, $stock_status, $value, $columnLangButtonId);
+							$product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $value, $columnLangButtonId);
 						$tableResultColumnHTML[count($tableResultColumnHTML) - 1] .= "<div class='{$langColClass}'>{$countStr}</div>";
 					}
 					$tableResultColumnHTML[count($tableResultColumnHTML) - 1] = "<div class='row'>{$tableResultColumnHTML[count($tableResultColumnHTML) - 1]}</div>";
@@ -243,7 +243,7 @@ class LibraryClientTranslateExpertCore
 		$analizeHeadInfo = $this->_model->language->get('message_analize_global_info');
 		$analizeHeadInfo = "
 			<div class='{$nameColClass}'>{$analizeHeadInfo}</div>
-			<!--div class='{$langColClass}'>{$this->buildHtmlTranslateTableButton($languageIdFrom, 'all', $titleAllTables, $mode, $analizeInfo->globalCharCount, null, null, $product_status, $product_quantity, $product_category_id, $stock_status, null, 'globalCharCount')}</div-->";
+			<!--div class='{$langColClass}'>{$this->buildHtmlTranslateTableButton($languageIdFrom, 'all', $titleAllTables, $mode, $analizeInfo->globalCharCount, null, null, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, null, 'globalCharCount')}</div-->";
 		$languageHeaderColumns = '';
 		foreach($analizeInfo->globalLanguageCharCounts as $langIdTo => $value)
 		{
@@ -251,7 +251,7 @@ class LibraryClientTranslateExpertCore
 				continue;
 			$languageHeaderColumns .= "<div class='{$langColClass}'>" . $this->buildHtmlToLanguageImage($langIdTo, $value['code']) . "</div>";
 			$analizeHeadInfo .= "<div class='{$langColClass}'>"
-				. $this->buildHtmlTranslateTableButton($languageIdFrom, 'all', $titleAllTables, $mode, $value['char_count'], null, $langIdTo, $product_status, $product_quantity, $product_category_id, $stock_status, $value, "globalLangCharCount{$value['code']}")
+				. $this->buildHtmlTranslateTableButton($languageIdFrom, 'all', $titleAllTables, $mode, $value['char_count'], null, $langIdTo, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $value, "globalLangCharCount{$value['code']}")
 				. "</div>";
 		}
 
@@ -282,7 +282,7 @@ class LibraryClientTranslateExpertCore
 		);
 	}
 
-	public function removeDataFromDb($languageIdTo, $filterTable = '', $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null)
+	public function removeDataFromDb($languageIdTo, $filterTable = '', $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null)
 	{
 		if (is_null($languageIdTo))
 		{
@@ -308,7 +308,7 @@ class LibraryClientTranslateExpertCore
 
 		foreach($tables as $table)
 		{
-			$tableResult = $this->getTableToTranslateAnalizationInfo($languageIdFrom, $table, $languages, $mode, $languageIdTo, $product_status, $product_quantity, $product_category_id, $stock_status, false);
+			$tableResult = $this->getTableToTranslateAnalizationInfo($languageIdFrom, $table, $languages, $mode, $languageIdTo, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, false);
 
 			$resultLines = array();
 
@@ -322,7 +322,7 @@ class LibraryClientTranslateExpertCore
 						if ($languageIdTo && ($languageIdTo != $language['language_id']))
 							continue;
 
-						$this->removeDataFromTable($languageIdTo, $tableResult->table, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status);
+						$this->removeDataFromTable($languageIdTo, $tableResult->table, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
 						$results[] = str_replace(array('{textColumnName}'), array($textColumnName), $this->_model->language->get('message_remove_data_from_table_column'));
 					}
 				}
@@ -366,7 +366,7 @@ INNER JOIN (
 		$this->gebugLog('insertSameTranslatedText: ============FINISH============', $startTime);
 	}
 
-	protected function insertTranslatedTableTextValue($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textToTranslateRow, $translatedText)
+	protected function insertTranslatedTableTextValue($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $textToTranslateRow, $translatedText)
 	{
 		$this->gebugLog('insertTranslatedTableTextValue: ============START============', $startTime);
 
@@ -379,7 +379,7 @@ INNER JOIN (
 		else
 		{
 			$rowsToTranslate = $this->getTextToTranslateRows($textToTranslateRow['language_id_from'], $tableResult->table, $tableResult->pkColumnNames, $textColumnName, $mode, 100500, 0,
-				$textToTranslateRow['language_id_to'], $product_status, $product_quantity, $product_category_id, $stock_status, $this->_model->db->escape($textToTranslateRow['text_from']));
+				$textToTranslateRow['language_id_to'], $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $this->_model->db->escape($textToTranslateRow['text_from']));
 		}
 
 		foreach ($rowsToTranslate as $textToTranslateRow)
@@ -481,7 +481,7 @@ INNER JOIN (
 	}
 
 	protected function buildHtmlTranslateTableButton($langIdFrom, $tableName, $title, $mode, $charCount, $textColumnName = null, $langIdTo = null,
-		$product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $value = null, $countId = null)
+		$product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null, $value = null, $countId = null)
 	{
 		$server = HTTP_SERVER;
 		$customStyleAttr = "style='background-image: url({$server}view/image/translate_expert_client/translate-icon-32.png);'";
@@ -498,14 +498,15 @@ INNER JOIN (
 
 		$categoryIdsParam = implode(',', $this->normalizeIdList($product_category_id));
 		$stockStatusParam = implode(',', $this->normalizeIdList($stock_status));
+		$manufacturerIdsParam = implode(',', $this->normalizeIdList($manufacturer_id));
 
 		$confirmation = str_replace(array('{translateTableTitle}'), array($title), $this->_model->language->get('title_translate_table_confirmation'));
-		$translateOnclick = 'doTranslateTableExpert("' . $langIdFrom . '", "' . $mode . '", "' . $tableName . '", "' . $textColumnName . '", "' . $langIdTo . '", "' . $product_status . '", "' . $product_quantity . '", "' . $categoryIdsParam . '", "' . $stockStatusParam . '", "' . $confirmation . '")';
+		$translateOnclick = 'doTranslateTableExpert("' . $langIdFrom . '", "' . $mode . '", "' . $tableName . '", "' . $textColumnName . '", "' . $langIdTo . '", "' . $product_status . '", "' . $product_quantity . '", "' . $categoryIdsParam . '", "' . $stockStatusParam . '", "' . $manufacturerIdsParam . '", "' . $confirmation . '")';
 
 		$aTabBegin = $aTabEnd = "";
 		if (!is_null($textColumnName) && !is_null($langIdTo))
 		{
-			$detailOnclick = 'analizeTableDetail("' . $langIdFrom . '", "' . $mode . '", "' . $tableName . '", "' . $textColumnName . '", "' . $langIdTo . '", "' . $product_status . '", "' . $product_quantity . '", "' . $categoryIdsParam . '", "' . $stockStatusParam . '"); return false;';
+			$detailOnclick = 'analizeTableDetail("' . $langIdFrom . '", "' . $mode . '", "' . $tableName . '", "' . $textColumnName . '", "' . $langIdTo . '", "' . $product_status . '", "' . $product_quantity . '", "' . $categoryIdsParam . '", "' . $stockStatusParam . '", "' . $manufacturerIdsParam . '"); return false;';
 			$aTabBegin = "<a onclick='{$detailOnclick}' href='#'>";
 			$aTabEnd = "</a>";
 		}
