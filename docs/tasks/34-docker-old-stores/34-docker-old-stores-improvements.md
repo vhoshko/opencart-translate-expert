@@ -23,7 +23,9 @@
 - **No Docker in the container.** Every store check needs the user. The research agent and the reviewer used vQmod and OpenCart source files with PHP to simulate parts of a store. This worked well for the vQmod logic.
 - **Scope grew after the plan started.** The user added the 1.5 build fix and the manual after Phase 0. The plan recorded it in the Context. No problem followed.
 
-## 5. Proposed edits (need the user's go-ahead)
+## 5. Proposed edits
+
+The user approved both edits on 2026-11-12. Both are applied in PR #41.
 
 1. `.claude/project-workflows.md`, **Known Environment Gotchas**, add one row:
    - Symptom: a Docker store run on the host tests old code, or a live run is not possible before the review.

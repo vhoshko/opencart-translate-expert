@@ -141,6 +141,8 @@ Record each load-bearing assumption in the `## Assumptions` section of the plan.
 2. Pass the key to `ote-build-test` only as a prompt argument. Tell the agent not to repeat it in its report.
 3. Before each review and before a commit, search for the key: `grep -rl "<first 12 key characters>" .`. The result must be empty.
 
+If the task writes install or update steps for an add-on that has a cache, read the cache-invalidation code of the add-on first. Examples are vQmod (`vqmod/mods.cache`, `vqmod/vqcache/`) and the OCMOD modification cache. A copy tool can keep old file dates, so a cache can stay valid after an update.
+
 **Skip** this step in two cases. The task touches nothing external. Or code that demonstrably works in production already establishes the behavior. In that case, cite that code as the evidence.
 
 ### Sanity check (subagent, background)
