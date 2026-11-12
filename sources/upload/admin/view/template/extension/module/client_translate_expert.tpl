@@ -77,6 +77,7 @@
 						<span class="input-group-btn"><button type="button" id="te-cron-secret-generate" class="btn btn-default"><?php echo $button_cron_secret_generate; ?></button></span>
 					  </div>
 					  <span class="help-block"><?php echo $help_cron_secret; ?></span>
+					  <div class="text-warning" id="te-cron-secret-unsaved" style="display:none"><?php echo $text_cron_secret_unsaved; ?></div>
 					</div>
 				  </div>
 				  <div class="form-group">
@@ -194,9 +195,9 @@
 				  <div class="form-group" id="te-cron-link-panel" data-cron-url="<?php echo htmlspecialchars($te_cron_url, ENT_QUOTES, 'UTF-8'); ?>">
 					<label class="col-sm-2 control-label" for="te-cron-link"><?php echo $entry_cron_link; ?></label>
 					<div class="col-sm-10">
-					  <input type="text" readonly="readonly" id="te-cron-link" class="form-control" value="" <?php if (!$te_cron_url) { echo 'style="display:none"'; } ?> />
-					  <span class="help-block" <?php if (!$te_cron_url) { echo 'style="display:none"'; } ?> id="te-cron-link-help"><?php echo $help_cron_link; ?></span>
-					  <div class="text-danger" id="te-cron-link-error" <?php if ($te_cron_url) { echo 'style="display:none"'; } ?>><?php echo $error_cron_secret; ?></div>
+					  <input type="text" readonly="readonly" id="te-cron-link" class="form-control" value="" <?php if (!$te_cron_secret_valid) { echo 'style="display:none"'; } ?> />
+					  <span class="help-block" <?php if (!$te_cron_secret_valid) { echo 'style="display:none"'; } ?> id="te-cron-link-help"><?php echo $help_cron_link; ?></span>
+					  <div class="text-danger" id="te-cron-link-error" <?php if ($te_cron_secret_valid) { echo 'style="display:none"'; } ?>><?php echo $error_cron_secret; ?></div>
 					</div>
 				  </div>
 

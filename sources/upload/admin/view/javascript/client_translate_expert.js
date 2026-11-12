@@ -1136,6 +1136,7 @@ function initModule()
 			secret += ('0' + bytes[i].toString(16)).slice(-2);
 		}
 		$('#te-cron-secret').val(secret);
+		updateTranslateExpertCronLink();
 	});
 
 	$('#te-cron-link').click(function() {
@@ -1144,6 +1145,7 @@ function initModule()
 
 	$('#te-analization-language-from, #te-analization-language-to, #te-analization-mode, #te-analization-table, #te-analization-product-status-filter, #te-analization-product-quantity-filter, #te-analization-product-category-id-filter, #te-analization-product-stock-status-filter')
 		.on('change', updateTranslateExpertCronLink);
+	$('#te-cron-bulk-amount, #te-cron-secret').on('change input', updateTranslateExpertCronLink);
 	updateTranslateExpertCronLink();
 
 	showTranslatedCharCount();
@@ -1157,7 +1159,20 @@ function updateTranslateExpertCronLink()
 		return;
 	}
 
+	var secretInput = $('#te-cron-secret');
+	var secret = $.trim(secretInput.val() || '');
+	var secretValid = /^[A-Za-z0-9_-]{16,128}$/.test(secret);
+	var secretUnsaved = secretInput.length > 0 && secret !== $.trim(secretInput.prop('defaultValue') || '');
+	$('#te-cron-secret-unsaved').toggle(secretUnsaved);
+	$('#te-cron-link, #te-cron-link-help').toggle(secretValid);
+	$('#te-cron-link-error').toggle(!secretValid);
+	if (!secretValid) {
+		$('#te-cron-link').val('');
+		return;
+	}
+
 	var params = [
+		'secret=' + encodeURIComponent(secret),
 		'langIdFrom=' + encodeURIComponent($('#te-analization-language-from').val()),
 		'langIdTo=' + encodeURIComponent($('#te-analization-language-to').val()),
 		'mode=' + encodeURIComponent($('#te-analization-mode').val())
@@ -1179,6 +1194,10 @@ function updateTranslateExpertCronLink()
 	var stockStatus = $('#te-analization-product-stock-status-filter').val();
 	if (stockStatus) {
 		params.push('stock_status=' + encodeURIComponent(stockStatus));
+	}
+	var bulkAmount = $.trim($('#te-cron-bulk-amount').val() || '');
+	if (/^[0-9]{1,9}$/.test(bulkAmount) && parseInt(bulkAmount, 10) > 0) {
+		params.push('bulk_amount=' + encodeURIComponent(parseInt(bulkAmount, 10)));
 	}
 
 	$('#te-cron-link').val(baseUrl + '&' + params.join('&'));

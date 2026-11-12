@@ -8,7 +8,7 @@ class ClientTranslateExpertCronHelper
 {
 	const SECRET_MIN_LENGTH = 16;
 	const SECRET_MAX_LENGTH = 128;
-	const BULK_AMOUNT_DEFAULT = 100;
+	const BULK_AMOUNT_DEFAULT = 1000;
 	const BULK_AMOUNT_MAX = 100000;
 
 	public static function isValidSecret($secret)
@@ -69,6 +69,12 @@ class ClientTranslateExpertCronHelper
 		if ($categoryId === false || $stockStatus === false)
 			return false;
 
+		$bulkAmount = self::optionalInt(isset($get['bulk_amount']) ? $get['bulk_amount'] : '');
+		if ($bulkAmount === false)
+			return false;
+		if ($bulkAmount !== '')
+			$bulkAmount = self::clampBulkAmount($bulkAmount);
+
 		return array(
 			'langIdFrom' => $langIdFrom,
 			'langIdTo' => $langIdTo,
@@ -78,6 +84,7 @@ class ClientTranslateExpertCronHelper
 			'product_quantity' => isset($get['product_quantity']) && $get['product_quantity'] === '1',
 			'product_category_id' => $categoryId,
 			'stock_status' => $stockStatus,
+			'bulk_amount' => $bulkAmount,
 		);
 	}
 

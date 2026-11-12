@@ -189,6 +189,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['entry_cron_link'] = $this->language->get('entry_cron_link');
 		$data['help_cron_link'] = $this->language->get('help_cron_link');
 		$data['error_cron_secret'] = $this->language->get('error_cron_secret');
+		$data['text_cron_secret_unsaved'] = $this->language->get('text_cron_secret_unsaved');
 
 		$data['entry_table_product_filter'] = $this->language->get('entry_table_product_filter');
 		$data['entry_table_product_status_filter'] = $this->language->get('entry_table_product_status_filter');
@@ -344,10 +345,9 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		{
 			$cronBaseUrl = HTTPS_CATALOG;
 		}
-		$cronSecret = (string)$this->config->get('client_translate_expert_cron_secret');
-		$data['te_cron_url'] = $this->model_extension_module_client_translate_expert->isValidCronSecret($cronSecret)
-			? $cronBaseUrl . 'index.php?route=extension/module/client_translate_expert_cron&secret=' . $cronSecret
-			: '';
+		// The page JS adds the secret from the Cron secret field (saved or not) and the filters.
+		$data['te_cron_url'] = $cronBaseUrl . 'index.php?route=extension/module/client_translate_expert_cron';
+		$data['te_cron_secret_valid'] = $this->model_extension_module_client_translate_expert->isValidCronSecret((string)$data['client_translate_expert_cron_secret']);
 
 		$data['download_href'] = $this->url->link('extension/module/client_translate_expert/downloadDebugLog', 'token=' . $this->session->data['token'], true);
 		$data['clear_href'] = $this->url->link('extension/module/client_translate_expert/clearDebugLog', 'token=' . $this->session->data['token'], true);

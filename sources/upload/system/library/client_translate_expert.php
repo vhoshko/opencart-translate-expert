@@ -128,7 +128,10 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		if ($filters['table'] !== '' && !in_array($filters['table'], $this->getTables(), true))
 			return $this->cronError('bad_params');
 
-		$rowCap = ClientTranslateExpertCronHelper::clampBulkAmount($config->get(ClientTranslateExpertCronHelper::settingKey('client_translate_expert_cron_bulk_amount', $version)));
+		if ($filters['bulk_amount'] !== '')
+			$rowCap = $filters['bulk_amount'];
+		else
+			$rowCap = ClientTranslateExpertCronHelper::clampBulkAmount($config->get(ClientTranslateExpertCronHelper::settingKey('client_translate_expert_cron_bulk_amount', $version)));
 
 		$db = $this->_model->db;
 		$lockName = 'te_cron_' . md5(DB_DATABASE . DB_PREFIX);

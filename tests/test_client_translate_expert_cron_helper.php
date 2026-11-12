@@ -71,16 +71,16 @@ class ClientTranslateExpertCronHelperTest {
 
 		$this->check(ClientTranslateExpertCronHelper::parseParams($base), array(
 			'langIdFrom' => 1, 'langIdTo' => 2, 'mode' => 'both', 'table' => '',
-			'product_status' => false, 'product_quantity' => false, 'product_category_id' => '', 'stock_status' => '',
+			'product_status' => false, 'product_quantity' => false, 'product_category_id' => '', 'stock_status' => '', 'bulk_amount' => '',
 		), 'minimal parameters get the defaults');
 
 		$full = array_merge($base, array(
 			'mode' => 'only_empty', 'table' => 'oc_product_description',
-			'product_status' => '1', 'product_quantity' => '1', 'product_category_id' => '15', 'stock_status' => '7',
+			'product_status' => '1', 'product_quantity' => '1', 'product_category_id' => '15', 'stock_status' => '7', 'bulk_amount' => '500',
 		));
 		$this->check(ClientTranslateExpertCronHelper::parseParams($full), array(
 			'langIdFrom' => 1, 'langIdTo' => 2, 'mode' => 'only_empty', 'table' => 'oc_product_description',
-			'product_status' => true, 'product_quantity' => true, 'product_category_id' => 15, 'stock_status' => 7,
+			'product_status' => true, 'product_quantity' => true, 'product_category_id' => 15, 'stock_status' => 7, 'bulk_amount' => 500,
 		), 'all parameters are normalized');
 
 		$this->check(ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('mode' => 'same_value'))) ['mode'], 'same_value', 'same_value mode is valid');
@@ -97,6 +97,11 @@ class ClientTranslateExpertCronHelperTest {
 		$this->check(ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('product_category_id' => 'x'))), false, 'non-numeric category is not valid');
 		$this->check(ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('stock_status' => '1 or 1=1'))), false, 'stock status with SQL text is not valid');
 		$this->check(ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('table' => array('x')))), false, 'array table is not valid');
+		$this->check(ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('bulk_amount' => '')))['bulk_amount'], '', 'empty bulk amount uses the saved setting');
+		$this->check(ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('bulk_amount' => '999999')))['bulk_amount'], 100000, 'a big bulk amount is limited');
+		$this->check(ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('bulk_amount' => '0'))), false, 'zero bulk amount is not valid');
+		$this->check(ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('bulk_amount' => '10x'))), false, 'bulk amount with letters is not valid');
+		$this->check(ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('bulk_amount' => array('10')))), false, 'array bulk amount is not valid');
 
 		$flags = ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('product_status' => 'true', 'product_quantity' => '0')));
 		$this->check($flags['product_status'] === false && $flags['product_quantity'] === false, true, 'a checkbox flag is set only by 1');
@@ -118,8 +123,8 @@ class ClientTranslateExpertCronHelperTest {
 	private function testClampBulkAmount()
 	{
 		echo "\nBulk amount:\n";
-		$this->check(ClientTranslateExpertCronHelper::clampBulkAmount(''), 100, 'empty value gives the default');
-		$this->check(ClientTranslateExpertCronHelper::clampBulkAmount('0'), 100, 'zero gives the default');
+		$this->check(ClientTranslateExpertCronHelper::clampBulkAmount(''), 1000, 'empty value gives the default');
+		$this->check(ClientTranslateExpertCronHelper::clampBulkAmount('0'), 1000, 'zero gives the default');
 		$this->check(ClientTranslateExpertCronHelper::clampBulkAmount('1'), 1, 'one is kept');
 		$this->check(ClientTranslateExpertCronHelper::clampBulkAmount('250'), 250, 'a normal value is kept');
 		$this->check(ClientTranslateExpertCronHelper::clampBulkAmount('999999'), 100000, 'a big value is limited');
