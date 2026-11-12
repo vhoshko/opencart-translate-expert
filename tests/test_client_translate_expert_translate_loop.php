@@ -97,6 +97,9 @@ class StubTranslateLibrary extends LibraryClientTranslateExpert
 	public $sameCalls = array();
 	public $pairs = array();
 	public $independentWrites = false;
+	public $translations = array();
+	public $sentTrimmedChars = 0;
+	public $trimLikeReal = false;
 
 	public function __construct($model = null)
 	{
@@ -179,11 +182,19 @@ class StubTranslateLibrary extends LibraryClientTranslateExpert
 			throw new Exception('boom SECRETSECRETSECRET1');
 		}
 		$out = array();
+		// The real translate() calls trimValue(), which drops the texts that trim() makes empty.
+		if ($this->trimLikeReal)
+			$text = array_values(array_filter($text, function ($t) { return trim($t) !== ''; }));
 		foreach ($text as $t)
 		{
 			$this->sent[$t] = isset($this->sent[$t]) ? $this->sent[$t] + 1 : 1;
 			$this->sentChars += mb_strlen($t);
-			$out[] = strpos($t, 'EMPTY') === 0 ? '' : 'T:' . $t;
+			// The real translate() trims each text before the Google call.
+			$this->sentTrimmedChars += mb_strlen(trim($t), 'UTF-8');
+			if (isset($this->translations[$t]))
+				$out[] = $this->translations[$t];
+			else
+				$out[] = strpos($t, 'EMPTY') === 0 ? '' : 'T:' . $t;
 		}
 		return (object)array('success' => 1, 'texts' => $out);
 	}
@@ -218,6 +229,27 @@ class StubTranslateLibrary extends LibraryClientTranslateExpert
 			$id = count($this->groups);
 			$this->groups[] = array('id' => $id, 'table' => $table, 'text' => str_pad($prefix . $table . $id . '_', $length, 'a'), 'vc' => $valueCount, 'done' => false);
 		}
+	}
+
+	public function addText($table, $text, $valueCount = 1)
+	{
+		$this->groups[] = array('id' => count($this->groups), 'table' => $table, 'text' => $text, 'vc' => $valueCount, 'done' => false);
+	}
+
+	protected function getColumns($table)
+	{
+		return array(
+			array('column_name' => 'id', 'data_type' => 'int', 'column_key' => 'PRI', 'extra' => ''),
+			array('column_name' => 'language_id', 'data_type' => 'int', 'column_key' => 'PRI', 'extra' => ''),
+			array('column_name' => 'name', 'data_type' => 'varchar', 'column_key' => '', 'extra' => ''),
+		);
+	}
+
+	// The real analysis count (parent method) over the same stub rows that the translate loop reads.
+	public function realAnalysisCount($table)
+	{
+		$info = parent::getTableToTranslateAnalizationInfo(1, $table, $this->getLanguages(), 'both', 2);
+		return $info->tableCharCount;
 	}
 
 	public function addTwins($table, $text)
@@ -316,6 +348,12 @@ class TranslateLoopTest
 		$this->testDuplicateTextGroups();
 		$this->testTimeCheckAfterFinalFlush();
 		$this->testCronReleaseLockThrows();
+		$this->testCountUsesTextSentToGoogle();
+		$this->testSameCheckUsesSqlRule();
+		$this->testAdminFailureKeepsCount();
+		$this->testFinalFlushFailureKeepsCount();
+		$this->testBatchSizeUsesSentLength();
+		$this->testZeroLengthTextIsSent();
 
 		restore_error_handler();
 
@@ -822,6 +860,116 @@ class TranslateLoopTest
 		$this->check(isset($body['error']) ? $body['error'] : null, '', 'body has no error');
 		$this->check(is_string(json_encode($body)), true, 'body is JSON-able');
 		$this->check($lib->model()->db->released(), 1, 'RELEASE_LOCK was tried once');
+	}
+
+	// Issue #38: texts with HTML entities and outer spaces. The analysis count, the counter and the
+	// characters that go to Google must be the same number.
+	private function billableFixture()
+	{
+		$lib = new StubTranslateLibrary();
+		$lib->addText('oc_a', '&lt;p&gt;Fresh &amp; tasty apples&lt;/p&gt;');
+		$lib->addText('oc_a', '  Padded product name  ');
+		$lib->addText('oc_a', 'Tom &amp; Jerry mug');
+		$lib->addText('oc_a', '&quot;Quoted&quot; title');
+		$lib->addText('oc_a', "Line one\nline two");
+		$lib->addText('oc_a', 'Plain text');
+		return $lib;
+	}
+
+	private function testCountUsesTextSentToGoogle()
+	{
+		echo "\nCount equals the text sent to Google (#38):\n";
+		// Raw mb_strlen of the fixture is 136. Decoded and trimmed (what Google gets) it is 102.
+		$lib = $this->billableFixture();
+		$this->check($lib->realAnalysisCount('oc_a'), 102, 'analysis counts decoded, trimmed text');
+		$r = $lib->translateNextBatch($this->filters('oc_a'), 100);
+		$this->check($lib->sentTrimmedChars, 102, 'Google gets 102 characters');
+		$this->check(array_sum($lib->counted), 102, 'cron counter equals the analysis count');
+		$this->check($r->chars, 102, 'cron result chars equal the analysis count');
+
+		$lib = $this->billableFixture();
+		$analysis = $lib->realAnalysisCount('oc_a');
+		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$this->check($r->translatedCharCount, $analysis, 'admin counter equals the analysis count');
+		$this->check($r->translatedCharCount, $lib->sentTrimmedChars, 'admin counter equals the characters sent');
+	}
+
+	// Issue #38: SQL selects a row again when LOWER() of source and target match with all spaces removed.
+	// PHP must then write a same-translation record, or the row is sent and counted on every read.
+	private function testSameCheckUsesSqlRule()
+	{
+		echo "\nSame-value check uses the SQL rule (#38):\n";
+		$lib = new StubTranslateLibrary();
+		$lib->addText('oc_a', '10 %');
+		$lib->addText('oc_a', 'СУПЕР ЦІНА');
+		$lib->addText('oc_a', 'Apple');
+		$lib->translations = array('10 %' => '10%', 'СУПЕР ЦІНА' => 'Супер ціна', 'Apple' => 'Яблуко');
+		$lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$texts = array();
+		foreach ($lib->sameCalls as $c)
+			$texts[] = $c[2];
+		$this->check(in_array('10%', $texts, true), true, 'inner space change writes a same-translation record');
+		$this->check(in_array('Супер ціна', $texts, true), true, 'Cyrillic case change writes a same-translation record');
+		$this->check(in_array('Яблуко', $texts, true), false, 'a real translation writes no record');
+	}
+
+	// Issue #38: when a later batch of an admin request fails, the batches that Google already got are counted.
+	private function testAdminFailureKeepsCount()
+	{
+		echo "\nAdmin failure keeps the count (#38):\n";
+		$lib = new StubTranslateLibrary();
+		$lib->add('oc_a', 3, 3000);
+		$lib->failAtCall = 2;
+		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$this->check($r->success, 0, 'the request fails');
+		$this->check(isset($r->translatedCharCount) ? $r->translatedCharCount : null, 3000, 'the first batch is in translatedCharCount');
+	}
+
+	// Issue #38: the failure of the final flush also returns the characters of the earlier batches.
+	private function testFinalFlushFailureKeepsCount()
+	{
+		echo "\nFinal flush failure keeps the count (#38):\n";
+		$lib = new StubTranslateLibrary();
+		$lib->add('oc_a', 3, 3000);
+		$lib->failAtCall = 3;
+		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$this->check($r->success, 0, 'the request fails');
+		$this->check(isset($r->translatedCharCount) ? $r->translatedCharCount : null, 6000, 'the first two batches are in translatedCharCount');
+	}
+
+	// Issue #38: the 5000 character batch rule measures the text as Google gets it (decoded).
+	private function testBatchSizeUsesSentLength()
+	{
+		echo "\nBatch size uses the sent length (#38):\n";
+		$lib = new StubTranslateLibrary();
+		// 3000 + 4800 characters in the DB, 600 + 1200 characters after the decode.
+		$lib->addText('oc_a', str_repeat('&amp;', 600));
+		$lib->addText('oc_a', str_repeat('&lt;', 1200));
+		$lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$this->check($lib->apiCalls, 1, 'two texts of 600 + 1200 sent characters go in one Google call');
+		$this->check($lib->left(), 0, 'both texts are written');
+	}
+
+	// Issue #38: a text with a sent length of 0 ("\x0B") is still flushed. As on the base, the request then
+	// fails with a visible error. It must not return success while the row stays silently in the table.
+	private function testZeroLengthTextIsSent()
+	{
+		echo "\nZero-length text is flushed (#38):\n";
+		$lib = new StubTranslateLibrary();
+		$lib->trimLikeReal = true;
+		$lib->addText('oc_a', "\x0B");
+		$r = $lib->translateTable(1, 'both', 'oc_a', null, 2, false, false, null, null);
+		$this->check($lib->apiCalls, 1, 'admin: the batch goes to the translate call');
+		$this->check($r->success, 0, 'admin: the request fails with a visible error');
+
+		// Row-cap branch (cron only): the zero-length row is first and the cap is 1.
+		$lib = new StubTranslateLibrary();
+		$lib->trimLikeReal = true;
+		$lib->addText('oc_a', "\x0B");
+		$lib->addText('oc_a', 'Plain text');
+		$r = $lib->translateNextBatch($this->filters('oc_a'), 1);
+		$this->check($lib->apiCalls, 1, 'cron cap 1: the batch goes to the translate call');
+		$this->check($r->success, 0, 'cron cap 1: the run fails with a visible error');
 	}
 
 	private function check($actual, $expected, $label)

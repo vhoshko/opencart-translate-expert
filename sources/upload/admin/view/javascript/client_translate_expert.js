@@ -699,6 +699,8 @@ function doTranslateTableExpertRecursive(langIdFrom, mode, tableName, textColumn
 		console.log(data);
 		if (!data.success)
 		{
+			// The server stores the characters of the batches that went to Google before the failure.
+			showTranslatedCharCount();
 			showTranslateExpertErrorMessage(data, null);
 			return;
 		}

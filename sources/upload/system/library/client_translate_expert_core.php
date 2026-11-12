@@ -730,6 +730,20 @@ INNER JOIN (
 		return false;
 	}
 
+	// Characters of a DB text as Google gets them: decodeHtml() and the trim() of trimValue() run before the send.
+	// The analysis, the batch size and the character counter all use this length.
+	protected function getBillableCharCount($text)
+	{
+		$decoded = $this->decodeHtml(array((string)$text));
+		return mb_strlen(trim($decoded[0]), 'UTF-8');
+	}
+
+	// The PHP form of the SQL "same value" rule in getTextToTranslateRows(): LOWER() and no ' ', '\t', '\n', '\r'.
+	protected function normalizeForSameCheck($text)
+	{
+		return mb_strtolower(str_replace(array(' ', "\t", "\n", "\r"), '', (string)$text), 'UTF-8');
+	}
+
 	protected function decodeHtml($texts)
 	{
 		foreach($texts as &$text)

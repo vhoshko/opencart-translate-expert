@@ -330,11 +330,11 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 
 							if ($budget->rowCap > 0 && $budget->rowsQueued > 0 && $budget->rowsQueued >= $budget->rowCap)
 							{
-								if ($textsToTranslateLenght > 0)
+								if (count($textRowsToTranslate) > 0)
 								{
 									$translateRes = $this->translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textRowsToTranslate, $budget);
 									if (!$translateRes->success)
-										return (object)array('success' => 0, 'done' => 0, 'message' => $translateRes->message, 'additional_message' => isset($translateRes->additional_message) ? $translateRes->additional_message : '');
+										return (object)array('success' => 0, 'done' => 0, 'message' => $translateRes->message, 'additional_message' => isset($translateRes->additional_message) ? $translateRes->additional_message : '', 'translatedCharCount' => $budget->charsDone);
 
 									$offset = 0;
 									$this->addBatchChars($budget, $textsToTranslateLenght);
@@ -350,12 +350,12 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 								}
 							}
 
-							if (($textsToTranslateLenght > 0)
-								&& ($textsToTranslateLenght + mb_strlen($textToTranslate) > 5000))
+							if ((count($textRowsToTranslate) > 0)
+								&& ($textsToTranslateLenght + $this->getBillableCharCount($textToTranslate) > 5000))
 							{
 								$translateRes = $this->translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textRowsToTranslate, $budget);
 								if (!$translateRes->success)
-									return (object)array('success' => 0, 'done' => 0, 'message' => $translateRes->message, 'additional_message' => isset($translateRes->additional_message) ? $translateRes->additional_message : '');
+									return (object)array('success' => 0, 'done' => 0, 'message' => $translateRes->message, 'additional_message' => isset($translateRes->additional_message) ? $translateRes->additional_message : '', 'translatedCharCount' => $budget->charsDone);
 
 								$offset = 0;
 								$this->addBatchChars($budget, $textsToTranslateLenght);
@@ -365,7 +365,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 								$droppedDuplicate = false;
 							}
 
-							$textsToTranslateLenght += mb_strlen($textToTranslate);
+							$textsToTranslateLenght += $this->getBillableCharCount($textToTranslate);
 							$textRowsToTranslate[] = $textToTranslateRow;
 							$queuedKeys[$queuedKey] = true;
 							$budget->rowsQueued += (int)$textToTranslateRow['value_count'];
@@ -382,11 +382,11 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 						}
 					}
 
-					if ($textsToTranslateLenght > 0)
+					if (count($textRowsToTranslate) > 0)
 					{
 						$translateRes = $this->translateTableTexts($tableResult, $mode, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $textRowsToTranslate, $budget);
 						if (!$translateRes->success)
-							return (object)array('success' => 0, 'done' => 0, 'message' => $translateRes->message, 'additional_message' => isset($translateRes->additional_message) ? $translateRes->additional_message : '');
+							return (object)array('success' => 0, 'done' => 0, 'message' => $translateRes->message, 'additional_message' => isset($translateRes->additional_message) ? $translateRes->additional_message : '', 'translatedCharCount' => $budget->charsDone);
 						$this->addBatchChars($budget, $textsToTranslateLenght);
 
 						$time_elapsed_secs = $this->now() - $budget->start;
@@ -461,7 +461,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		$c2 = count($textRowsToTranslate);
 		if ($c1 != $c2)
 		{
-			return (object)array('success' => 0, 'error_code' => 1000, 'message' => 'Internal error.', 'additional_message' => "count($translationResults->texts) != count($textRowsToTranslate), {$c1} != {$c2}");
+			return (object)array('success' => 0, 'error_code' => 1000, 'message' => 'Internal error.', 'additional_message' => 'count($translationResults->texts) != count($textRowsToTranslate), ' . $c1 . ' != ' . $c2);
 		}
 
 		if ($shouldBeDecoded)
@@ -474,7 +474,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		$c2 = count($textRowsToTranslate);
 		if ($c1 != $c2)
 		{
-			return (object)array('success' => 0, 'error_code' => 1000, 'message' => 'Internal error.', 'additional_message' => "count($translationResults->texts) != count($textRowsToTranslate), {$c1} != {$c2}");
+			return (object)array('success' => 0, 'error_code' => 1000, 'message' => 'Internal error.', 'additional_message' => 'count($translationResults->texts) != count($textRowsToTranslate), ' . $c1 . ' != ' . $c2);
 		}
 
 		for($i = 0; $i < count($textRowsToTranslate); $i++)
@@ -485,8 +485,9 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 			// Google returns '' for some texts (e.g. '.'): keep the source text, as if it came back unchanged.
 			if (trim($translatedText) === '')
 				$translatedText = $textToTranslate;
-			if (trim(strtolower($textToTranslate)) == trim(strtolower($translatedText))
-				|| isset($textToTranslateRow['text_to']) && trim(strtolower($textToTranslateRow['text_to'])) == trim(strtolower($translatedText))
+			$translatedNormalized = $this->normalizeForSameCheck($translatedText);
+			if ($this->normalizeForSameCheck($textToTranslate) === $translatedNormalized
+				|| isset($textToTranslateRow['text_to']) && $this->normalizeForSameCheck($textToTranslateRow['text_to']) === $translatedNormalized
 			)
 			{
 				$this->insertSameTranslatedText($textToTranslateRow['language_id_from'], $textToTranslateRow['language_id_to'], $translatedText);
@@ -598,7 +599,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 						//print '<br><br><br>'; var_dump($textToTranslateRow); print '<br><br><br>';
 
 						$langIdTo = $textToTranslateRow['language_id_to'];
-						$charCount = mb_strlen($textToTranslateRow['text_from']);
+						$charCount = $this->getBillableCharCount($textToTranslateRow['text_from']);
 
 						$tableCharCount += $charCount;
 						$tableLanguageCharCounts[$langIdTo]['char_count'] += $charCount;
