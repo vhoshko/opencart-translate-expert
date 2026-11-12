@@ -348,6 +348,7 @@ class TranslateLoopTest
 		$this->testDuplicateTextGroups();
 		$this->testTimeCheckAfterFinalFlush();
 		$this->testCronReleaseLockThrows();
+		$this->testTableListFilter();
 		$this->testCountUsesTextSentToGoogle();
 		$this->testSameCheckUsesSqlRule();
 		$this->testAdminFailureKeepsCount();
@@ -363,8 +364,8 @@ class TranslateLoopTest
 
 	private function filters($table)
 	{
-		return array('langIdFrom' => 1, 'langIdTo' => 2, 'mode' => 'both', 'table' => $table,
-			'product_status' => false, 'product_quantity' => false, 'product_category_id' => '', 'stock_status' => '');
+		return array('langIdFrom' => 1, 'langIdTo' => 2, 'mode' => 'both', 'table' => is_array($table) ? $table : ($table === '' ? array() : array($table)),
+			'product_status' => false, 'product_quantity' => false, 'product_category_id' => array(), 'stock_status' => array());
 	}
 
 	private function runAll($lib, $cap, $table, $maxRuns = 80)
@@ -834,6 +835,44 @@ class TranslateLoopTest
 		$this->check($r->rows, 1, 'cron: one row written');
 		$this->check($lib->left(), 0, 'cron: the row is written');
 		$this->check($r->done, false, 'cron: the final flush passes 900 s, so not done');
+	}
+
+	private function testTableListFilter()
+	{
+		echo "\nTable list filter:\n";
+		$lib = new StubTranslateLibrary();
+		$lib->tablesList = array('oc_a', 'oc_b', 'oc_c');
+		$lib->add('oc_a', 2, 20);
+		$lib->add('oc_b', 2, 20);
+		$lib->add('oc_c', 2, 20);
+		$r = $lib->translateNextBatch($this->filters(array('oc_c', 'oc_unknown', 'oc_a')), 1000);
+		$this->check($r->done, true, 'selected tables finish');
+		$this->check($r->rows, 4, 'only the two known selected tables are translated');
+		$this->check($r->table, 'oc_c', 'order follows getTables, so oc_c is last');
+		$this->check($lib->left(), 2, 'the table that is not selected stays');
+
+		$lib = new StubTranslateLibrary();
+		$lib->tablesList = array('oc_a', 'oc_b');
+		$lib->add('oc_a', 2, 20);
+		$r = $lib->translateNextBatch($this->filters(array('oc_unknown')), 1000);
+		$this->check($r->rows, 0, 'a filter with only unknown tables translates nothing');
+		$this->check($lib->left(), 2, 'no table is widened to all');
+
+		$lib = $this->cronLib();
+		$lib->tablesList = array('oc_a', 'oc_b');
+		$lib->add('oc_a', 2, 20);
+		$lib->add('oc_b', 2, 20);
+		$get = $this->cronGet();
+		$get['table'] = 'oc_a,oc_unknown';
+		$r = $lib->runCron($get);
+		$this->check($r['body']['error'], 'bad_params', 'cron: an unknown table in the list is bad_params');
+		$this->check($lib->left(), 4, 'cron: nothing is translated');
+
+		$get['table'] = 'oc_a,oc_b';
+		$r = $lib->runCron($get);
+		$this->check($r['body']['error'], '', 'cron: a list of two known tables works');
+		$this->check($r['body']['rows'], 4, 'cron: both tables are translated');
+		$this->check($r['body']['done'], true, 'cron: done');
 	}
 
 	private function testCronReleaseLockThrows()

@@ -188,6 +188,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['help_cron_secret'] = $this->language->get('help_cron_secret');
 		$data['entry_cron_link'] = $this->language->get('entry_cron_link');
 		$data['help_cron_link'] = $this->language->get('help_cron_link');
+		$data['help_multi_select'] = $this->language->get('help_multi_select');
 		$data['error_cron_secret'] = $this->language->get('error_cron_secret');
 		$data['text_cron_secret_unsaved'] = $this->language->get('text_cron_secret_unsaved');
 
@@ -316,11 +317,11 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['te_langIdFrom'] = isset($this->session->data['te_langIdFrom']) ? $this->session->data['te_langIdFrom'] : null;
 		$data['te_langIdTo'] = isset($this->session->data['te_langIdTo']) ? $this->session->data['te_langIdTo'] : null;
 		$data['te_mode'] = isset($this->session->data['te_mode']) ? $this->session->data['te_mode'] : null;
-		$data['te_table'] = isset($this->session->data['te_table']) ? $this->session->data['te_table'] : null;
+		$data['te_table'] = $this->readSessionList('te_table');
 		$data['te_product_status'] = isset($this->session->data['te_product_status']) ? $this->session->data['te_product_status'] : null;
 		$data['te_product_quantity'] = isset($this->session->data['te_product_quantity']) ? $this->session->data['te_product_quantity'] : null;
-		$data['te_product_category_id'] = isset($this->session->data['te_product_category_id']) ? $this->session->data['te_product_category_id'] : null;
-		$data['te_stock_status'] = isset($this->session->data['te_stock_status']) ? $this->session->data['te_stock_status'] : null;
+		$data['te_product_category_id'] = $this->readSessionList('te_product_category_id');
+		$data['te_stock_status'] = $this->readSessionList('te_stock_status');
 
 		$data['translate_expert_version'] = $this->getCurrentVersion();
 		$data['php_version'] = phpversion();
@@ -465,6 +466,32 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$this->response->setOutput(json_encode($result));
 	}
 
+	private function readIdListParam($source, $key) {
+		$raw = isset($source[$key]) && is_string($source[$key]) ? html_entity_decode($source[$key]) : '';
+		$this->load->model('extension/module/client_translate_expert');
+		$list = $this->model_extension_module_client_translate_expert->parseIdList($raw);
+		return $list === false ? array() : $list;
+	}
+
+	private function readTableListParam($source, $key) {
+		$raw = isset($source[$key]) && is_string($source[$key]) ? html_entity_decode($source[$key]) : '';
+		$this->load->model('extension/module/client_translate_expert');
+		$list = $this->model_extension_module_client_translate_expert->parseTableList($raw);
+		return $list === false ? array() : $list;
+	}
+
+	private function readSessionList($key) {
+		$list = array();
+		if (isset($this->session->data[$key]) && !is_null($this->session->data[$key])) {
+			foreach ((array)$this->session->data[$key] as $item) {
+				if (is_scalar($item) && (string)$item !== '') {
+					$list[] = (string)$item;
+				}
+			}
+		}
+		return $list;
+	}
+
 	public function translateTable() {
 		$langIdFrom = isset($this->request->post['langIdFrom']) ? html_entity_decode($this->request->post['langIdFrom']) : null;
 		$mode = isset($this->request->post['mode']) ? html_entity_decode($this->request->post['mode']) : null;
@@ -473,8 +500,8 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$langIdTo = isset($this->request->post['langIdTo']) ? html_entity_decode($this->request->post['langIdTo']) : null;
 		$product_status = isset($this->request->post['product_status']) ? boolval(html_entity_decode($this->request->post['product_status'])) : false;
 		$product_quantity = isset($this->request->post['product_quantity']) ? boolval(html_entity_decode($this->request->post['product_quantity'])) : false;
-		$product_category_id = isset($this->request->post['product_category_id']) ? intval(html_entity_decode($this->request->post['product_category_id'])) : null;
-		$stock_status = isset($this->request->post['stock_status']) ? intval(html_entity_decode($this->request->post['stock_status'])) : null;
+		$product_category_id = $this->readIdListParam($this->request->post, 'product_category_id');
+		$stock_status = $this->readIdListParam($this->request->post, 'stock_status');
 
 		$this->load->model('extension/module/client_translate_expert');
 		$result = $this->model_extension_module_client_translate_expert->translateTable($langIdFrom, $mode, $tableName, $textColumnName, $langIdTo, $product_status, $product_quantity, $product_category_id, $stock_status);
@@ -496,8 +523,8 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$langIdTo = isset($this->request->post['langIdTo']) ? html_entity_decode($this->request->post['langIdTo']) : null;
 		$product_status = isset($this->request->post['product_status']) ? boolval(html_entity_decode($this->request->post['product_status'])) : false;
 		$product_quantity = isset($this->request->post['product_quantity']) ? boolval(html_entity_decode($this->request->post['product_quantity'])) : false;
-		$product_category_id = isset($this->request->post['product_category_id']) ? intval(html_entity_decode($this->request->post['product_category_id'])) : null;
-		$stock_status = isset($this->request->post['stock_status']) ? intval(html_entity_decode($this->request->post['stock_status'])) : null;
+		$product_category_id = $this->readIdListParam($this->request->post, 'product_category_id');
+		$stock_status = $this->readIdListParam($this->request->post, 'stock_status');
 
 		$this->load->model('extension/module/client_translate_expert');
 		$result = $this->model_extension_module_client_translate_expert->analizeTableDetail($langIdFrom, $mode, $tableName, $textColumnName, $langIdTo, $product_status, $product_quantity, $product_category_id, $stock_status);
@@ -510,11 +537,11 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$langIdFrom = isset($this->request->get['langIdFrom']) ? html_entity_decode($this->request->get['langIdFrom']) : null;
 		$langIdTo = isset($this->request->get['langIdTo']) ? html_entity_decode($this->request->get['langIdTo']) : null;
 		$mode = isset($this->request->get['mode']) ? html_entity_decode($this->request->get['mode']) : null;
-		$table = isset($this->request->get['table']) ? html_entity_decode($this->request->get['table']) : null;
+		$table = $this->readTableListParam($this->request->get, 'table');
 		$product_status = isset($this->request->get['product_status']) ? boolval(html_entity_decode($this->request->get['product_status'])) : false;
 		$product_quantity = isset($this->request->get['product_quantity']) ? boolval(html_entity_decode($this->request->get['product_quantity'])) : false;
-		$product_category_id = isset($this->request->get['product_category_id']) ? intval(html_entity_decode($this->request->get['product_category_id'])) : null;
-		$stock_status = isset($this->request->get['stock_status']) ? intval(html_entity_decode($this->request->get['stock_status'])) : null;
+		$product_category_id = $this->readIdListParam($this->request->get, 'product_category_id');
+		$stock_status = $this->readIdListParam($this->request->get, 'stock_status');
 
 		$continueAfterTable = isset($this->request->get['continue_after_table']) ? html_entity_decode($this->request->get['continue_after_table']) : null;
 		$continueAfterColumn = isset($this->request->get['continue_after_column']) ? html_entity_decode($this->request->get['continue_after_column']) : null;
@@ -540,11 +567,11 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 	public function removeDataFromDb() {
 		$langIdTo = isset($this->request->get['langIdTo']) ? html_entity_decode($this->request->get['langIdTo']) : null;
-		$table = isset($this->request->get['table']) ? html_entity_decode($this->request->get['table']) : null;
+		$table = $this->readTableListParam($this->request->get, 'table');
 		$product_status = isset($this->request->get['product_status']) ? boolval(html_entity_decode($this->request->get['product_status'])) : false;
 		$product_quantity = isset($this->request->get['product_quantity']) ? boolval(html_entity_decode($this->request->get['product_quantity'])) : false;
-		$product_category_id = isset($this->request->get['product_category_id']) ? intval(html_entity_decode($this->request->get['product_category_id'])) : null;
-		$stock_status = isset($this->request->get['stock_status']) ? intval(html_entity_decode($this->request->get['stock_status'])) : null;
+		$product_category_id = $this->readIdListParam($this->request->get, 'product_category_id');
+		$stock_status = $this->readIdListParam($this->request->get, 'stock_status');
 
 		$this->session->data['te_langIdTo'] = $langIdTo;
 		$this->session->data['te_table'] = $table;

@@ -161,6 +161,16 @@ class ModelExtensionModuleClientTranslateExpert extends Model
 		return $this->getLibrary()->isValidCronSecret($secret);
 	}
 
+	public function parseIdList($value)
+	{
+		return $this->getLibrary()->parseIdList($value);
+	}
+
+	public function parseTableList($value)
+	{
+		return $this->getLibrary()->parseTableList($value);
+	}
+
 	public function clampCronBulkAmount($value)
 	{
 		return $this->getLibrary()->clampCronBulkAmount($value);

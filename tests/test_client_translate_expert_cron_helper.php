@@ -70,8 +70,8 @@ class ClientTranslateExpertCronHelperTest {
 		$base = array('langIdFrom' => '1', 'langIdTo' => '2');
 
 		$this->check(ClientTranslateExpertCronHelper::parseParams($base), array(
-			'langIdFrom' => 1, 'langIdTo' => 2, 'mode' => 'both', 'table' => '',
-			'product_status' => false, 'product_quantity' => false, 'product_category_id' => '', 'stock_status' => '', 'bulk_amount' => '',
+			'langIdFrom' => 1, 'langIdTo' => 2, 'mode' => 'both', 'table' => array(),
+			'product_status' => false, 'product_quantity' => false, 'product_category_id' => array(), 'stock_status' => array(), 'bulk_amount' => '',
 		), 'minimal parameters get the defaults');
 
 		$full = array_merge($base, array(
@@ -79,8 +79,8 @@ class ClientTranslateExpertCronHelperTest {
 			'product_status' => '1', 'product_quantity' => '1', 'product_category_id' => '15', 'stock_status' => '7', 'bulk_amount' => '500',
 		));
 		$this->check(ClientTranslateExpertCronHelper::parseParams($full), array(
-			'langIdFrom' => 1, 'langIdTo' => 2, 'mode' => 'only_empty', 'table' => 'oc_product_description',
-			'product_status' => true, 'product_quantity' => true, 'product_category_id' => 15, 'stock_status' => 7, 'bulk_amount' => 500,
+			'langIdFrom' => 1, 'langIdTo' => 2, 'mode' => 'only_empty', 'table' => array('oc_product_description'),
+			'product_status' => true, 'product_quantity' => true, 'product_category_id' => array(15), 'stock_status' => array(7), 'bulk_amount' => 500,
 		), 'all parameters are normalized');
 
 		$this->check(ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('mode' => 'same_value'))) ['mode'], 'same_value', 'same_value mode is valid');
@@ -106,8 +106,27 @@ class ClientTranslateExpertCronHelperTest {
 		$flags = ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('product_status' => 'true', 'product_quantity' => '0')));
 		$this->check($flags['product_status'] === false && $flags['product_quantity'] === false, true, 'a checkbox flag is set only by 1');
 
+		$multi = ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('product_category_id' => '15,16', 'stock_status' => '15, 16 ,15', 'table' => ' a , b ,a,')));
+		$this->check($multi['product_category_id'], array(15, 16), 'a list of categories is parsed');
+		$this->check($multi['stock_status'], array(15, 16), 'a list of stock statuses is trimmed and unique');
+		$this->check($multi['table'], array('a', 'b'), 'a list of tables is trimmed and unique');
+		$this->check(ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('product_category_id' => '15,x'))), false, 'a list with a text item is not valid');
+		$this->check(ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('stock_status' => '15,0'))), false, 'a list with a zero item is not valid');
+
+		$this->check(ClientTranslateExpertCronHelper::parseIdList(null), array(), 'parseIdList: null is empty');
+		$this->check(ClientTranslateExpertCronHelper::parseIdList(''), array(), 'parseIdList: empty text is empty');
+		$this->check(ClientTranslateExpertCronHelper::parseIdList(5), array(5), 'parseIdList: integer is one item');
+		$this->check(ClientTranslateExpertCronHelper::parseIdList(array(5)), false, 'parseIdList: array is not valid');
+		$this->check(ClientTranslateExpertCronHelper::parseIdList('1 or 1=1'), false, 'parseIdList: SQL text is not valid');
+		$this->check(ClientTranslateExpertCronHelper::parseIdList('3,,2,3'), array(3, 2), 'parseIdList: empty items are skipped, order is kept');
+		$this->check(ClientTranslateExpertCronHelper::parseTableList(null), array(), 'parseTableList: null is empty');
+		$this->check(ClientTranslateExpertCronHelper::parseTableList(''), array(), 'parseTableList: empty text is empty');
+		$this->check(ClientTranslateExpertCronHelper::parseTableList(5), false, 'parseTableList: integer is not valid');
+		$this->check(ClientTranslateExpertCronHelper::parseTableList(array('a')), false, 'parseTableList: array is not valid');
+		$this->check(ClientTranslateExpertCronHelper::parseTableList(' , '), array(), 'parseTableList: only separators are empty');
+
 		$empty = ClientTranslateExpertCronHelper::parseParams(array_merge($base, array('table' => '', 'product_category_id' => '', 'stock_status' => '')));
-		$this->check($empty['table'] === '' && $empty['product_category_id'] === '' && $empty['stock_status'] === '', true, 'empty table, category and stock status are kept empty');
+		$this->check($empty['table'] === array() && $empty['product_category_id'] === array() && $empty['stock_status'] === array(), true, 'empty table, category and stock status are kept empty');
 	}
 
 	private function testSettingKey()

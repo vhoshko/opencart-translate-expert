@@ -55,15 +55,15 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		return $res;
 	}
 
-	// Translates one batch for the cron link: up to $rowCap DB rows in the selected table,
-	// or in every table in order when $filters['table'] is empty. The WHERE of getTextToTranslateRows
+	// Translates one batch for the cron link: up to $rowCap DB rows in the selected tables,
+	// or in every table in order when $filters['table'] is an empty list. The WHERE of getTextToTranslateRows
 	// selects only untranslated rows, so the next call continues where this one stopped.
 	public function translateNextBatch($filters, $rowCap)
 	{
 		$this->gebugLog('translateNextBatch: ============START============', $startTime);
 
 		$budget = $this->createBatchBudget($rowCap, self::CRON_TIME_LIMIT, true);
-		$tables = $filters['table'] !== '' ? array($filters['table']) : $this->getTables();
+		$tables = $this->selectTables($filters['table']);
 
 		$res = (object)array('success' => 1, 'done' => true, 'table' => '');
 		foreach($tables as $table)
@@ -125,7 +125,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		if (!in_array($filters['langIdFrom'], $languageIds, true) || !in_array($filters['langIdTo'], $languageIds, true))
 			return $this->cronError('bad_params');
 
-		if ($filters['table'] !== '' && !in_array($filters['table'], $this->getTables(), true))
+		if (count($filters['table']) > 0 && count(array_diff($filters['table'], $this->getTables())) > 0)
 			return $this->cronError('bad_params');
 
 		if ($filters['bulk_amount'] !== '')
@@ -192,6 +192,16 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 				// The lock is released anyway when the DB connection closes.
 			}
 		}
+	}
+
+	public function parseIdList($value)
+	{
+		return ClientTranslateExpertCronHelper::parseIdList($value);
+	}
+
+	public function parseTableList($value)
+	{
+		return ClientTranslateExpertCronHelper::parseTableList($value);
 	}
 
 	public function isValidCronSecret($secret)
@@ -664,7 +674,8 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		if (is_null($mode))
 			$mode = 'both';
 
-		$tables = $filterTable ? array($filterTable) : $this->getTables();
+		$filterTable = $this->normalizeList($filterTable);
+		$tables = $this->selectTables($filterTable);
 
 		$languages = $this->getLanguages();
 
@@ -704,7 +715,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 
 			//if($table == 'oc_product_description') var_export($tableResult);
 
-			if ($tableResult->tableCharCount > 0 || $filterTable)
+			if ($tableResult->tableCharCount > 0 || count($filterTable) > 0)
 			{
 				if ($tableResult->tableTranslationIsSuppported)
 				{
@@ -737,7 +748,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 
 			$lastProcessedTable = $table;
 		}
-		if ($done && $lastProcessedTable == $tables[count($tables) - 1])
+		if ($done && (count($tables) == 0 || $lastProcessedTable == $tables[count($tables) - 1]))
 		{
 			$lastProcessedTable = null;
 			$lastProcessedColumn = null;
@@ -819,14 +830,17 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 
 		$tableHasProductId = $this->tableHasFIeld($tableName, 'product_id');
 
-		$productJoin = $tableHasProductId && ($product_status || $product_quantity || $stock_status)
+		$stockIds = $this->normalizeIdList($stock_status);
+		$categoryIds = $this->normalizeIdList($product_category_id);
+
+		$productJoin = $tableHasProductId && ($product_status || $product_quantity || count($stockIds) > 0)
 			? "join ".DB_PREFIX."product p on p.product_id = t.product_id"
 				. ($product_status ? " and p.status" : "")
 				. ($product_quantity ? " and p.quantity > 0" : "")
-				. ($stock_status ? " and p.stock_status_id = {$stock_status}" : "")
+				. (count($stockIds) > 0 ? " and p.stock_status_id in (" . implode(',', $stockIds) . ")" : "")
 			: "";
-		$productCategoryJoin = $tableHasProductId && $product_category_id
-			? "join ".DB_PREFIX."product_to_category ptc on ptc.product_id = t.product_id and ptc.category_id = {$product_category_id}"
+		$categoryCondition = $tableHasProductId && count($categoryIds) > 0
+			? " and exists (select 1 from ".DB_PREFIX."product_to_category ptc where ptc.product_id = t.product_id and ptc.category_id in (" . implode(',', $categoryIds) . "))"
 			: "";
 
 		$sql = "
@@ -855,8 +869,7 @@ left join {$tableSameTranslatedText} stt2 on stt2.language_id_from = l1.language
 	and stt2.language_id_to = l2.language_id
 	and stt2.text_hash_sum = unhex(MD5(REPLACE(REPLACE(REPLACE(REPLACE(LOWER(t2.{$textColumnName}), ' ', ''), '\t', ''), '\n', ''), '\r', '')))
 {$productJoin}
-{$productCategoryJoin}
-where {$l1WhereCondition} {$filterByTextFrom}
+where {$l1WhereCondition} {$filterByTextFrom} {$categoryCondition}
 	and (".implode(' or ', $whereConditions).")
 group by {$groupBy}
 order by t.".implode(', t.', $pkColumnNames).", t.language_id, t2.language_id
@@ -877,23 +890,26 @@ limit {$limit} offset {$offset}
 
 		$tableHasProductId = $this->tableHasFIeld($tableName, 'product_id');
 
-		$productJoin = $tableHasProductId && ($product_status || $product_quantity || $stock_status)
+		$stockIds = $this->normalizeIdList($stock_status);
+		$categoryIds = $this->normalizeIdList($product_category_id);
+
+		$productJoin = $tableHasProductId && ($product_status || $product_quantity || count($stockIds) > 0)
 			? "join ".DB_PREFIX."product p on p.product_id = t.product_id"
 				. ($product_status ? " and p.status" : "")
 				. ($product_quantity ? " and p.quantity > 0" : "")
-				. ($stock_status ? " and p.stock_status_id = {$stock_status}" : "")
+				. (count($stockIds) > 0 ? " and p.stock_status_id in (" . implode(',', $stockIds) . ")" : "")
 			: "";
-		$productCategoryJoin = $tableHasProductId && $product_category_id
-			? "join ".DB_PREFIX."product_to_category ptc on ptc.product_id = t.product_id and ptc.category_id = {$product_category_id}"
+		$categoryCondition = $tableHasProductId && count($categoryIds) > 0
+			? " and exists (select 1 from ".DB_PREFIX."product_to_category ptc where ptc.product_id = t.product_id and ptc.category_id in (" . implode(',', $categoryIds) . "))"
 			: "";
 
 
 		$sql = "
 update `{$tableName}` t
 {$productJoin}
-{$productCategoryJoin}
 set t.{$textColumnName} = ''
 where t.language_id = {$langIdToParam}
+  {$categoryCondition}
   and t.{$textColumnName} <> ''
   and t.{$textColumnName} is not null
 		";

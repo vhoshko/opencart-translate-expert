@@ -60,12 +60,12 @@ class ClientTranslateExpertCronHelper
 		if (!is_string($mode) || !in_array($mode, array('both', 'only_empty', 'same_value'), true))
 			return false;
 
-		$table = isset($get['table']) ? $get['table'] : '';
-		if (!is_string($table))
+		$table = self::parseTableList(isset($get['table']) ? $get['table'] : '');
+		if ($table === false)
 			return false;
 
-		$categoryId = self::optionalInt(isset($get['product_category_id']) ? $get['product_category_id'] : '');
-		$stockStatus = self::optionalInt(isset($get['stock_status']) ? $get['stock_status'] : '');
+		$categoryId = self::parseIdList(isset($get['product_category_id']) ? $get['product_category_id'] : '');
+		$stockStatus = self::parseIdList(isset($get['stock_status']) ? $get['stock_status'] : '');
 		if ($categoryId === false || $stockStatus === false)
 			return false;
 
@@ -86,6 +86,54 @@ class ClientTranslateExpertCronHelper
 			'stock_status' => $stockStatus,
 			'bulk_amount' => $bulkAmount,
 		);
+	}
+
+	/**
+	 * @param mixed $value Comma-separated positive integers
+	 * @return array|bool List of unique integers (empty list = no filter), or false if an item is not valid
+	 */
+	public static function parseIdList($value)
+	{
+		if ($value === '' || $value === null)
+			return array();
+		if (is_int($value))
+			$value = (string)$value;
+		if (!is_string($value))
+			return false;
+
+		$ids = array();
+		foreach(explode(',', $value) as $item)
+		{
+			$item = trim($item);
+			if ($item === '')
+				continue;
+			$id = self::positiveInt($item);
+			if ($id === false)
+				return false;
+			$ids[] = $id;
+		}
+		return array_values(array_unique($ids));
+	}
+
+	/**
+	 * @param mixed $value Comma-separated table names
+	 * @return array|bool List of unique names (empty list = no filter), or false if the value is not a string
+	 */
+	public static function parseTableList($value)
+	{
+		if ($value === '' || $value === null)
+			return array();
+		if (!is_string($value))
+			return false;
+
+		$tables = array();
+		foreach(explode(',', $value) as $item)
+		{
+			$item = trim($item);
+			if ($item !== '')
+				$tables[] = $item;
+		}
+		return array_values(array_unique($tables));
 	}
 
 	public static function settingKey($name, $version)

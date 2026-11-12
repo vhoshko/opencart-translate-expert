@@ -1,0 +1,60 @@
+# 35-multi-value-analysis-filters
+
+## Settings
+- Planning model: Opus 5.5 (inline, main session).
+- Review model: Fable 5.2 (pass `model: fable` to `ote-code-reviewer`).
+- Build and tests: yes, after every change (`./build.release.sh` with a version bump).
+- Commit, push, PR: not part of this workflow. Ask the user.
+- Standing auto-approve for review findings: no.
+- Store run: yes. After the first green build, push the branch as WIP (the user approved this push). The user pulls and tests on the host Docker stores.
+- Plan approved by the user on 2026-11-12.
+
+## Context
+Issue: https://github.com/vhoshko/opencart-translate-expert/issues/35
+
+On the analysis tab, 3 filters accept one value only: Table (`te-analization-table`), Product category (`te-analization-product-category-id-filter`) and Product stock status (`te-analization-product-stock-status-filter`). To translate 3 tables or 3 categories, the user must do 3 runs. The change affects all OC versions (1.5–4.x).
+
+The cron work (#39) merged. For this reason, the cron link (JS) and `client_translate_expert_cron_helper.php` are in scope too.
+
+Key files (HEAD `a4132c8`):
+- Templates: `client_translate_expert.tpl:134-141`, `:176-191`. `client_translate_expert.oc4.twig:134-141`, `:176-187`.
+- JS: `makeAnalizeRequest` `client_translate_expert.js:813` (reads at 825-829, GET string at 832-844). `makeRemovingDataFromDbRequest` `:969` (974-987). `updateTranslateExpertCronLink` `:1167` (1193-1207). `analizeTableDetail` `:643`, `doTranslateTableExpert` `:673` and `doTranslateTableExpertRecursive` `:694` get the values from the `onclick` strings.
+- Controller: `translateTable()` `:468`, `analizeTableDetail()` `:491`, `analize()` `:509`, `removeDataFromDb()` `:541`, session read in `index()` `:318-322`.
+- Library: table selection `client_translate_expert.php:667`, cron `:66`, cron table check `:128`, SQL `:822-830` (`getTextToTranslateRows`) and `:880-888` (`removeDataFromTable`). Core: table selection `client_translate_expert_core.php:302`, `onclick` strings `:473`, `:478`.
+- Cron helper: `parseParams` `client_translate_expert_cron_helper.php:52`. Tests: `tests/test_client_translate_expert_cron_helper.php:67-111`, `tests/test_client_translate_expert_translate_loop.php:364-367` (`filters()`), `:548-551` (`cronGet()`).
+
+## Approach
+Send each filter as one comma-separated string in all places: GET, POST, the `onclick` strings and the cron link. An empty string means "all". Old single-value cron links stay valid. Two pure helpers in `ClientTranslateExpertCronHelper` parse the strings: `parseIdList()` and `parseTableList()`. The admin controller calls them through new model and library wrappers, as it does for `isValidCronSecret`, because OC4 puts the helper in another namespace. The library takes lists: an empty list means "all". A new protected `selectTables()` replaces the 3 copies of `$x ? array($x) : $this->getTables()`. It keeps only known tables, in `getTables()` order, with sequential keys. A non-empty table filter never widens to "all".
+
+**Design correction (issue item 6).** Do not use `distinct`. The row query has `GROUP BY` (`t2.language_id, t.<text>`, or the primary keys), so the duplicates from the category join never reach Google. Only `count(*) value_count` grows. Replace the `product_to_category` join with `exists (select 1 ... ptc.category_id in (...))` in both queries. The `in (...)` list contains only `(int)` values.
+
+## Assumptions
+- ✅ The `GROUP BY` removes the duplicate rows of the category join, and only `value_count` changes. Evidence: `client_translate_expert.php:817` and the SQL at `:832-864` (read in this session).
+- ✅ A wrong `value_count` changes only the path in `insertTranslatedTableTextValue` (`client_translate_expert_core.php:375`), not the result. The `exists` form removes the problem.
+- ✅ MySQL allows a subquery on another table in a multi-table `UPDATE`. Error 1093 applies only to a subquery on the target table. `product_to_category` is never the target.
+- ✅ jQuery `.val()` on an empty `<select multiple>` gives `null` (jQuery < 3, OC 1.5–2.x) or `[]` (jQuery 3, OC 4). The JS uses `($(sel).val() || [])`, which handles both.
+- ✅ Twig `in` and PHP `in_array` compare the same types. The controller gives the template the session ids as strings, and the DB gives `category_id` and `stock_status_id` as strings.
+- ❓ No store run on OC 1.5 or OC 4 is planned before the review. The host checkout is separate, so a store run needs a WIP push (see the question to the user). Without a store run, the SQL and the templates are checked only by the build, `php -l` and code reading.
+- Decision: in the admin, an invalid id list (only possible with a hand-made request) becomes an empty list ("all"). The UI sends only valid ids. The cron link stays strict and returns `bad_params`.
+
+## Steps
+- [x] Cron helper: add `parseIdList($value)` (string or int, comma-separated, each item a positive int, unique, `''`/`null` → `array()`, anything else → `false`) and `parseTableList($value)` (string only, split, trim, drop empty items, unique, `array_values`). `parseParams()` uses them for `table`, `product_category_id` and `stock_status`. Keep PHP 5.6 syntax.
+- [x] Tests: update `testParseParams` (lists in the expected values, `'15,16'`, `'15,x'` → false, `' a , b ,a'` → `array('a','b')`, array table still false). Add tests for the two new helpers. Update `filters()` and any `'table' => ''` filters in the translate loop tests. Add a test for `selectTables()` (unknown table dropped, order of `getTables()`, non-empty filter with no known table → no tables) and for `runCron` with an unknown table in a list → `bad_params`.
+- [x] Library `client_translate_expert.php`: add `selectTables($filterTables)`, and public `parseIdList()` and `parseTableList()` wrappers. Use `selectTables()` at `:66` and `:667`. At `:128`, return `bad_params` if any table is unknown. In `getTextToTranslateRows` and `removeDataFromTable`, use `p.stock_status_id in (...)` and the `exists` semi-join. Build each `in (...)` list with `implode(',', array_map('intval', ...))`.
+- [x] Core `client_translate_expert_core.php`: use `selectTables()` at `:302`. At `:473` and `:478`, put `implode(',', ...)` of the lists in the `onclick` strings.
+- [x] Model: add `parseIdList()` and `parseTableList()` wrappers.
+- [x] Controller: in the 4 actions, read the 3 filters as comma-separated strings and parse them through the model. Store the lists in the session. In `index()`, give the template lists of strings (`(array)` for old scalar session values).
+- [x] JS: read each select as `($(sel).val() || [])` without empty items. Send `encodeURIComponent(list.join(','))` in `makeAnalizeRequest`, `makeRemovingDataFromDbRequest` and `updateTranslateExpertCronLink`. The `onclick` functions pass the strings through with no change.
+- [x] Templates: `<select multiple size="6">` with `form-control` (`.tpl`) and `form-select` (`.oc4.twig`). Remove the empty "all" option. Mark the selected items with `in_array` and `in`. Add a hint under each filter.
+- [x] Language strings (en-gb, ru-ru, uk-ua): add `help_multi_select` ("Hold Ctrl to select more than one value. If nothing is selected, all values are used."). Update `help_cron_link` (selected tables, no selection means all tables).
+- [x] Bump version + build + test
+  Findings: `ote-implementer` did the code steps. `LibraryClientTranslateExpert` extends `LibraryClientTranslateExpertCore`, so `normalizeList()`, `normalizeIdList()` and `selectTables()` are protected methods in the core. The controller has 3 private helpers (`readIdListParam`, `readTableListParam`, `readSessionList`). They are not routes. The tpl selects now have `form-control` (full width), so the filter label is below the select. I fixed one wrong comment in `translateNextBatch`. Build `04.01.0151` is green. Tests: 24 (6 skipped, no key) + 40 + 67 + 185 passed. The rewrites are correct in the OC 1.5, 2.2, 3.0 and 4.x packages. `build.sh` did not change. No DB-backed test exists for the new SQL, so the store run is the only SQL check.
+- [ ] WIP push of the branch for the store run (user approved)
+- [ ] Independent review (Fable 5.2) → `35-multi-value-analysis-filters-review.md`
+- [ ] Address review findings (the user picks which to fix or skip)
+- [ ] Bump version + build + tests (verify loop)
+- [ ] Re-review? (unreviewed fixes exist. Ask the user.)
+- [ ] Improvements pass → `35-multi-value-analysis-filters-improvements.md`
+
+## Done
+<fill at the end>

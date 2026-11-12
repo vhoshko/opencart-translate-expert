@@ -299,7 +299,7 @@ class LibraryClientTranslateExpertCore
 		$languageIdFrom = null;
 		$mode = 'both';
 
-		$tables = $filterTable ? array($filterTable) : $this->getTables();
+		$tables = $this->selectTables($this->normalizeList($filterTable));
 
 		$this->loadLanguage($this->_modulePrefix . '/client_translate_expert');
 		$languages = $this->getLanguages();
@@ -453,6 +453,33 @@ INNER JOIN (
 		return "<img src='{$langImgUrl}' alt='{$title}' title='{$title}'>";
 	}
 
+	protected function normalizeList($value)
+	{
+		if (is_array($value))
+			return $value;
+		return $value === '' || $value === null ? array() : array($value);
+	}
+
+	protected function normalizeIdList($value)
+	{
+		$ids = array();
+		foreach($this->normalizeList($value) as $item)
+		{
+			$id = (int)$item;
+			if ($id > 0)
+				$ids[] = $id;
+		}
+		return array_values(array_unique($ids));
+	}
+
+	protected function selectTables($filterTables)
+	{
+		$filterTables = $this->normalizeList($filterTables);
+		if (count($filterTables) == 0)
+			return $this->getTables();
+		return array_values(array_intersect($this->getTables(), $filterTables));
+	}
+
 	protected function buildHtmlTranslateTableButton($langIdFrom, $tableName, $title, $mode, $charCount, $textColumnName = null, $langIdTo = null,
 		$product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $value = null, $countId = null)
 	{
@@ -469,13 +496,16 @@ INNER JOIN (
 			$title = $title . $titleLangSuffix;
 		}
 
+		$categoryIdsParam = implode(',', $this->normalizeIdList($product_category_id));
+		$stockStatusParam = implode(',', $this->normalizeIdList($stock_status));
+
 		$confirmation = str_replace(array('{translateTableTitle}'), array($title), $this->_model->language->get('title_translate_table_confirmation'));
-		$translateOnclick = 'doTranslateTableExpert("' . $langIdFrom . '", "' . $mode . '", "' . $tableName . '", "' . $textColumnName . '", "' . $langIdTo . '", "' . $product_status . '", "' . $product_quantity . '", "' . $product_category_id . '", "' . $stock_status . '", "' . $confirmation . '")';
+		$translateOnclick = 'doTranslateTableExpert("' . $langIdFrom . '", "' . $mode . '", "' . $tableName . '", "' . $textColumnName . '", "' . $langIdTo . '", "' . $product_status . '", "' . $product_quantity . '", "' . $categoryIdsParam . '", "' . $stockStatusParam . '", "' . $confirmation . '")';
 
 		$aTabBegin = $aTabEnd = "";
 		if (!is_null($textColumnName) && !is_null($langIdTo))
 		{
-			$detailOnclick = 'analizeTableDetail("' . $langIdFrom . '", "' . $mode . '", "' . $tableName . '", "' . $textColumnName . '", "' . $langIdTo . '", "' . $product_status . '", "' . $product_quantity . '", "' . $product_category_id . '", "' . $stock_status . '"); return false;';
+			$detailOnclick = 'analizeTableDetail("' . $langIdFrom . '", "' . $mode . '", "' . $tableName . '", "' . $textColumnName . '", "' . $langIdTo . '", "' . $product_status . '", "' . $product_quantity . '", "' . $categoryIdsParam . '", "' . $stockStatusParam . '"); return false;';
 			$aTabBegin = "<a onclick='{$detailOnclick}' href='#'>";
 			$aTabEnd = "</a>";
 		}

@@ -810,6 +810,10 @@ function makeLocalizationAnalizeRequest(nextFileIndex = 0)
 
 }
 
+function getTranslateExpertMultiValue(selector) {
+	return $.grep($(selector).val() || [], function(v) { return v !== '' && v !== null; }).join(',');
+}
+
 function makeAnalizeRequest(lastProcessedTable = null, lastProcessedColumn = null, lastProcessedOffset = null) {
 
 	if (document.stopTranslationModelProcess) {
@@ -822,11 +826,11 @@ function makeAnalizeRequest(lastProcessedTable = null, lastProcessedColumn = nul
 	var langIdFrom = $('#te-analization-language-from').val();
 	var langIdTo = $('#te-analization-language-to').val();
 	var mode = $('#te-analization-mode').val();
-	var table = $('#te-analization-table').val();
+	var table = getTranslateExpertMultiValue('#te-analization-table');
 	var product_status = $('#te-analization-product-status-filter').is(':checked');
 	var product_quantity = $('#te-analization-product-quantity-filter').is(':checked');
-	var product_category_id = $('#te-analization-product-category-id-filter').val();
-	var stock_status = $('#te-analization-product-stock-status-filter').val();
+	var product_category_id = getTranslateExpertMultiValue('#te-analization-product-category-id-filter');
+	var stock_status = getTranslateExpertMultiValue('#te-analization-product-stock-status-filter');
 	var isDeep = $('#te-analization-table-deep').is(':checked');
 
 	$.get(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/analize'
@@ -834,11 +838,11 @@ function makeAnalizeRequest(lastProcessedTable = null, lastProcessedColumn = nul
 		+ '&langIdFrom=' + langIdFrom
 		+ '&langIdTo=' + langIdTo
 		+ '&mode=' + mode
-		+ '&table=' + table
+		+ '&table=' + encodeURIComponent(table)
 		+ (product_status ? '&product_status=1' : '')
 		+ (product_quantity ? '&product_quantity=1' : '')
-		+ (product_category_id ? '&product_category_id=' + product_category_id : '')
-		+ (stock_status ? '&stock_status=' + stock_status : '')
+		+ (product_category_id ? '&product_category_id=' + encodeURIComponent(product_category_id) : '')
+		+ (stock_status ? '&stock_status=' + encodeURIComponent(stock_status) : '')
 		+ (lastProcessedTable ? '&continue_after_table=' + lastProcessedTable : '')
 		+ (lastProcessedColumn ? '&continue_after_column=' + lastProcessedColumn : '')
 		+ (lastProcessedOffset ? '&continue_offset=' + lastProcessedOffset : '')
@@ -971,20 +975,20 @@ function makeRemovingDataFromDbRequest() {
 	var urlParams = new URLSearchParams(window.location.search);
 	var token = urlParams.get('token');
 	var langIdTo = $('#te-analization-language-to').val();
-	var table = $('#te-analization-table').val();
+	var table = getTranslateExpertMultiValue('#te-analization-table');
 	var product_status = $('#te-analization-product-status-filter').is(':checked');
 	var product_quantity = $('#te-analization-product-quantity-filter').is(':checked');
-	var product_category_id = $('#te-analization-product-category-id-filter').val();
-	var stock_status = $('#te-analization-product-stock-status-filter').val();
+	var product_category_id = getTranslateExpertMultiValue('#te-analization-product-category-id-filter');
+	var stock_status = getTranslateExpertMultiValue('#te-analization-product-stock-status-filter');
 
 	$.get(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/removeDataFromDb'
 		+ '&token=' + token
 		+ '&langIdTo=' + langIdTo
-		+ '&table=' + table
+		+ '&table=' + encodeURIComponent(table)
 		+ (product_status ? '&product_status=1' : '')
 		+ (product_quantity ? '&product_quantity=1' : '')
-		+ (product_category_id ? '&product_category_id=' + product_category_id : '')
-		+ (stock_status ? '&stock_status=' + stock_status : '')
+		+ (product_category_id ? '&product_category_id=' + encodeURIComponent(product_category_id) : '')
+		+ (stock_status ? '&stock_status=' + encodeURIComponent(stock_status) : '')
 	).done(function(data) {
 		if (!data.success)
 		{
@@ -1190,7 +1194,7 @@ function updateTranslateExpertCronLink()
 		'langIdTo=' + encodeURIComponent($('#te-analization-language-to').val()),
 		'mode=' + encodeURIComponent($('#te-analization-mode').val())
 	];
-	var table = $('#te-analization-table').val();
+	var table = getTranslateExpertMultiValue('#te-analization-table');
 	if (table) {
 		params.push('table=' + encodeURIComponent(table));
 	}
@@ -1200,11 +1204,11 @@ function updateTranslateExpertCronLink()
 	if ($('#te-analization-product-quantity-filter').is(':checked')) {
 		params.push('product_quantity=1');
 	}
-	var categoryId = $('#te-analization-product-category-id-filter').val();
+	var categoryId = getTranslateExpertMultiValue('#te-analization-product-category-id-filter');
 	if (categoryId) {
 		params.push('product_category_id=' + encodeURIComponent(categoryId));
 	}
-	var stockStatus = $('#te-analization-product-stock-status-filter').val();
+	var stockStatus = getTranslateExpertMultiValue('#te-analization-product-stock-status-filter');
 	if (stockStatus) {
 		params.push('stock_status=' + encodeURIComponent(stockStatus));
 	}
