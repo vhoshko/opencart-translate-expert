@@ -27,7 +27,7 @@
 
 ## 5. Proposed edits to the workflow skills
 
-Not applied. Each edit needs the go-ahead of the user.
+Applied on 2026-11-12, with the go-ahead of the user.
 
 1. `.claude/project-workflows.md`, **Known Environment Gotchas**: add one row (the friction came up 2 times):
    - Symptom: an in-place `perl`/`sed` edit of a PHP line leaves empty text where `$name` was, or a `grep` check of a PHP line stops a `&&` chain.
