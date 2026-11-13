@@ -59,6 +59,8 @@ $_['entry_localization_analization'] = 'Анализировать не пере
 $_['entry_localization_analization_result'] = 'Результат анализа';
 $_['entry_localization_file_to_translate_info'] = '{path}: <b>не переведено {count} значений</b>';
 $_['entry_localization_file_to_translate_info_full_translated'] = '{path}: Полностью переведен';
+$_['entry_localization_file_expression_info'] = '<b>({count} с PHP-кодом: копируются без изменений, отредактируйте их вручную)</b>';
+$_['entry_localization_file_target_missing'] = '<b>(целевой файл не существует)</b>';
 
 $_['entry_info']          = 'Информация';
 $_['entry_char_quantity'] = 'Количество символов доступных для перевода';
@@ -158,6 +160,7 @@ $_['error_lang_from_folder_is_not_exists']	   = 'Папка файлов лок�
 $_['error_lang_from_and_lang_to_are_equal']	   = 'Виберите язык на который переводить';
 $_['error_localization_save_target_invalid']	   = 'Неверная целевая папка или путь к файлу. Файл не сохранен.';
 $_['error_localization_save_failed']	   = 'Файл не сохранен. Проверьте, что веб-сервер может записывать в эту папку:';
+$_['error_localization_save_empty']	   = 'Файл пустой. Нечего сохранять.';
 
 // Messages
 $_['message_analize_global_info']     = '<b>Все таблицы</b>';

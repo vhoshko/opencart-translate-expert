@@ -178,26 +178,17 @@ function doTranslateLocalizationAllExpert(index = 0, scope = 'catalog')
 
 function doTranslateLocalization(langFromId, langToId, toTranslate, toEl, callback = null)
 {
-	/**/
+	// A value with PHP code (value.expression) is not sent to Google: its statement is copied unchanged.
 	var textArr = [];
 	Object.entries(toTranslate).forEach(([key, value]) => {
-		valueStr = value.text.trim();
+		var valueStr = value.expression ? '' : value.text.trim();
 		if (valueStr)
 			textArr.push(valueStr);
 	});
 
 	console.log(textArr);
 
-	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/translate&token=' + getOcToken(),
-		{ textArr: JSON.stringify(textArr), source: langFromId, target: langToId, format: 'html' }
-	).done(function(data) {
-		console.log(data);
-		if (!data.success)
-		{
-			showTranslateExpertErrorMessage(data, toEl);
-			return;
-		}
-
+	var appendTranslated = function(texts) {
 		var translatedResult = toEl.text();
 		if (!translatedResult
 			|| (translatedResult.indexOf('<?php') === -1)
@@ -210,8 +201,13 @@ function doTranslateLocalization(langFromId, langToId, toTranslate, toEl, callba
 			translatedResult = translatedResult + "\n";
 		var i = 0;
 		Object.entries(toTranslate).forEach(([key, value]) => {
+			if (value.expression)
+			{
+				translatedResult += "\n" + value.full_text;
+				return;
+			}
 			var valueStr = value.text.trim();
-			var translatedStr = valueStr ? data.texts[i++] : '';
+			var translatedStr = valueStr ? texts[i++] : '';
 			translatedStr = translatedStr.replaceAll('"', '\\"');
 			translatedResult += "\n$_['" + key + "'] = \"" + translatedStr + "\";";
 		});
@@ -219,10 +215,28 @@ function doTranslateLocalization(langFromId, langToId, toTranslate, toEl, callba
 		toEl.text(translatedResult);
 		toEl[0].scrollTop = toEl[0].scrollHeight;
 
-		showTranslatedCharCount();
-
 		if (callback)
 			callback();
+	};
+
+	if (!textArr.length)
+	{
+		appendTranslated([]);
+		return;
+	}
+
+	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/translate&token=' + getOcToken(),
+		{ textArr: JSON.stringify(textArr), source: langFromId, target: langToId, format: 'html' }
+	).done(function(data) {
+		console.log(data);
+		if (!data.success)
+		{
+			showTranslateExpertErrorMessage(data, toEl);
+			return;
+		}
+
+		showTranslatedCharCount();
+		appendTranslated(data.texts);
 	}).fail(function(data) {
 		console.log(data);
 		showTranslateExpertErrorMessage(data, toEl);

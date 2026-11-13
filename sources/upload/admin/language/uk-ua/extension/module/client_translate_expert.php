@@ -106,6 +106,8 @@ $_['entry_localization_analization'] = 'Аналізувати не переве
 $_['entry_localization_analization_result'] = 'Результат аналізу';
 $_['entry_localization_file_to_translate_info'] = '{path}: <b>Не перекладено {count} значень</b>';
 $_['entry_localization_file_to_translate_info_full_translated'] = '{path}: Повністю перекладений';
+$_['entry_localization_file_expression_info'] = '<b>({count} з PHP-кодом: копіюються без змін, відредагуйте їх вручну)</b>';
+$_['entry_localization_file_target_missing'] = '<b>(цільовий файл не існує)</b>';
 
 $_['entry_fileCount'] = 'Файлів всього';
 $_['entry_needToTranslateFileCount'] = 'Файлів не перекладено';
@@ -158,6 +160,7 @@ $_['error_lang_from_folder_is_not_exists']	   = 'Папка файлів лок�
 $_['error_lang_from_and_lang_to_are_equal']	   = 'Виберіть мову на яку перекладати';
 $_['error_localization_save_target_invalid']	   = 'Неправильна цільова тека або шлях до файлу. Файл не збережено.';
 $_['error_localization_save_failed']	   = 'Файл не збережено. Перевірте, що веб-сервер може записувати в цю теку:';
+$_['error_localization_save_empty']	   = 'Файл порожній. Нічого зберігати.';
 
 // Messages
 $_['message_analize_global_info']     = '<b>Всі таблиці</b>';
