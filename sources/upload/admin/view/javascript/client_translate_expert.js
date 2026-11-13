@@ -46,10 +46,40 @@ function clickTranslateExpertLocalizationHeader(el)
 	}
 }
 
+// Localization tabs: "catalog" (#tab-localization) and "admin" (#tab-admin-localization).
+var translateExpertLocalizationIds = {
+	catalog: {
+		from: '#te-localization-language-from',
+		to: '#te-localization-language-to',
+		button: '#te-begin-localization-analization',
+		result: '#te-localization-analization-result'
+	},
+	admin: {
+		from: '#te-admin-localization-language-from',
+		to: '#te-admin-localization-language-to',
+		button: '#te-begin-admin-localization-analization',
+		result: '#te-admin-localization-analization-result'
+	}
+};
+
+function getTranslateExpertLocalizationScope(el)
+{
+	return $(el).closest('[data-scope]').attr('data-scope') === 'admin' ? 'admin' : 'catalog';
+}
+
+function getTranslateExpertLocalizationResults(scope)
+{
+	if (!document.localizationAnalizationResults)
+		document.localizationAnalizationResults = {};
+	return document.localizationAnalizationResults[scope] || [];
+}
+
 function doSaveLocalizationExpert(el, callback = null)
 {
 	var headerEl = $(el).parent().parent().prev();
-	var pathTo = headerEl.data('path-to');
+	var pathTo = headerEl.attr('data-path-to');
+	var root = headerEl.attr('data-root') || 'core';
+	var scope = getTranslateExpertLocalizationScope(el);
 	console.log(pathTo);
 
 	var fromEl = $(el).parent().parent().next().find('.localization-analize-file.from pre');
@@ -62,7 +92,7 @@ function doSaveLocalizationExpert(el, callback = null)
 	var fileContent = toEl[0].value;
 
 	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/saveLocalizationFile&token=' + getOcToken(),
-		{ fileContent: fileContent, langId: langToId, path: pathTo }
+		{ fileContent: fileContent, langId: langToId, path: pathTo, scope: scope, root: root }
 	).done(function(data) {
 		console.log(data);
 		if (!data.success)
@@ -86,7 +116,9 @@ function doSaveLocalizationExpert(el, callback = null)
 function doTranslateLocalizationExpert(el, callback = null)
 {
 	var headerEl = $(el).parent().parent().prev();
-	var pathTo = headerEl.data('path-to');
+	var pathTo = headerEl.attr('data-path-to');
+	var root = headerEl.attr('data-root') || 'core';
+	var scope = getTranslateExpertLocalizationScope(el);
 	console.log(pathTo);
 
 	var fromEl = $(el).parent().parent().next().find('.localization-analize-file.from pre');
@@ -97,7 +129,7 @@ function doTranslateLocalizationExpert(el, callback = null)
 	var langToId = toEl.data('lang-to');
 	console.log(langToId);
 
-	var analizationResult = document.localizationAnalizationResult.find((analizationResult) => analizationResult.pathTo == pathTo);
+	var analizationResult = getTranslateExpertLocalizationResults(scope).find((analizationResult) => analizationResult.pathTo == pathTo && (analizationResult.root || 'core') == root);
 	if (analizationResult)
 	{
 		console.log(analizationResult);
@@ -106,14 +138,21 @@ function doTranslateLocalizationExpert(el, callback = null)
 	}
 }
 
-function doTranslateLocalizationAllExpert(index = 0)
+// scope: "catalog", "admin", or an element inside the result div of a localization tab.
+function doTranslateLocalizationAllExpert(index = 0, scope = 'catalog')
 {
-	var allButtons = $('.translate_localization_button');
+	if (typeof scope !== 'string')
+		scope = getTranslateExpertLocalizationScope(scope);
+	var ids = translateExpertLocalizationIds[scope] || translateExpertLocalizationIds.catalog;
+	var allButtons = $(ids.result).find('.translate_localization_button');
 	if (index < allButtons.length)
 	{
 		var btn = allButtons[index];
 		var headerEl = $(btn).parent().parent().prev();
-		var pathTo = headerEl.data('path-to');
+		var pathTo = headerEl.attr('data-path-to');
+		var root = headerEl.attr('data-root') || 'core';
+		if (root.indexOf('ext:') === 0)
+			pathTo = '[' + root.substr(4) + '] ' + pathTo;
 
 		showTranslateExpertModal('Translation of localization file {currIndex} of {count}: {path}.'
 			.replace('{currIndex}', index + 1)
@@ -123,7 +162,7 @@ function doTranslateLocalizationAllExpert(index = 0)
 
 		doTranslateLocalizationExpert(btn, function(){
 			doSaveLocalizationExpert(btn, function(){
-				doTranslateLocalizationAllExpert(++index);
+				doTranslateLocalizationAllExpert(++index, scope);
 			});
 		});
 	}
@@ -788,51 +827,54 @@ function confirmStopTranslationModelProcess(confirmStr) {
 	return res;
 }
 
-function makeLocalizationAnalizeRequest(nextFileIndex = 0)
+function makeLocalizationAnalizeRequest(scope = 'catalog', nextFileIndex = 0)
 {
+	var ids = translateExpertLocalizationIds[scope] || translateExpertLocalizationIds.catalog;
 	var urlParams = new URLSearchParams(window.location.search);
 	var token = urlParams.get('token');
-	var langIdFrom = $('#te-localization-language-from').val();
-	var langIdTo = $('#te-localization-language-to').val();
+	var langIdFrom = $(ids.from).val();
+	var langIdTo = $(ids.to).val();
 
 	$.get(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/analizeLocalization'
 		+ '&token=' + token
 		+ '&langIdFrom=' + langIdFrom
 		+ '&langIdTo=' + langIdTo
 		+ '&nextFileIndex=' + nextFileIndex
+		+ '&scope=' + scope
 	).done(function(data) {
 		if (!data.success)
 		{
-			showTranslateExpertErrorMessage(data, $('#te-localization-language-from')[0]);
-			$('#te-analization-result').html(data);
+			showTranslateExpertErrorMessage(data, $(ids.from)[0]);
+			$(ids.button).prop('disabled', false);
 			return;
 		}
 
 		console.log(data);
+		if (!document.localizationAnalizationResults)
+			document.localizationAnalizationResults = {};
 		if (nextFileIndex == 0)
 		{
-			$('#te-localization-analization-result').html(data.html);
-			document.localizationAnalizationResult = data.analize;
+			$(ids.result).html(data.html);
+			document.localizationAnalizationResults[scope] = data.analize;
 		}
 		else
-			document.localizationAnalizationResult = document.localizationAnalizationResult.concat(data.analize);
+			document.localizationAnalizationResults[scope] = getTranslateExpertLocalizationResults(scope).concat(data.analize);
 
-		$table = $('.localization-analize-table');
+		var $table = $(ids.result).find('.localization-analize-table');
 		$table.html($table.html() + data.detailsHtml);
 		if(!data.done)
 		{
-			makeLocalizationAnalizeRequest(data.nextFileIndex);
+			makeLocalizationAnalizeRequest(scope, data.nextFileIndex);
 		}
 		else
 		{
-			$('#te-begin-localization-analization').prop('disabled', false);
+			$(ids.button).prop('disabled', false);
 		}
 
 	}).fail(function(data) {
 		console.log(data);
-		showTranslateExpertErrorMessage(data, $('#te-localization-language-from')[0]);
-		$('#te-analization-result').html(data);
-		$('#te-begin-localization-analization').prop('disabled', false);
+		showTranslateExpertErrorMessage(data, $(ids.from)[0]);
+		$(ids.button).prop('disabled', false);
 	});
 
 }
@@ -1161,9 +1203,11 @@ function initModule()
 		}
 	});
 
-	$('#te-begin-localization-analization').click(function() {
-		$('#te-begin-localization-analization').prop('disabled', true);
-		makeLocalizationAnalizeRequest();
+	$.each(translateExpertLocalizationIds, function(scope, ids) {
+		$(ids.button).click(function() {
+			$(ids.button).prop('disabled', true);
+			makeLocalizationAnalizeRequest(scope);
+		});
 	});
 
 	showTranslatedCharCount();

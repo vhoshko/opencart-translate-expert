@@ -29,6 +29,7 @@
             <li class="<?php echo $tab_general_class; ?>"><a href="#tab-general" data-toggle="tab"><?php echo $tab_general; ?></a></li>
             <li><a href="#tab-translate-site" data-toggle="tab"><?php echo $tab_translate_site; ?></a></li>
             <li><a href="#tab-localization" data-toggle="tab"><?php echo $tab_localization; ?></a></li>
+            <li><a href="#tab-admin-localization" data-toggle="tab"><?php echo $tab_admin_localization; ?></a></li>
             <li class="<?php echo $tab_debug_class; ?>"><a href="#tab-debug" data-toggle="tab"><?php echo $tab_debug; ?></a></li>
             <li><a href="#tab-about" data-toggle="tab"><?php echo $tab_about; ?></a></li>
           </ul>
@@ -261,15 +262,52 @@
 					</div>
 				  </div>
 				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-localization-analization"><?php echo $entry_localization_analization; ?></label>
+					<label class="col-sm-2 control-label" for="te-begin-localization-analization"><?php echo $entry_localization_analization; ?></label>
 					<div class="col-sm-10">
 						<input type="button" id="te-begin-localization-analization" value="<?php echo $entity_begin_analization; ?>">
 					</div>
 				  </div>
 				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="input-client_translate_expert_status"><?php echo $entry_localization_analization_result; ?></label>
+					<label class="col-sm-2 control-label" for="te-localization-analization-result"><?php echo $entry_localization_analization_result; ?></label>
 					<div class="col-sm-10">
-						<div id="te-localization-analization-result">
+						<div id="te-localization-analization-result" data-scope="catalog">
+						</div>
+					</div>
+				  </div>	  
+				</div>
+
+
+				<div class="tab-pane" id="tab-admin-localization">
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="te-admin-localization-language-from"><?php echo $entry_localization_language_from; ?></label>
+					<div class="col-sm-10">
+						<select id="te-admin-localization-language-from">
+							<?php foreach ($languages as $language) { ?>
+							<option value="<?php echo $language['language_id']; ?>" <?php if ($te_langIdFrom == $language['language_id']) { echo 'selected="selected"'; } ?>><?php echo $language['name']; ?></option>
+							<?php } ?>
+						</select>
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="te-admin-localization-language-to"><?php echo $entry_localization_language_to; ?></label>
+					<div class="col-sm-10">
+						<select id="te-admin-localization-language-to">
+							<?php $te_langIndex = 0; foreach ($languages as $language) { ?>
+							<option value="<?php echo $language['language_id']; ?>" <?php if (empty($te_langIdTo) ? $te_langIndex == 1 : $te_langIdTo == $language['language_id']) { echo 'selected="selected"'; } ?>><?php echo $language['name']; ?></option>
+							<?php $te_langIndex++; } ?>
+						</select>
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="te-begin-admin-localization-analization"><?php echo $entry_localization_analization; ?></label>
+					<div class="col-sm-10">
+						<input type="button" id="te-begin-admin-localization-analization" value="<?php echo $entity_begin_analization; ?>">
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="te-admin-localization-analization-result"><?php echo $entry_localization_analization_result; ?></label>
+					<div class="col-sm-10">
+						<div id="te-admin-localization-analization-result" data-scope="admin">
 						</div>
 					</div>
 				  </div>	  

@@ -169,6 +169,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['tab_general'] = $this->language->get('tab_general');
 		$data['tab_translate_site'] = $this->language->get('tab_translate_site');
 		$data['tab_localization'] = $this->language->get('tab_localization');
+		$data['tab_admin_localization'] = $this->language->get('tab_admin_localization');
 		$data['tab_debug'] = $this->language->get('tab_debug');
 		$data['tab_about'] = $this->language->get('tab_about');
 
@@ -632,12 +633,13 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$langIdFrom = isset($this->request->get['langIdFrom']) ? html_entity_decode($this->request->get['langIdFrom']) : null;
 		$langIdTo = isset($this->request->get['langIdTo']) ? html_entity_decode($this->request->get['langIdTo']) : null;
 		$nextFileIndex = isset($this->request->get['nextFileIndex']) ? html_entity_decode($this->request->get['nextFileIndex']) : 0;
+		$scope = (isset($this->request->get['scope']) && $this->request->get['scope'] === 'admin') ? 'admin' : 'catalog';
 
 		$this->session->data['te_langIdFrom'] = $langIdFrom;
 		$this->session->data['te_langIdTo'] = $langIdTo;
 
 		$this->load->model('extension/module/client_translate_expert');
-		$result = $this->model_extension_module_client_translate_expert->analizeLocalization($langIdFrom, $langIdTo, $nextFileIndex);
+		$result = $this->model_extension_module_client_translate_expert->analizeLocalization($langIdFrom, $langIdTo, $nextFileIndex, $scope);
 
 		$result = $this->convert_from_latin1_to_utf8_recursively($result);
 
@@ -767,12 +769,22 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 	public function saveLocalizationFile()
 	{
-		$fileContent = isset($this->request->post['fileContent']) ? html_entity_decode($this->request->post['fileContent']) : null;
-		$langId = isset($this->request->post['langId']) ? html_entity_decode($this->request->post['langId']) : null;
-		$path = isset($this->request->post['path']) ? html_entity_decode($this->request->post['path']) : null;
+		$this->load->language('extension/module/client_translate_expert');
+
+		if (!$this->user->hasPermission('modify', 'extension/module/client_translate_expert')) {
+			$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
+			$this->response->setOutput(json_encode(array('success' => 0, 'error_code' => 3006, 'message' => $this->language->get('error_permission'))));
+			return;
+		}
+
+		$fileContent = (isset($this->request->post['fileContent']) && is_string($this->request->post['fileContent'])) ? html_entity_decode($this->request->post['fileContent']) : null;
+		$langId = (isset($this->request->post['langId']) && is_string($this->request->post['langId'])) ? html_entity_decode($this->request->post['langId']) : null;
+		$path = (isset($this->request->post['path']) && is_string($this->request->post['path'])) ? html_entity_decode($this->request->post['path']) : null;
+		$scope = (isset($this->request->post['scope']) && $this->request->post['scope'] === 'admin') ? 'admin' : 'catalog';
+		$root = (isset($this->request->post['root']) && is_string($this->request->post['root'])) ? html_entity_decode($this->request->post['root']) : 'core';
 
 		$this->load->model('extension/module/client_translate_expert');
-		$result = $this->model_extension_module_client_translate_expert->saveLocalizationFile($fileContent, $langId, $path);
+		$result = $this->model_extension_module_client_translate_expert->saveLocalizationFile($fileContent, $langId, $path, $scope, $root);
 
 		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
 		$this->response->setOutput(json_encode($result));

@@ -121,6 +121,7 @@ $_['entry_TranslateAll'] = 'Перекласти все';
 $_['tab_general']        = 'Загальна';
 $_['tab_translate_site'] = 'Переклад контенту сайту';
 $_['tab_localization']   = 'Переклад файлів локалізації';
+$_['tab_admin_localization']   = 'Переклад файлів локалізації адмінки';
 $_['tab_debug']          = 'Відлагоджування';
 $_['tab_about']          = 'Про модуль';
 
@@ -156,6 +157,8 @@ $_['error_debug_log_warning']	   = 'Попередження: Ваш файл ж
 $_['error_lang_from_folder_is_not_exists']	   = 'Папка файлів локалізації для "Мова з якої перекладати" не знайдена: ';
 $_['error_lang_to_folder_is_not_exists']	   = 'Папка файлів локалізації для "Мова на яку перекладати" не знайдена: ';
 $_['error_lang_from_and_lang_to_are_equal']	   = 'Виберіть мову на яку перекладати';
+$_['error_localization_save_target_invalid']	   = 'Неправильна цільова тека або шлях до файлу. Файл не збережено.';
+$_['error_localization_save_failed']	   = 'Файл не збережено. Перевірте, що веб-сервер може записувати в цю теку:';
 
 // Messages
 $_['message_analize_global_info']     = '<b>Всі таблиці</b>';

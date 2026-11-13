@@ -65,10 +65,10 @@ class ModelExtensionModuleClientTranslateExpert extends Model
 		}		
 	}
 
-	public function analizeLocalization($languageIdFrom, $languageIdTo, $nextFileIndex = 0)
+	public function analizeLocalization($languageIdFrom, $languageIdTo, $nextFileIndex = 0, $scope = 'catalog')
 	{
 		try {
-			$res = $this->getLocaliationLibrary()->analizeLocalization($languageIdFrom, $languageIdTo, $nextFileIndex);
+			$res = $this->getLocaliationLibrary()->analizeLocalization($languageIdFrom, $languageIdTo, $nextFileIndex, $scope);
 			$this->getLibrary()->gebugLog("function analizeLocaliation \n" . var_export($res, true));
 			return $res;
 		} catch (\Exception $e) {
@@ -77,10 +77,10 @@ class ModelExtensionModuleClientTranslateExpert extends Model
 		}		
 	}
 	
-	public function saveLocalizationFile($fileContent, $langId, $path)
+	public function saveLocalizationFile($fileContent, $langId, $path, $scope = 'catalog', $root = 'core')
 	{
 		try {
-			$res = $this->getLocaliationLibrary()->saveLocalizationFile($fileContent, $langId, $path);
+			$res = $this->getLocaliationLibrary()->saveLocalizationFile($fileContent, $langId, $path, $scope, $root);
 			$this->getLibrary()->gebugLog("function saveLocalizationFile \n" . var_export($res, true));
 			return $res;
 		} catch (\Exception $e) {

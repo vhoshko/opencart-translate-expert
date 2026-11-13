@@ -89,6 +89,9 @@ php tests/test_client_translate_expert_translate_loop.php
 
 # OC4 Twig name check: filters, tests, functions, tags (static, no Twig needed)
 php tests/test_oc4_twig_filters.php
+
+# Localization scope tests: catalog and admin language folders, OC4 extension roots, save guard (temp folders, no DB, no API key)
+php tests/test_client_translate_expert_localization.php
 ```
 
 The `VHGoogleTranslator` tests cover language code mapping, format parameter preservation, batch processing and API integration.
