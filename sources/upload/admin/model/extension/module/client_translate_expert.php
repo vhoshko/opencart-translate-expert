@@ -17,10 +17,10 @@ class ModelExtensionModuleClientTranslateExpert extends Model
 		}		
 	}
 	
-	public function translateTable($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status)
+	public function translateTable($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id)
 	{		
 		try {
-			$res = $this->getLibrary()->translateTable($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status);
+			$res = $this->getLibrary()->translateTable($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
 			$this->getLibrary()->gebugLog("function translateTable \n" . var_export($res, true));
 			return $res;
 		} catch (\Exception $e) {
@@ -29,10 +29,10 @@ class ModelExtensionModuleClientTranslateExpert extends Model
 		}		
 	}
 	
-	public function analizeTableDetail($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status)
+	public function analizeTableDetail($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id)
 	{		
 		try {
-			$res = $this->getLibrary()->analizeTableDetail($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status);
+			$res = $this->getLibrary()->analizeTableDetail($languageIdFrom, $mode, $tableName, $textColumnNameParam, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
 			$this->getLibrary()->gebugLog("function analizeTableDetail \n" . var_export($res, true));
 			return $res;
 		} catch (\Exception $e) {
@@ -41,10 +41,10 @@ class ModelExtensionModuleClientTranslateExpert extends Model
 		}		
 	}
 
-	public function analize($languageIdFrom, $languageIdTo, $mode = null, $filterTable = '', $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $continueAfterTable = null, $continueAfterColumn = null, $continueOffset = 0)
+	public function analize($languageIdFrom, $languageIdTo, $mode = null, $filterTable = '', $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null, $continueAfterTable = null, $continueAfterColumn = null, $continueOffset = 0)
 	{
 		try {
-			$res = $this->getLibrary()->analize($languageIdFrom, $languageIdTo, $mode, $filterTable, $product_status, $product_quantity, $product_category_id, $stock_status, $continueAfterTable, $continueAfterColumn, $continueOffset);
+			$res = $this->getLibrary()->analize($languageIdFrom, $languageIdTo, $mode, $filterTable, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $continueAfterTable, $continueAfterColumn, $continueOffset);
 			$this->getLibrary()->gebugLog("function analize \n" . var_export($res, true));
 			return $res;
 		} catch (\Exception $e) {
@@ -53,10 +53,10 @@ class ModelExtensionModuleClientTranslateExpert extends Model
 		}		
 	}
 
-	public function removeDataFromDb($languageIdTo, $filterTable = '', $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null)
+	public function removeDataFromDb($languageIdTo, $filterTable = '', $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null)
 	{
 		try {
-			$res = $this->getLibrary()->removeDataFromDb($languageIdTo, $filterTable, $product_status, $product_quantity, $product_category_id, $stock_status);
+			$res = $this->getLibrary()->removeDataFromDb($languageIdTo, $filterTable, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
 			$this->getLibrary()->gebugLog("function analize \n" . var_export($res, true));
 			return $res;
 		} catch (\Exception $e) {
@@ -159,6 +159,11 @@ class ModelExtensionModuleClientTranslateExpert extends Model
 	public function isValidCronSecret($secret)
 	{
 		return $this->getLibrary()->isValidCronSecret($secret);
+	}
+
+	public function getListMaxItems()
+	{
+		return $this->getLibrary()->getListMaxItems();
 	}
 
 	public function parseIdList($value)

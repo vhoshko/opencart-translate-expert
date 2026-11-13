@@ -10,6 +10,7 @@ class ClientTranslateExpertCronHelper
 	const SECRET_MAX_LENGTH = 128;
 	const BULK_AMOUNT_DEFAULT = 1000;
 	const BULK_AMOUNT_MAX = 100000;
+	const LIST_MAX_ITEMS = 100;
 
 	public static function isValidSecret($secret)
 	{
@@ -66,7 +67,8 @@ class ClientTranslateExpertCronHelper
 
 		$categoryId = self::parseIdList(isset($get['product_category_id']) ? $get['product_category_id'] : '');
 		$stockStatus = self::parseIdList(isset($get['stock_status']) ? $get['stock_status'] : '');
-		if ($categoryId === false || $stockStatus === false)
+		$manufacturerId = self::parseIdList(isset($get['manufacturer_id']) ? $get['manufacturer_id'] : '');
+		if ($categoryId === false || $stockStatus === false || $manufacturerId === false)
 			return false;
 
 		$bulkAmount = self::optionalInt(isset($get['bulk_amount']) ? $get['bulk_amount'] : '');
@@ -84,13 +86,14 @@ class ClientTranslateExpertCronHelper
 			'product_quantity' => isset($get['product_quantity']) && $get['product_quantity'] === '1',
 			'product_category_id' => $categoryId,
 			'stock_status' => $stockStatus,
+			'manufacturer_id' => $manufacturerId,
 			'bulk_amount' => $bulkAmount,
 		);
 	}
 
 	/**
 	 * @param mixed $value Comma-separated positive integers
-	 * @return array|bool List of unique integers ('' or null = empty list = no filter), or false if an item is not valid or a non-empty value has no items
+	 * @return array|bool List of unique integers ('' or null = empty list = no filter), or false if an item is not valid or a non-empty value has no items or more than LIST_MAX_ITEMS unique items
 	 */
 	public static function parseIdList($value)
 	{
@@ -112,12 +115,13 @@ class ClientTranslateExpertCronHelper
 				return false;
 			$ids[] = $id;
 		}
-		return count($ids) > 0 ? array_values(array_unique($ids)) : false;
+		$ids = array_values(array_unique($ids));
+		return count($ids) > 0 && count($ids) <= self::LIST_MAX_ITEMS ? $ids : false;
 	}
 
 	/**
 	 * @param mixed $value Comma-separated table names
-	 * @return array|bool List of unique names ('' or null = empty list = no filter), or false if the value is not a string or a non-empty value has no items
+	 * @return array|bool List of unique names ('' or null = empty list = no filter), or false if the value is not a string or a non-empty value has no items or more than LIST_MAX_ITEMS unique items
 	 */
 	public static function parseTableList($value)
 	{
@@ -133,7 +137,8 @@ class ClientTranslateExpertCronHelper
 			if ($item !== '')
 				$tables[] = $item;
 		}
-		return count($tables) > 0 ? array_values(array_unique($tables)) : false;
+		$tables = array_values(array_unique($tables));
+		return count($tables) > 0 && count($tables) <= self::LIST_MAX_ITEMS ? $tables : false;
 	}
 
 	public static function settingKey($name, $version)

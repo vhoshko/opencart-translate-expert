@@ -133,13 +133,13 @@
 				  <div class="form-group">
 					<label class="col-sm-2 control-label" for="te-analization-table"><?php echo $entry_table; ?></label>
 					<div class="col-sm-10">
-						<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-table"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-table"><?php echo $button_clear_selection; ?></button></div>
-						<select id="te-analization-table" multiple="multiple" size="6" class="form-control">
+						<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-table" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-table"><?php echo $button_clear_selection; ?></button></div>
+						<select id="te-analization-table" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
 							<?php foreach ($tables as $table) { ?>
 							<option value="<?php echo $table; ?>" <?php if (in_array((string)$table, $te_table)) { echo 'selected="selected"'; } ?>><?php echo $table; ?></option>
 							<?php } ?>
 						</select>
-						<span class="help-block"><?php echo $help_multi_select; ?></span>
+						<span class="help-block"><?php echo $help_multi_select; ?></span><div class="text-muted te-multi-select-limit" style="display:none; margin: 5px 0 10px;"><?php echo $help_multi_select_limit; ?></div>
 					</div>
 				  </div>
 				  <div class="form-group">
@@ -175,8 +175,8 @@
 						<input type="checkbox" id="te-analization-product-status-filter" value="1" <?php if ($te_product_status) { echo 'checked="checked"'; } ?>> <?php echo $entry_table_product_status_filter; ?><br><br>
 						<input type="checkbox" id="te-analization-product-quantity-filter" value="1" <?php if ($te_product_quantity) { echo 'checked="checked"'; } ?>> <?php echo $entry_table_product_quantity_filter; ?><br><br>
 						<label for="te-analization-product-category-id-filter"><?php echo $entry_table_product_category_id_filter; ?></label>
-						<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-product-category-id-filter"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-product-category-id-filter"><?php echo $button_clear_selection; ?></button></div>
-						<select id="te-analization-product-category-id-filter" multiple="multiple" size="6" class="form-control">
+						<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-product-category-id-filter" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-product-category-id-filter"><?php echo $button_clear_selection; ?></button></div>
+						<select id="te-analization-product-category-id-filter" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
 							<?php foreach($categories as $category) { ?>
 							<?php if(in_array((string)$category['category_id'], $te_product_category_id)) { ?>
 							<option value="<?php echo $category['category_id']; ?>" selected="selected"><?php echo $category['name']; ?></option>
@@ -185,24 +185,33 @@
 							<?php } ?>
 							<?php } ?>
 						</select>
-						<span class="help-block"><?php echo $help_multi_select; ?></span><br>
+						<span class="help-block"><?php echo $help_multi_select; ?></span><div class="text-muted te-multi-select-limit" style="display:none; margin: 5px 0 10px;"><?php echo $help_multi_select_limit; ?></div><br>
 						<label for="te-analization-product-stock-status-filter"><?php echo $entry_table_product_stock_status_filter; ?></label>
-						<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-product-stock-status-filter"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-product-stock-status-filter"><?php echo $button_clear_selection; ?></button></div>
-						<select id="te-analization-product-stock-status-filter" multiple="multiple" size="6" class="form-control">
+						<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-product-stock-status-filter" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-product-stock-status-filter"><?php echo $button_clear_selection; ?></button></div>
+						<select id="te-analization-product-stock-status-filter" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
 							<?php foreach ($stock_statuses as $stock_status) { ?>
 							<option value="<?php echo $stock_status['stock_status_id']; ?>" <?php if (in_array((string)$stock_status['stock_status_id'], $te_stock_status)) { echo 'selected="selected"'; } ?>><?php echo $stock_status['name']; ?></option>
 							<?php } ?>
 						</select>
-						<span class="help-block"><?php echo $help_multi_select; ?></span><br>
+						<span class="help-block"><?php echo $help_multi_select; ?></span><div class="text-muted te-multi-select-limit" style="display:none; margin: 5px 0 10px;"><?php echo $help_multi_select_limit; ?></div><br>
+						<label for="te-analization-product-manufacturer-filter"><?php echo $entry_table_product_manufacturer_filter; ?></label>
+						<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-product-manufacturer-filter" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-product-manufacturer-filter"><?php echo $button_clear_selection; ?></button></div>
+						<select id="te-analization-product-manufacturer-filter" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
+							<?php foreach ($manufacturers as $manufacturer) { ?>
+							<option value="<?php echo $manufacturer['manufacturer_id']; ?>" <?php if (in_array((string)$manufacturer['manufacturer_id'], $te_manufacturer_id)) { echo 'selected="selected"'; } ?>><?php echo $manufacturer['name']; ?></option>
+							<?php } ?>
+						</select>
+						<span class="help-block"><?php echo $help_multi_select; ?></span><div class="text-muted te-multi-select-limit" style="display:none; margin: 5px 0 10px;"><?php echo $help_multi_select_limit; ?></div><br>
 					</div>
 				  </div>
 
-				  <div class="form-group" id="te-cron-link-panel" data-cron-url="<?php echo htmlspecialchars($te_cron_url, ENT_QUOTES, 'UTF-8'); ?>">
+				  <div class="form-group" id="te-cron-link-panel" data-cron-url="<?php echo htmlspecialchars($te_cron_url, ENT_QUOTES, 'UTF-8'); ?>" data-te-max-length="<?php echo (int)$te_cron_link_max_length; ?>">
 					<label class="col-sm-2 control-label" for="te-cron-link"><?php echo $entry_cron_link; ?></label>
 					<div class="col-sm-10">
 					  <input type="text" readonly="readonly" id="te-cron-link" class="form-control" value="" <?php if (!$te_cron_secret_valid) { echo 'style="display:none"'; } ?> />
 					  <span class="help-block" <?php if (!$te_cron_secret_valid) { echo 'style="display:none"'; } ?> id="te-cron-link-help"><?php echo $help_cron_link; ?></span>
 					  <div class="text-danger" id="te-cron-link-error" <?php if ($te_cron_secret_valid) { echo 'style="display:none"'; } ?>><?php echo $error_cron_secret; ?></div>
+					  <div class="text-warning" id="te-cron-link-long" style="display:none"><?php echo $warning_cron_link_long; ?></div>
 					</div>
 				  </div>
 

@@ -133,13 +133,13 @@
               <div class="mb-3 row">
                 <label class="col-sm-2 form-label" for="te-analization-table">{{ entry_table }}</label>
                 <div class="col-sm-10">
-                  <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-table">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-table">{{ button_clear_selection }}</button></div>
-                  <select id="te-analization-table" multiple="multiple" size="6" class="form-select">
+                  <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-table" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-table">{{ button_clear_selection }}</button></div>
+                  <select id="te-analization-table" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="6" class="form-select">
                     {% for table in tables %}
                     <option value="{{ table }}" {% if table in te_table %}selected="selected"{% endif %}>{{ table }}</option>
                     {% endfor %}
                   </select>
-                  <div class="form-text">{{ help_multi_select }}</div>
+                  <div class="form-text">{{ help_multi_select }}</div><div class="form-text te-multi-select-limit" style="display:none">{{ help_multi_select_limit }}</div>
                 </div>
               </div>
               <div class="mb-3 row">
@@ -175,30 +175,39 @@
                   <input type="checkbox" id="te-analization-product-status-filter" value="1" class="form-check-input" {% if te_product_status %}checked="checked"{% endif %}> {{ entry_table_product_status_filter }}<br><br>
                   <input type="checkbox" id="te-analization-product-quantity-filter" value="1" class="form-check-input" {% if te_product_quantity %}checked="checked"{% endif %}> {{ entry_table_product_quantity_filter }}<br><br>
                   <label class="form-label" for="te-analization-product-category-id-filter">{{ entry_table_product_category_id_filter }}</label>
-                  <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-category-id-filter">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-category-id-filter">{{ button_clear_selection }}</button></div>
-                  <select id="te-analization-product-category-id-filter" multiple="multiple" size="6" class="form-select mb-2">
+                  <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-category-id-filter" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-category-id-filter">{{ button_clear_selection }}</button></div>
+                  <select id="te-analization-product-category-id-filter" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="6" class="form-select mb-2">
                     {% for category in categories %}
                     <option value="{{ category.category_id }}" {% if category.category_id in te_product_category_id %}selected="selected"{% endif %}>{{ category.name }}</option>
                     {% endfor %}
                   </select>
-                  <div class="form-text">{{ help_multi_select }}</div><br>
+                  <div class="form-text">{{ help_multi_select }}</div><div class="form-text te-multi-select-limit" style="display:none">{{ help_multi_select_limit }}</div><br>
                   <label class="form-label" for="te-analization-product-stock-status-filter">{{ entry_table_product_stock_status_filter }}</label>
-                  <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-stock-status-filter">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-stock-status-filter">{{ button_clear_selection }}</button></div>
-                  <select id="te-analization-product-stock-status-filter" multiple="multiple" size="6" class="form-select mb-2">
+                  <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-stock-status-filter" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-stock-status-filter">{{ button_clear_selection }}</button></div>
+                  <select id="te-analization-product-stock-status-filter" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="6" class="form-select mb-2">
                     {% for stock_status in stock_statuses %}
                     <option value="{{ stock_status.stock_status_id }}" {% if stock_status.stock_status_id in te_stock_status %}selected="selected"{% endif %}>{{ stock_status.name }}</option>
                     {% endfor %}
                   </select>
-                  <div class="form-text">{{ help_multi_select }}</div><br>
+                  <div class="form-text">{{ help_multi_select }}</div><div class="form-text te-multi-select-limit" style="display:none">{{ help_multi_select_limit }}</div><br>
+                  <label class="form-label" for="te-analization-product-manufacturer-filter">{{ entry_table_product_manufacturer_filter }}</label>
+                  <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-manufacturer-filter" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-manufacturer-filter">{{ button_clear_selection }}</button></div>
+                  <select id="te-analization-product-manufacturer-filter" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="6" class="form-select mb-2">
+                    {% for manufacturer in manufacturers %}
+                    <option value="{{ manufacturer.manufacturer_id }}" {% if manufacturer.manufacturer_id in te_manufacturer_id %}selected="selected"{% endif %}>{{ manufacturer.name }}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="form-text">{{ help_multi_select }}</div><div class="form-text te-multi-select-limit" style="display:none">{{ help_multi_select_limit }}</div><br>
                 </div>
               </div>
 
-              <div class="mb-3 row" id="te-cron-link-panel" data-cron-url="{{ te_cron_url|e('html_attr') }}">
+              <div class="mb-3 row" id="te-cron-link-panel" data-cron-url="{{ te_cron_url|e('html_attr') }}" data-te-max-length="{{ te_cron_link_max_length }}">
                 <label class="col-sm-2 form-label" for="te-cron-link">{{ entry_cron_link }}</label>
                 <div class="col-sm-10">
                   <input type="text" readonly="readonly" id="te-cron-link" class="form-control" value=""{% if not te_cron_secret_valid %} style="display:none"{% endif %} />
                   <div class="form-text" id="te-cron-link-help"{% if not te_cron_secret_valid %} style="display:none"{% endif %}>{{ help_cron_link }}</div>
                   <div class="text-danger" id="te-cron-link-error"{% if te_cron_secret_valid %} style="display:none"{% endif %}>{{ error_cron_secret }}</div>
+                  <div class="text-warning" id="te-cron-link-long" style="display:none">{{ warning_cron_link_long }}</div>
                 </div>
               </div>
 
