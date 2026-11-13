@@ -156,9 +156,9 @@
 					<label class="col-sm-2 control-label" for="te-analization-language-to"><?php echo $entry_analization_language_to; ?></label>
 					<div class="col-sm-10">
 						<select id="te-analization-language-to" onchange="$('#te-begin-removing_data_from_db').val('<?php echo $entity_begin_removing_data_from_db; ?> - ' + this.options[this.selectedIndex].text)">
-							<?php foreach ($languages as $language) { ?>
-							<option value="<?php echo $language['language_id']; ?>" <?php if ($te_langIdTo == $language['language_id']) { echo 'selected="selected"'; } ?>><?php echo $language['name']; ?></option>
-							<?php } ?>
+							<?php $te_langIndex = 0; foreach ($languages as $language) { ?>
+							<option value="<?php echo $language['language_id']; ?>" <?php if (empty($te_langIdTo) ? $te_langIndex == 1 : $te_langIdTo == $language['language_id']) { echo 'selected="selected"'; } ?>><?php echo $language['name']; ?></option>
+							<?php $te_langIndex++; } ?>
 						</select>
 					</div>
 				  </div>
@@ -254,9 +254,9 @@
 					<label class="col-sm-2 control-label" for="te-localization-language-to"><?php echo $entry_localization_language_to; ?></label>
 					<div class="col-sm-10">
 						<select id="te-localization-language-to">
-							<?php foreach ($languages as $language) { ?>
-							<option value="<?php echo $language['language_id']; ?>" <?php if ($te_langIdTo == $language['language_id']) { echo 'selected="selected"'; } ?>><?php echo $language['name']; ?></option>
-							<?php } ?>
+							<?php $te_langIndex = 0; foreach ($languages as $language) { ?>
+							<option value="<?php echo $language['language_id']; ?>" <?php if (empty($te_langIdTo) ? $te_langIndex == 1 : $te_langIdTo == $language['language_id']) { echo 'selected="selected"'; } ?>><?php echo $language['name']; ?></option>
+							<?php $te_langIndex++; } ?>
 						</select>
 					</div>
 				  </div>
