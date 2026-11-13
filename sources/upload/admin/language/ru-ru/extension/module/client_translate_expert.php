@@ -121,6 +121,7 @@ $_['entry_TranslateAll'] = 'Перевести всё';
 $_['tab_general']        = 'Общее';
 $_['tab_translate_site'] = 'Перевод контента сайта';
 $_['tab_localization']   = 'Перевод файлов локализации';
+$_['tab_admin_localization']   = 'Перевод файлов локализации админки';
 $_['tab_debug']          = 'Отладка';
 $_['tab_about']          = 'Про модуль';
 
@@ -156,6 +157,8 @@ $_['error_debug_log_warning']	   = 'Предупреждение: Ваш фай�
 $_['error_lang_from_folder_is_not_exists']	   = 'Папка файлов локализации для "Язык с которой переводить" не найдена: ';
 $_['error_lang_to_folder_is_not_exists']	   = 'Папка файлов локализации для "Язык на который переводить" не найдена: ';
 $_['error_lang_from_and_lang_to_are_equal']	   = 'Виберите язык на который переводить';
+$_['error_localization_save_target_invalid']	   = 'Неверная целевая папка или путь к файлу. Файл не сохранен.';
+$_['error_localization_save_failed']	   = 'Файл не сохранен. Проверьте, что веб-сервер может записывать в эту папку:';
 
 // Messages
 $_['message_analize_global_info']     = '<b>Все таблицы</b>';

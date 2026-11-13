@@ -120,6 +120,7 @@ $_['entry_TranslateAll'] = 'Translate All';
 $_['tab_general'] = 'General';
 $_['tab_translate_site'] = 'Website content translation';
 $_['tab_localization']   = 'Localization files translation';
+$_['tab_admin_localization']   = 'Admin localization files translation';
 $_['tab_debug']          = 'Debug';
 $_['tab_about'] = 'About module';
 
@@ -155,6 +156,8 @@ $_['error_debug_log_warning']	   = 'Warning: Your debug log file %s is %s!';
 $_['error_lang_from_folder_is_not_exists']	   = 'Localization files folder for "Language to translate from" not found: ';
 $_['error_lang_to_folder_is_not_exists']	   = 'Localization files folder for "Language to translate to" not found: ';
 $_['error_lang_from_and_lang_to_are_equal']	   = 'Select language to translate to';
+$_['error_localization_save_target_invalid']	   = 'The target folder or the file path is not valid. The file is not saved.';
+$_['error_localization_save_failed']	   = 'The file is not saved. Make sure that the web server can write to this folder:';
 
 // Messages;
 $_['message_analize_global_info'] =' <b>All tables</b> ';

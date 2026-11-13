@@ -850,6 +850,18 @@ INNER JOIN (
 		return DIR_CATALOG . 'language/' . $language['code'] . '/';
 	}
 
+	// The admin runs this code, so DIR_APPLICATION is the admin folder.
+	protected function getAdminLanguageFolder($language)
+	{
+		if (version_compare(VERSION, '2.2', '<'))
+			return DIR_APPLICATION . 'language/' . $language['directory'] . '/';
+
+		if (version_compare(VERSION, '4.0', '>=') && !empty($language['extension']))
+			return DIR_EXTENSION . $language['extension'] . '/admin/language/' . $language['code'] . '/';
+
+		return DIR_APPLICATION . 'language/' . $language['code'] . '/';
+	}
+
 	protected function getLanguages()
 	{
 		if (is_null($this->_languages))
