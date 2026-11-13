@@ -161,6 +161,10 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['js_const_in_progress_status'] = $this->language->get('js_const_in_progress_status');
 		$data['js_const_statistic_html'] = $this->language->get('js_const_statistic_html');
 		$data['js_const_analization_process_is_started'] = $this->language->get('js_const_analization_process_is_started');
+		$data['js_const_saved'] = $this->language->get('js_const_saved');
+		$data['js_const_localization_translate_progress'] = $this->language->get('js_const_localization_translate_progress');
+		$data['js_const_localization_translate_done'] = $this->language->get('js_const_localization_translate_done');
+		$data['js_const_preparing_detail_info'] = $this->language->get('js_const_preparing_detail_info');
 
 		$data['value_analization_mode_only_empty'] = $this->language->get('value_analization_mode_only_empty');
 		$data['value_analization_mode_same_value'] = $this->language->get('value_analization_mode_same_value');
@@ -211,12 +215,6 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			$data['error_warning'] = $this->error['warning'];
 		} else {
 			$data['error_warning'] = '';
-		}
-
-		if (isset($this->error['name'])) {
-			$data['error_name'] = $this->error['name'];
-		} else {
-			$data['error_name'] = '';
 		}
 
 		if (isset($this->error['width'])) {

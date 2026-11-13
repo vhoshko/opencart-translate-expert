@@ -55,10 +55,52 @@ foreach ($versions as $version)
 	removeTree($tmp);
 }
 
+echo "\n=== Module admin language files: key sets ===\n";
+foreach (checkModuleLanguageKeySets() as $result)
+{
+	echo ($result[0] ? ' [PASS] ' : ' [FAIL] ') . $result[1] . "\n";
+	if ($result[0])
+		$passed++;
+	else
+		$failed++;
+}
+
 echo "\n" . str_repeat('=', 50) . "\n";
 echo "Results: {$passed} passed, {$failed} failed\n";
 echo str_repeat('=', 50) . "\n";
 exit($failed === 0 && $passed > 0 ? 0 : 1);
+
+// The analysis of the module's own language file compares the keys (with the case) of the source and target files.
+// A key that only one language file has shows as "not translated". Each module language file must have the same keys.
+function checkModuleLanguageKeySets()
+{
+	$languages = array('en-gb', 'ru-ru', 'uk-ua');
+	$keys = array();
+	$results = array();
+	foreach ($languages as $code)
+	{
+		$path = __DIR__ . '/../sources/upload/admin/language/' . $code . '/extension/module/client_translate_expert.php';
+		$keys[$code] = array_keys(loadLanguageFile($path));
+		$results[] = array(count($keys[$code]) > 0, "{$code} module language file has keys");
+	}
+	foreach ($languages as $code)
+	{
+		if ($code === 'en-gb')
+			continue;
+		$missing = array_diff($keys['en-gb'], $keys[$code]);
+		$extra = array_diff($keys[$code], $keys['en-gb']);
+		$results[] = array(empty($missing), "{$code} has all en-gb keys" . (empty($missing) ? '' : ' (missing: ' . implode(', ', $missing) . ')'));
+		$results[] = array(empty($extra), "{$code} has no keys that en-gb does not have" . (empty($extra) ? '' : ' (extra: ' . implode(', ', $extra) . ')'));
+	}
+	return $results;
+}
+
+function loadLanguageFile($path)
+{
+	$_ = array();
+	include $path;
+	return $_;
+}
 
 function removeTree($dir)
 {

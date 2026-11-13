@@ -58,9 +58,6 @@
                     <input type="text" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" name="client_translate_expert_key" value="{{ client_translate_expert_key }}" placeholder="{{ entry_server_key }}" id="input-client_translate_expert_key" class="form-control te-key-masked" />
                     <button type="button" id="button-client_translate_expert_key_toggle" class="btn btn-outline-secondary" data-text-show="{{ button_show_key }}" data-text-hide="{{ button_hide_key }}">{{ button_show_key }}</button>
                   </div>
-                  {% if error_name %}
-                  <div class="text-danger">{{ error_name }}</div>
-                  {% endif %}
                 </div>
               </div>
               <div class="mb-3 row">
@@ -410,6 +407,10 @@
 	document.js_const_in_progress_status = "{{ js_const_in_progress_status|raw }}";
 	document.js_const_statistic_html = "{{ js_const_statistic_html|replace({"\n": "", "\r": ""})|raw }}";
 	document.js_const_analization_process_is_started = "{{ js_const_analization_process_is_started|raw }}";
+	document.js_const_saved = "{{ js_const_saved|raw }}";
+	document.js_const_localization_translate_progress = "{{ js_const_localization_translate_progress|raw }}";
+	document.js_const_localization_translate_done = "{{ js_const_localization_translate_done|raw }}";
+	document.js_const_preparing_detail_info = "{{ js_const_preparing_detail_info|raw }}";
 	// removing
 	document.js_const_entry_remove_translation_records_from_db_confirmation = "{{ entry_remove_translation_records_from_db_confirmation }}";
 	document.js_const_entry_removing_data_from_db_process_is_started = "{{ entry_removing_data_from_db_process_is_started }}";

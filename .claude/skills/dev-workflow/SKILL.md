@@ -101,6 +101,14 @@ git stash push -u -m "<slug>: <one-line description>" -- <paths>
 ```
 Record the stash in the Done block of the plan. Never use `git checkout --` or `git restore` as a shortcut.
 
+Before you ask, show `git diff --stat` and the list of untracked files. If the changes touch `.claude/**` or `docs/tasks/**`, also show a short summary of the content. Workflow edits and improvements files are easy to lose (tasks 44 and 50). Offer these options:
+- Commit them on a separate branch.
+- Carry them over.
+- Stash them.
+- Reset them.
+
+If the user chooses a reset, save `git diff` and the untracked files to `docs/tasks/<slug>/tmp/reset-backup/` first. Do not use the scratchpad, because it does not survive the session.
+
 ### Investigation subagent
 
 **Dispatch an Explore agent** (`subagent_type=Explore`) to map the problem across `sources/`. The root cause can span the controller, the model, the core library, the JS and the templates. Let the agent investigate freely.

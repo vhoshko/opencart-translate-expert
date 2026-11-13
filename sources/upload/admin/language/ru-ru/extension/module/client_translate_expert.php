@@ -21,7 +21,6 @@ $_['text_clear_debug_log_success']	   = 'Успех: вы успешно очи�
 $_['text_clear_confirm']	   = 'Вы хотите удалить файл журнала отладки?';
 
 // Entry
-$_['entry_key']       = 'Ключ';
 $_['entry_server_key'] = 'Google Translate Api Key (Ключ)';
 $_['button_show_key'] = 'Показать ключ';
 $_['button_hide_key'] = 'Скрыть ключ';
@@ -41,7 +40,6 @@ $_['button_clear_selection'] = 'Очистить выбор';
 $_['error_cron_secret'] = 'Ссылка для cron выключена. Секрет для cron пуст или неправильный (от 16 до 128 символов). Введите секрет или нажмите кнопку "Сгенерировать", затем сохраните настройки.';
 $_['text_cron_secret_unsaved'] = 'Секрет не сохранён. Ссылка для cron заработает только после сохранения настроек.';
 $_['entry_limit']      = 'Лимит';
-$_['entry_image']      = 'Изображение (ширина x высота)';
 $_['entry_width']      = 'Ширина';
 $_['entry_height']     = 'Высота';
 $_['entry_status']     = 'Статус';
@@ -49,7 +47,6 @@ $_['entry_login']     = 'Ваш логин';
 $_['entry_name']     = 'Название';
 $_['entity_table']    = 'Таблица';
 $_['entity_column']   = 'Колонка';
-$_['entity_language'] = 'Язык';
 $_['entry_table']     = 'Таблица';
 $_['entry_analization_language_from'] = 'Язык с которого переводить';
 $_['entry_analization_language_to'] = 'Язык на какой переводить';
@@ -79,7 +76,6 @@ $_['entry_try_translate_text']     = 'Форма проверки перевод
 $_['entry_translate_expert_version']     = 'Версия модуля';
 $_['entry_php_version']     = 'Версия PHP';
 $_['entry_opencart_version']= 'Версия Opencart';
-$_['entry_license_info']= 'Информация по лицензии';
 $_['entry_debug_status']     = 'Статус режима отладки';
 
 // удаляем перевод
@@ -143,19 +139,22 @@ $_['js_const_done_status'] = 'Завершено!';
 $_['js_const_in_progress_status'] = 'В процесе...';
 $_['js_const_statistic_html'] = "<div id='statusLog'>{historyLog}</div><div id='statusCurrent'>Таблица <strong>{table}</strong>, переведено: <strong class='statusTranslatedCharCount'>{translatedCharCount}</strong>, Статус: <strong class='translatedStatus'>{status}</strong></div>";
 $_['js_const_analization_process_is_started'] = "Выполняется процесс анализа...<br>Талица: <strong id='analization_current_table'></strong><br>Номер запроса: <strong id='analization_request_number'>1</strong>";
+$_['js_const_saved'] = 'Сохранено!';
+$_['js_const_localization_translate_progress'] = 'Перевод файла локализации {currIndex} из {count}: {path}.';
+$_['js_const_localization_translate_done'] = 'Перевод файла локализации {currIndex} из {count}: Готово!';
+$_['js_const_preparing_detail_info'] = 'Подготовка детальной информации ...';
+$_['button_localization_translate'] = 'Перевести';
+$_['button_localization_save'] = 'Сохранить';
 
 // Error
 $_['error_permission'] = 'У вас нет прав для управления этим модулем!';
 $_['error_bad_filter'] = 'Значения фильтров недопустимы. Перезагрузите страницу и выберите фильтры заново.';
-$_['error_name']       = 'Имя модуля должно быть от 3 до 64 символов!';
 $_['error_width']      = 'Необходимо указать ширину!';
 $_['error_height']     = 'Необходимо указать высоту!';
 $_['error_unlicensed'] = 'Вы используете нелицензионную версию модуля! <br> Рекомендуем купить модуль на сайте <a href="https://github.com/vhoshko/opencart-translate-expert" target="_blank">https://github.com/vhoshko/opencart-translate-expert</a> или обратиться в поддержку модуля через <a href="https://github.com/vhoshko/opencart-translate-expert/issues" target="_blank">GitHub Issues</a>';
-$_['error_unlicensed_active'] = 'Вы используете нелицензионную версию модуля! <br>Модуль работает в Демо режиме и скоро совсем перестанет работать.<br> Рекомендуем купить модуль на сайте <a href="https://github.com/vhoshko/opencart-translate-expert" target="_blank">https://github.com/vhoshko/opencart-translate-expert</a> или обратиться в поддержку модуля через <a href="https://github.com/vhoshko/opencart-translate-expert/issues" target="_blank">GitHub Issues</a>';
 $_['error_debug_log_warning']	   = 'Предупреждение: Ваш файл журналу отладки %s - %s!';
 
 $_['error_lang_from_folder_is_not_exists']	   = 'Папка файлов локализации для "Язык с которой переводить" не найдена: ';
-$_['error_lang_to_folder_is_not_exists']	   = 'Папка файлов локализации для "Язык на который переводить" не найдена: ';
 $_['error_lang_from_and_lang_to_are_equal']	   = 'Виберите язык на который переводить';
 $_['error_localization_save_target_invalid']	   = 'Неверная целевая папка или путь к файлу. Файл не сохранен.';
 $_['error_localization_save_failed']	   = 'Файл не сохранен. Проверьте, что веб-сервер может записывать в эту папку:';
