@@ -9,6 +9,8 @@ description: Use when you run an end-to-end coding task. Orchestrates the setup,
 
 This workflow orchestrates a coding task end-to-end through 7 phases. Each phase must pass before the next phase starts. The workflow never commits, pushes or creates PRs. It stops after the review and the improvements.
 
+If the user asks for a commit, a push or a PR, do it after Phase 7. Use the commit format of `project-workflows.md`. Record the request in the `## Settings` block of the plan.
+
 For a trivial task (a single file, under 20 lines, no schema or build-script impact), propose a stripped-down flow. Proceed only if the user agrees.
 
 The stripped-down flow has these steps:
@@ -206,6 +208,8 @@ Adapt the template. Drop the steps that do not apply. If you skip a standard ste
 
 **Plan review checkpoint:** Paste Context, Approach, Assumptions and Steps in chat. Ask the user to approve. Do not start Phase 2 until the user acknowledges the plan.
 
+If the `## Settings` block records standing auto-approve, paste the plan summary and continue to Phase 2. Do not wait for an answer.
+
 **Do not ask for approval of a plan that has unverified load-bearing assumptions.** Verify the assumptions first. Or say plainly which assumptions are unverified and what fails if one is wrong. The user then approves a known risk and not an unknown risk. "Approved" does not make an assumption true.
 
 **Plan updates during development:** The plan is an audit trail. It must be able to record that it was wrong.
@@ -264,7 +268,9 @@ On a bug-fix task, do these steps when the suite is green:
 
 If a mutation passes all tests, do not add a test at once. First check if later code makes the result the same. For example, a final flush after a `break` can send the rows that an earlier flush skipped. If the result is the same, record the mutation as equivalent in the Findings of the plan. Otherwise, add a test that fails with the mutation.
 
-The test scripts have no filter, so each script always runs its whole suite. Run the script inline (`php tests/test_vh_google_translator.php` or `php tests/test_client_translate_expert_route_filter.php`). Or run it through `ote-build-test` in **checks-only** mode. Never run a full build for this check, because a full build uses up a version number.
+The test scripts have no filter, so each script always runs its whole suite. Run the script inline, for example `php tests/test_client_translate_expert_localization.php`. Or run it through `ote-build-test` in **checks-only** mode. Never run a full build for this check, because a full build uses up a version number.
+
+If the mutation run stops with an unexpected exception before the new assertion, guard the test so that it reaches the assertion. Then run the mutation again.
 
 This applies only where a test exists. The test scripts are in `tests/`. The **Tests** section of `CLAUDE.md` lists them. For code without a test harness, say so in the Findings of the plan. Do not claim regression coverage.
 

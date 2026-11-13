@@ -25,3 +25,7 @@ No permission prompts occurred. Auto mode was on. No allowlist change is necessa
 1. `.claude/skills/dev-workflow/SKILL.md`, Phase 3 **Prove the test would have caught it**: replace the list of two test scripts with "the scripts in `tests/`". Add this sentence: "If the mutation run stops with an exception, guard the test so that it reaches the new assertion."
 2. `.claude/skills/dev-workflow/SKILL.md`, Phase 1 **Plan review checkpoint**: add this sentence: "If the Settings block records standing auto-approve, paste the plan summary and continue."
 3. `.claude/skills/dev-workflow/SKILL.md`, Overview: add this sentence: "If the user asks for a commit or a PR, do it after Phase 7 with the commit format of `project-workflows.md`."
+
+## 6. Applied
+
+The user approved the edits in section 5. All three edits are now in `.claude/skills/dev-workflow/SKILL.md`. The list of test scripts in edit 1 was already replaced on `main`, so only the exception-guard sentence and the inline example were added. Section 3 is covered by edits 2 and 3.
