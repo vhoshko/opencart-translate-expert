@@ -390,24 +390,9 @@ file_replace "$OC4_JS" '/client_translate_expert/translate' '/client_translate_e
 file_replace "$OC4_JS" '/client_translate_expert/analize' '/client_translate_expert.analize'
 
 # --- Update Bootstrap modal calls for OC4 (Bootstrap 5 uses native JS API, not jQuery) ---
-# Replace showTranslateExpertModal function to use Bootstrap 5 API
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    sed -i '' "/function showTranslateExpertModal/,/^}$/c\\
-function showTranslateExpertModal(message) {\\
-	\$('#translateExpertModal .modal-body').html(message);\\
-	var modalEl = document.getElementById('translateExpertModal');\\
-	var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: 'static', keyboard: false});\\
-	modal.show();\\
-}" "$OC4_JS"
-else
-    sed -i "/function showTranslateExpertModal/,/^}$/c\\
-function showTranslateExpertModal(message) {\\
-	\$('#translateExpertModal .modal-body').html(message);\\
-	var modalEl = document.getElementById('translateExpertModal');\\
-	var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: 'static', keyboard: false});\\
-	modal.show();\\
-}" "$OC4_JS"
-fi
+# showTranslateExpertModal and hideTranslateExpertModal in the source already use the Bootstrap 5 API
+# (getOrCreateInstance, and a hide that waits for the show animation). The OC4 template sets
+# data-bs-backdrop="static" and data-bs-keyboard="false", so the source functions need no rewrite.
 # Replace all .modal('hide') calls
 file_replace "$OC4_JS" "\$('#translateExpertModal').modal('hide')" "var _m = bootstrap.Modal.getInstance(document.getElementById('translateExpertModal')); if (_m) _m.hide()"
 

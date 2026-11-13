@@ -516,9 +516,33 @@ function getOcToken() {
 	return getParameter('token');
 }
 
+// Bootstrap 5 Modal.hide() does nothing while the show animation runs.
+// A fast response can ask to hide the modal in that time, so remember the request
+// and hide the modal when the animation ends.
+function trackTranslateExpertModalTransition(modalEl) {
+	if (modalEl.teTransitionTracked) {
+		return;
+	}
+	modalEl.teTransitionTracked = true;
+	modalEl.addEventListener('show.bs.modal', function() {
+		modalEl.teShowing = true;
+	});
+	modalEl.addEventListener('shown.bs.modal', function() {
+		modalEl.teShowing = false;
+		if (modalEl.teHidePending) {
+			modalEl.teHidePending = false;
+			bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+		}
+	});
+}
+
 function hideTranslateExpertModal() {
 	var modalEl = document.getElementById('translateExpertModal');
 	if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+		if (modalEl.teShowing) {
+			modalEl.teHidePending = true;
+			return;
+		}
 		var instance = bootstrap.Modal.getInstance(modalEl);
 		if (instance) instance.hide();
 	} else {
@@ -531,6 +555,8 @@ function showTranslateExpertModal(message) {
 
 	var modalEl = document.getElementById('translateExpertModal');
 	if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+		trackTranslateExpertModalTransition(modalEl);
+		modalEl.teHidePending = false;
 		bootstrap.Modal.getOrCreateInstance(modalEl).show();
 	} else {
 		$(modalEl).modal({

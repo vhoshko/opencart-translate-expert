@@ -119,3 +119,13 @@ The user declined the per-finding question and said "continue please". The main 
   Findings: `04.01.0161` → `04.01.0162`. Build green. Tests 393 passed, 6 skipped (no API key). The oc1.5, oc2.2 and oc3.0 `.tpl` files have 4 `text-muted te-multi-select-limit` hints and no `help-block` hint.
 - [x] Re-review? (ask the user)
   Findings: the user said "continue without rereview".
+
+## Update 2026-11-13: OC 4 analysis popup does not close
+
+The user tested PR #43 on the OC 4.0 store with one manufacturer. The popup stayed open at "Request number: 1".
+
+- Evidence: the `analize` response was correct (`success: 1, done: true`, 0.11 s). The JS showed the result.
+- Root cause: OC 4.0.2.3 bundles Bootstrap 5.3.1 and OC 4.1.0.0 bundles 5.3.3. `Modal.hide()` returns while `_isTransitioning` is true (`bootstrap.js` line 2492 and line 2489). The analysis finished in one request before the 300 ms show animation ended, so the hide did nothing. `hideTranslateExpertModal()` is unchanged since #9, so the bug is older than this task. The manufacturer filter only made the analysis fast enough to show it.
+- Fix: `trackTranslateExpertModalTransition()` listens to `show.bs.modal` and `shown.bs.modal`. If a hide comes during the animation, the hide runs on `shown.bs.modal`.
+- Second cause: `build.sh` replaced `showTranslateExpertModal` in the OC 4 JS, so the fix did not reach OC 4 in build `04.01.0163`. The OC 4 template sets `data-bs-backdrop="static"` and `data-bs-keyboard="false"`, so the replacement was not necessary. It is removed.
+- Proof: `tmp/modal_check.js` imitates the Bootstrap 5.3 guards and runs the real helper functions. The check fails on the old code (hide at 100 ms leaves the modal open) and passes on the new code. In build `04.01.0164` it passes on the built OC 4 and OC 3.0 JS files. Tests: 393 passed, 6 skipped.
