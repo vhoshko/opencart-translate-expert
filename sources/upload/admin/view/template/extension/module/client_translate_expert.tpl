@@ -58,9 +58,6 @@
 						<input type="text" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" name="client_translate_expert_key" value="<?php echo $client_translate_expert_key; ?>" placeholder="<?php echo $entry_server_key; ?>" id="input-client_translate_expert_key" class="form-control te-key-masked" />
 						<span class="input-group-btn"><button type="button" id="button-client_translate_expert_key_toggle" class="btn btn-default" data-text-show="<?php echo $button_show_key; ?>" data-text-hide="<?php echo $button_hide_key; ?>"><?php echo $button_show_key; ?></button></span>
 					  </div>
-					  <?php if ($error_name) { ?>
-					  <div class="text-danger"><?php echo $error_name; ?></div>
-					  <?php } ?>
 					</div>
 				  </div>
 				  <div class="form-group">
@@ -419,6 +416,10 @@
 	document.js_const_in_progress_status = "<?php echo $js_const_in_progress_status; ?>";
 	document.js_const_statistic_html = "<?php echo str_replace(array('\n', '\r', PHP_EOL), '', $js_const_statistic_html); ?>";
 	document.js_const_analization_process_is_started = "<?php echo $js_const_analization_process_is_started; ?>";
+	document.js_const_saved = "<?php echo $js_const_saved; ?>";
+	document.js_const_localization_translate_progress = "<?php echo $js_const_localization_translate_progress; ?>";
+	document.js_const_localization_translate_done = "<?php echo $js_const_localization_translate_done; ?>";
+	document.js_const_preparing_detail_info = "<?php echo $js_const_preparing_detail_info; ?>";
 	// removing
 	document.js_const_entry_remove_translation_records_from_db_confirmation = "<?php echo $entry_remove_translation_records_from_db_confirmation; ?>";
 	document.js_const_entry_removing_data_from_db_process_is_started = "<?php echo $entry_removing_data_from_db_process_is_started; ?>";

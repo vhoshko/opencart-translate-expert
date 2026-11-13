@@ -101,7 +101,7 @@ function doSaveLocalizationExpert(el, callback = null)
 			return;
 		}
 
-		showTranslateExpertInfoMessage('Saved!', toEl);
+		showTranslateExpertInfoMessage(document.js_const_saved, toEl);
 		console.log('doSaveLocalizationExpert: success');
 
 		if (callback)
@@ -154,7 +154,7 @@ function doTranslateLocalizationAllExpert(index = 0, scope = 'catalog')
 		if (root.indexOf('ext:') === 0)
 			pathTo = '[' + root.substr(4) + '] ' + pathTo;
 
-		showTranslateExpertModal('Translation of localization file {currIndex} of {count}: {path}.'
+		showTranslateExpertModal(document.js_const_localization_translate_progress
 			.replace('{currIndex}', index + 1)
 			.replace('{count}', allButtons.length)
 			.replace('{path}', pathTo)
@@ -168,7 +168,7 @@ function doTranslateLocalizationAllExpert(index = 0, scope = 'catalog')
 	}
 	else
 	{
-		showTranslateExpertModal('Translation of localization file {currIndex} of {count}: Done!'
+		showTranslateExpertModal(document.js_const_localization_translate_done
 			.replace('{currIndex}', allButtons.length)
 			.replace('{count}', allButtons.length)
 			.replace('{path}', pathTo)
@@ -715,7 +715,7 @@ function analizeTableDetail(langIdFrom, mode, tableName, textColumnName, langIdT
 	$('.stop_modal_process').hide();
 	$('.close_modal').removeAttr('disabled');
 
-	showTranslateExpertModal('Preparing detail info ...');
+	showTranslateExpertModal(document.js_const_preparing_detail_info);
 
 	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/analizeTableDetail&token=' + getOcToken(),
 		{ langIdFrom: langIdFrom, mode: mode, tableName: tableName, textColumnName: textColumnName , langIdTo: langIdTo,

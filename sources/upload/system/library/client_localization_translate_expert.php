@@ -282,6 +282,8 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 	{
 		$toTranslateInfo = $this->_model->language->get('entry_localization_file_to_translate_info');
 		$toTranslateInfoFullTranslated = $this->_model->language->get('entry_localization_file_to_translate_info_full_translated');
+		$buttonTranslate = htmlspecialchars($this->_model->language->get('button_localization_translate'), ENT_QUOTES, 'UTF-8');
+		$buttonSave = htmlspecialchars($this->_model->language->get('button_localization_save'), ENT_QUOTES, 'UTF-8');
 
 		$html = '';
 		foreach($analize as $analizeFile)
@@ -327,8 +329,8 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 			$html .= 	"<div class='col-md-6 localization-analize-file-toolbar to'>";
 			$html .= 		"<img src='{$langToImgUrl}' alt='{$langTo['name']}' title='{$langTo['name']}'>";
 			if ($toTranslateCount > 0)
-				$html .= 	"<button type='button' class='translate_localization_button' title='Translate' onclick='doTranslateLocalizationExpert(this); return false;'><i class='fa fa-language'></i> Translate</button>";
-			$html .= 		"<button type='button' class='save_translation_button' title='Save' onclick='doSaveLocalizationExpert(this); return false;'><i class='fa fa-save'></i> Save</button>";
+				$html .= 	"<button type='button' class='translate_localization_button' title='{$buttonTranslate}' onclick='doTranslateLocalizationExpert(this); return false;'><i class='fa fa-language'></i> {$buttonTranslate}</button>";
+			$html .= 		"<button type='button' class='save_translation_button' title='{$buttonSave}' onclick='doSaveLocalizationExpert(this); return false;'><i class='fa fa-save'></i> {$buttonSave}</button>";
 			$html .= 	"</div>";
 			$html .= "</div>";
 			$html .= "<div class='row localization-analize-row info' style='display:none;'>";
