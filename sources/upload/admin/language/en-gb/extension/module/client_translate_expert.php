@@ -105,6 +105,8 @@ $_['entry_localization_analization'] = 'Analyze unlocalized values';
 $_['entry_localization_analization_result'] = 'Analysis result';
 $_['entry_localization_file_to_translate_info'] = '{path}: <b>{count} values not translated</b>';
 $_['entry_localization_file_to_translate_info_full_translated'] = '{path}: Fully translated';
+$_['entry_localization_file_expression_info'] = '<b>({count} with PHP code: copied unchanged, edit them by hand)</b>';
+$_['entry_localization_file_target_missing'] = '<b>(the target file does not exist)</b>';
 
 $_['entry_fileCount'] = 'Total files';
 $_['entry_needToTranslateFileCount'] = 'No files translated';
@@ -157,6 +159,7 @@ $_['error_lang_from_folder_is_not_exists']	   = 'Localization files folder for "
 $_['error_lang_from_and_lang_to_are_equal']	   = 'Select language to translate to';
 $_['error_localization_save_target_invalid']	   = 'The target folder or the file path is not valid. The file is not saved.';
 $_['error_localization_save_failed']	   = 'The file is not saved. Make sure that the web server can write to this folder:';
+$_['error_localization_save_empty']	   = 'The file is empty. Nothing to save.';
 
 // Messages;
 $_['message_analize_global_info'] =' <b>All tables</b> ';

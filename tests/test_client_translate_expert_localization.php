@@ -22,6 +22,7 @@ if ($isChild)
 	{
 		public function roots($scope, $from, $to) { return $this->getLocalizationRoots($scope, $from, $to); }
 		public function mainName($language) { return $this->getMainLanguageFileName($language); }
+		public function parseByRegExp($content) { return $this->parseLocalizationFileByRegExp($content); }
 	}
 
 	$childTest->run();
@@ -301,12 +302,15 @@ class LocalizationChildTest
 			$this->testRoots();
 			$this->testAdminAnalysis();
 			$this->testCatalogAnalysis();
+			$this->testParser();
+			$this->testConcatenatedValueWithoutTarget();
 			// Before the save tests: these write target files that the reverse direction would read as source files.
 			if ($this->isOc4)
 				$this->testOc4SourceFromLanguageExtension();
 			$this->testSaveGuard();
 			$this->testSave();
 			$this->testSaveFailure();
+			$this->testSaveEmpty();
 		} catch (Exception $e) {
 			$this->fail('unexpected exception: ' . get_class($e) . ': ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 		}
@@ -410,6 +414,90 @@ class LocalizationChildTest
 
 		$res = $lib->analizeLocalization('1', '2', 0, 'other');
 		$this->check($res->success, 0, 'unknown scope is rejected');
+	}
+
+	private function testParser()
+	{
+		$lib = $this->newLibrary();
+		$content = "<?php\n"
+			. "// Text\n"
+			. "\$_['text_single'] = 'It\\'s single';\n"
+			. "\$_[\"text_double\"]  =  \"Double \\\"q\\\"\" ;\n"
+			. "// \$_['text_commented'] = 'Commented';\n"
+			. "/* \$_['text_block'] = 'Block'; */\n"
+			. "\$_['text_footer'] = '<a href=\"http://www.opencart.com\">OpenCart</a> &copy; 2009-' . date('Y') . ' All Rights Reserved.<br />Version %s';\n"
+			. "\$_['text_var'] = \"Hello \$name\";\n"
+			. "\$_['text_array'] = array('a' => 'b; c');\n"
+			. "\$_['text_nested']['x'] = 'Nested';\n"
+			. "\$x = \$_['text_chained'] = 'Chained';\n"
+			. "?>\n";
+		$parsed = $lib->parseLocalizationFile($content);
+		$this->check(array_keys($parsed), array('text_single', 'text_double', 'text_footer', 'text_var', 'text_array'), 'parser keys (comments, nested and chained assignments are not keys)');
+		if (count(array_intersect(array_keys($parsed), array('text_single', 'text_double', 'text_footer', 'text_var', 'text_array'))) < 5)
+			return;
+		$this->check($parsed['text_single'], array('text' => "It\\'s single", 'full_text' => "\$_['text_single'] = 'It\\'s single';"), 'single-quoted literal: raw text and full statement');
+		$this->check($parsed['text_double']['text'], 'Double \\"q\\"', 'double-quoted literal: raw text');
+		$this->check(isset($parsed['text_double']['expression']), false, 'a literal is not an expression');
+		$this->check($parsed['text_footer']['expression'], 1, 'concatenated value is an expression');
+		$this->check($parsed['text_footer']['text'], '', 'an expression has no text to translate');
+		$this->check(strpos($content, $parsed['text_footer']['full_text']) !== false && substr($parsed['text_footer']['full_text'], -1) === ';',
+			true, 'expression full_text is the exact source statement');
+		$this->check(isset($parsed['text_var']['expression']), true, 'string with a variable is an expression');
+		$this->check($parsed['text_array']['full_text'], "\$_['text_array'] = array('a' => 'b; c');", 'expression ends at the ; outside brackets and strings');
+
+		// The fallback for a server without the tokenizer gives the same literals.
+		$literals = "<?php\n\$_['a'] = 'A';\n\$_['b'] = \"B\";\n";
+		$this->check($lib->parseLocalizationFile($literals), $lib->parseByRegExp($literals), 'tokenizer and regexp parsers agree on literals');
+		$this->check($lib->parseLocalizationFile(''), array(), 'empty content has no keys');
+
+		$conditional = "<?php\nif (\$a) \$_['text_if'] = 'If';\nelse \$_['text_else'] = 'Else';\nif (\$b):\n\$_['text_alt'] = 'Alt';\nendif;\n";
+		$this->check(array_keys($lib->parseLocalizationFile($conditional)), array('text_if', 'text_else', 'text_alt'), 'statements after if (...), else and if (...): are keys');
+	}
+
+	private function testConcatenatedValueWithoutTarget()
+	{
+		$footer = "<?php\n// Text\n\$_['text_footer'] = '<a href=\"http://www.opencart.com\">OpenCart</a> &copy; 2009-' . date('Y') . ' All Rights Reserved.<br />Version %s';\n?>\n";
+		$path = $this->tmp . '/catalog/language/' . $this->from . '/common/footer.php';
+		writeFile($path, $footer);
+
+		$lib = $this->newLibrary();
+		$res = $lib->analizeLocalization('1', '2', 0);
+		unlink($path);
+		$this->check($res->success, 1, 'analysis with a concatenated value succeeds');
+		if (!$res->success)
+			return;
+		$rows = $this->analysisRows($res);
+		$row = isset($rows['core|/common/footer.php']) ? $rows['core|/common/footer.php'] : null;
+		$this->check($row !== null && isset($row['toTranslate']['text_footer']), true, 'concatenated key without a target file needs attention');
+		$this->check($row !== null && !empty($row['toTranslate']['text_footer']['expression']), true, 'concatenated key is marked as an expression');
+		$this->check($row !== null ? $row['targetExists'] : null, false, 'missing target file is reported');
+
+		$html = $res->detailsHtml;
+		$pos = strpos($html, "data-path-to='/common/footer.php'");
+		$this->check($pos !== false, true, 'footer row is in the HTML');
+		if ($pos === false)
+			return;
+		$next = strpos($html, "data-path-to=", $pos + 1);
+		$rowHtml = $next === false ? substr($html, $pos) : substr($html, $pos, $next - $pos);
+		$this->check(strpos($rowHtml, 'full_translated') === false, true, 'footer is not "Fully translated"');
+		$this->check(strpos($rowHtml, 'entry_localization_file_expression_info') !== false, true, 'info line shows the values with PHP code');
+		$this->check(strpos($rowHtml, 'entry_localization_file_target_missing') !== false, true, 'info line shows the missing target file');
+		$this->check(strpos($rowHtml, 'translate_localization_button') !== false, true, 'footer has the Translate button');
+		$this->check($res->html !== '' && strpos($res->html, 'translate_localization_all_button') !== false, true, 'totals show Translate all');
+	}
+
+	private function testSaveEmpty()
+	{
+		$lib = $this->newLibrary();
+		foreach (array('' => 'empty content', "  \n\t" => 'whitespace-only content') as $content => $name)
+		{
+			$res = $lib->saveLocalizationFile($content, '2', '/common/empty.php', 'admin', 'core');
+			$this->check($res->success, 0, 'save rejects ' . $name);
+			$this->check(isset($res->message) ? $res->message : null, 'error_localization_save_empty', 'save gives the clear message for ' . $name);
+		}
+		$res = $lib->saveLocalizationFile(null, '2', '/common/empty.php', 'admin', 'core');
+		$this->check(isset($res->message) ? $res->message : null, 'error_localization_save_empty', 'save gives the clear message for no content');
+		$this->check(is_file($this->adminTargetCore() . 'common/empty.php'), false, 'no empty file is written');
 	}
 
 	private function testSaveGuard()

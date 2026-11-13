@@ -57,6 +57,7 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 				$contentTo = isset($languageToFiles[$pathTo]) ? $languageToFiles[$pathTo] : '';
 				$analizeLocalizationFileResult = $this->analizeLocalizationFile($languageFrom, $languageTo, $contentFrom, $contentTo, $path, $pathTo, $includeFolder);
 				$analizeLocalizationFileResult['root'] = $rootId;
+				$analizeLocalizationFileResult['targetExists'] = isset($languageToFiles[$pathTo]);
 				$analizeLocalizationFileResult['rootName'] = $root['name'];
 				$analize[] = $analizeLocalizationFileResult;
 			}
@@ -83,13 +84,17 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 	{
 		$this->gebugLog('analizeLocalization: ============START============', $startTime);
 
-		if (is_null($fileContent) || is_null($langId) || is_null($path) || !$fileContent || !$langId || !$path)
+		$this->loadLanguage($this->_modulePrefix . '/client_translate_expert');
+
+		if (is_null($langId) || is_null($path) || !$langId || !$path)
 		{
 			return (object)array('success' => 0, 'error_code' => 3003, 'message' => 'Internal error.',
-				'additional_message' => 'saveLocalizationFile: emty parameters is not allowed');
+				'additional_message' => 'saveLocalizationFile: empty parameters are not allowed');
 		}
+		if (!is_string($fileContent) || trim($fileContent) === '')
+			return (object)array('success' => 0, 'error_code' => 3008,
+				'message' => $this->_model->language->get('error_localization_save_empty'));
 
-		$this->loadLanguage($this->_modulePrefix . '/client_translate_expert');
 		$this->_model->load->model('localisation/language');
 
 		if (!$this->isValidLocalizationPath($path) || !$this->isLocalizationScope($scope))
@@ -282,6 +287,8 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 	{
 		$toTranslateInfo = $this->_model->language->get('entry_localization_file_to_translate_info');
 		$toTranslateInfoFullTranslated = $this->_model->language->get('entry_localization_file_to_translate_info_full_translated');
+		$targetMissingInfo = $this->_model->language->get('entry_localization_file_target_missing');
+		$expressionInfo = $this->_model->language->get('entry_localization_file_expression_info');
 		$buttonTranslate = htmlspecialchars($this->_model->language->get('button_localization_translate'), ENT_QUOTES, 'UTF-8');
 		$buttonSave = htmlspecialchars($this->_model->language->get('button_localization_save'), ENT_QUOTES, 'UTF-8');
 
@@ -312,9 +319,22 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 			$pathToAttr = htmlspecialchars($analizeFile['pathTo'], ENT_QUOTES, 'UTF-8');
 			$rootAttr = htmlspecialchars(isset($analizeFile['root']) ? $analizeFile['root'] : self::ROOT_CORE, ENT_QUOTES, 'UTF-8');
 
-			$fileToTranslateInfo = ($toTranslateCount == 0)
-				? str_replace('{path}', $displayPath, $toTranslateInfoFullTranslated)
-				: $fileToTranslateInfo = str_replace(array('{path}', '{count}'), array($displayPath, $toTranslateCount), $toTranslateInfo);
+			$targetExists = !isset($analizeFile['targetExists']) || $analizeFile['targetExists'];
+			$expressionCount = 0;
+			foreach ($toTranslate as $toTranslateLine)
+				if (!empty($toTranslateLine['expression']))
+					$expressionCount++;
+
+			if ($toTranslateCount == 0 && $targetExists)
+				$fileToTranslateInfo = str_replace('{path}', $displayPath, $toTranslateInfoFullTranslated);
+			elseif ($toTranslateCount == 0)
+				$fileToTranslateInfo = $displayPath . ':';
+			else
+				$fileToTranslateInfo = str_replace(array('{path}', '{count}'), array($displayPath, $toTranslateCount), $toTranslateInfo);
+			if ($expressionCount > 0)
+				$fileToTranslateInfo .= ' ' . str_replace('{count}', $expressionCount, $expressionInfo);
+			if (!$targetExists)
+				$fileToTranslateInfo .= ' ' . $targetMissingInfo;
 
 			//$contentFrom = htmlentities($contentFrom); // already entited
 			$contentTo = htmlentities($contentTo);
@@ -431,7 +451,114 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 		return $content;
 	}
 
+	// Returns array(key => array('text' => raw literal content, 'full_text' => statement source, 'expression' => 1 if the value is not one literal string)).
 	public function parseLocalizationFile($content)
+	{
+		if (!function_exists('token_get_all'))
+			return $this->parseLocalizationFileByRegExp($content);
+
+		$res = array();
+		$tokens = token_get_all($content);
+		$count = count($tokens);
+		$skip = array(T_WHITESPACE, T_COMMENT, T_DOC_COMMENT);
+		for ($i = 0; $i < $count; $i++)
+		{
+			if (!is_array($tokens[$i]) || $tokens[$i][0] !== T_VARIABLE || $tokens[$i][1] !== '$_')
+				continue;
+			// The statement must start a statement (also after "if (...)", "else" and "if (...):"): not "$x = $_['a'] = ..." and not "$_['a']['b'] = ...".
+			$prev = $this->prevCodeToken($tokens, $i, $skip);
+			if ($prev !== null && !in_array($prev, array(';', '{', '}', ')', ':'), true) && !(is_array($prev) && in_array($prev[0], array(T_OPEN_TAG, T_ELSE), true)))
+				continue;
+
+			$j = $this->nextCodeIndex($tokens, $i + 1, $skip);
+			if ($j === null || $tokens[$j] !== '[')
+				continue;
+			$j = $this->nextCodeIndex($tokens, $j + 1, $skip);
+			if ($j === null || !is_array($tokens[$j]) || $tokens[$j][0] !== T_CONSTANT_ENCAPSED_STRING)
+				continue;
+			$key = substr($tokens[$j][1], 1, -1);
+			if (!preg_match('/^[\w\-\.]+$/', $key))
+				continue;
+			$j = $this->nextCodeIndex($tokens, $j + 1, $skip);
+			if ($j === null || $tokens[$j] !== ']')
+				continue;
+			$j = $this->nextCodeIndex($tokens, $j + 1, $skip);
+			if ($j === null || $tokens[$j] !== '=')
+				continue;
+
+			// The value: the code tokens up to the ";" at depth 0.
+			$valueTokens = array();
+			$depth = 0;
+			$end = null;
+			for ($k = $j + 1; $k < $count; $k++)
+			{
+				$t = $tokens[$k];
+				if (!is_array($t))
+				{
+					if ($t === ';' && $depth === 0)
+					{
+						$end = $k;
+						break;
+					}
+					if ($t === '(' || $t === '[' || $t === '{')
+						$depth++;
+					elseif ($t === ')' || $t === ']' || $t === '}')
+						$depth--;
+				}
+				elseif ($t[0] === T_CLOSE_TAG)
+				{
+					break;
+				}
+				elseif (in_array($t[0], array(T_CURLY_OPEN, T_DOLLAR_OPEN_CURLY_BRACES), true))
+				{
+					$depth++;
+				}
+				if (!is_array($t) || !in_array($t[0], $skip, true))
+					$valueTokens[] = $t;
+			}
+			if ($end === null || empty($valueTokens))
+				continue;
+
+			$fullText = '';
+			for ($k = $i; $k <= $end; $k++)
+				$fullText .= is_array($tokens[$k]) ? $tokens[$k][1] : $tokens[$k];
+
+			if (count($valueTokens) == 1 && is_array($valueTokens[0]) && $valueTokens[0][0] === T_CONSTANT_ENCAPSED_STRING)
+				$res[$key] = array('text' => substr($valueTokens[0][1], 1, -1), 'full_text' => $fullText);
+			else
+				$res[$key] = array('text' => '', 'full_text' => $fullText, 'expression' => 1);
+
+			$i = $end;
+		}
+
+		return $res;
+	}
+
+	private function prevCodeToken($tokens, $index, $skip)
+	{
+		for ($k = $index - 1; $k >= 0; $k--)
+		{
+			if (is_array($tokens[$k]) && in_array($tokens[$k][0], $skip, true))
+				continue;
+			return $tokens[$k];
+		}
+		return null;
+	}
+
+	private function nextCodeIndex($tokens, $index, $skip)
+	{
+		$count = count($tokens);
+		for ($k = $index; $k < $count; $k++)
+		{
+			if (is_array($tokens[$k]) && in_array($tokens[$k][0], $skip, true))
+				continue;
+			return $k;
+		}
+		return null;
+	}
+
+	// The parser for a server without the tokenizer extension: single-literal values only.
+	protected function parseLocalizationFileByRegExp($content)
 	{
 		$res = array();
 
