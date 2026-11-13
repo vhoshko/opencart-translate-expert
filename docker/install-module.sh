@@ -6,11 +6,13 @@
 #
 #   stores: oc15 oc20 oc21 oc22 oc23 oc30 oc40 oc41
 #
-#   -p  package to install (default: newest in releases/)
+#   -p  package to install (default: the release of _version.txt)
 #   -c  checks only: skip the install and only run the smoke checks
 #
-# Without -p, the newest releases/v*/OpenCartTranslateExpertClient-v*.full.zip
-# is used (run ./build.release.sh first).
+# Without -p, the script reads the version from _version.txt and uses
+# releases/v<version>/OpenCartTranslateExpertClient-v<version>-*.full.zip
+# (run ./build.release.sh first). If that package does not exist, the script
+# stops. It does not fall back to another version in releases/.
 #
 # The steps are the ones README.md (Installation) gives a store owner.
 # First run per store: full install.
@@ -68,9 +70,13 @@ trap 'rm -rf "$WORK"' EXIT
 
 if [ "$CHECK_ONLY" = "0" ]; then
 	if [ -z "$PACKAGE" ]; then
-		# Versions are zero-padded (MM.mm.pppp), so a plain sort is a version sort.
-		PACKAGE="$(ls "$REPO_ROOT"/releases/v*/OpenCartTranslateExpertClient-v*.full.zip 2>/dev/null | sort | tail -n 1 || true)"
-		[ -n "$PACKAGE" ] || { echo "No package in releases/. Run ./build.release.sh first." >&2; exit 1; }
+		# Use the release of the version in _version.txt, read the same way as
+		# build.release.sh does. Never fall back to another version: a stray
+		# package with a higher version would hide the current build.
+		VERSION="$( { tr -d '[:space:]' < "$REPO_ROOT/_version.txt"; } 2>/dev/null || true)"
+		[ -n "$VERSION" ] || { echo "Cannot read the version from $REPO_ROOT/_version.txt." >&2; exit 1; }
+		PACKAGE="$(ls "$REPO_ROOT/releases/v$VERSION/OpenCartTranslateExpertClient-v$VERSION-"*.full.zip 2>/dev/null | sort | tail -n 1 || true)"
+		[ -n "$PACKAGE" ] || { echo "No package for version $VERSION (_version.txt) in releases/v$VERSION/. Run ./build.release.sh first, or give a package with -p." >&2; exit 1; }
 	fi
 	[ -f "$PACKAGE" ] || { echo "Package not found: $PACKAGE" >&2; exit 1; }
 	echo "Package: $PACKAGE"
