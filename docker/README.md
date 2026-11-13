@@ -33,7 +33,7 @@ To do everything in one go, run `docker/rebuild-stores.sh`. It first runs `git f
 ```bash
 docker/rebuild-stores.sh                 # build, then all eight stores
 docker/rebuild-stores.sh oc30            # build, then just one
-docker/rebuild-stores.sh -s oc23 oc40    # skip the build, use the newest release
+docker/rebuild-stores.sh -s oc23 oc40    # skip the build, use the release of _version.txt
 docker/rebuild-stores.sh -n oc41         # skip git fetch and git pull
 ```
 
@@ -55,7 +55,7 @@ OpenCart writes its URL (with the port) into `config.php` when it installs, whic
 docker/install-module.sh all          # or oc15 / oc20 / oc21 / oc22 / oc23 / oc30 / oc40 / oc41
 ```
 
-The script takes the newest `releases/v*/OpenCartTranslateExpertClient-v*.full.zip` (or the one given with `-p <file>`), picks the right package for each store and installs it with the steps of the Installation section in the main [README](../README.md), signed in to the admin with `curl`:
+The script reads the version from `_version.txt` and takes `releases/v<version>/OpenCartTranslateExpertClient-v<version>-*.full.zip` (or the one given with `-p <file>`). If that package does not exist, the script stops and tells you to run `./build.release.sh`. It does not use another version in `releases/`, so a stray package with a higher version cannot hide the current build. The script then picks the right package for each store and installs it with the steps of the Installation section in the main [README](../README.md), signed in to the admin with `curl`:
 
 - **oc20, oc21, oc22, oc23, oc30**: copies `upload/` into the store, runs Extensions › Modifications › Refresh (this applies `system/OpenCartTranslateExpertClient.ocmod.xml` to the admin header), then Extensions › Modules › Install.
 - **oc15**: checks that vQmod is installed, copies `upload/` into the store (this puts `vqmod/xml/OpenCartTranslateExpertClient.xml` in place), deletes `vqmod/mods.cache` and the compiled `vqmod/vqcache/vq2-*` files so vQmod applies its XML files again on the next page load, then Extensions › Modules › Install.

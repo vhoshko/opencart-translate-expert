@@ -22,7 +22,7 @@ TIMEOUT="${READY_TIMEOUT:-600}"
 
 usage() {
 	echo "Usage: $0 [-s] [-n] [store...]   stores: ${ALL_STORES[*]} (default: all)" >&2
-	echo "  -s  skip ./build.release.sh and install the newest existing release" >&2
+	echo "  -s  skip ./build.release.sh and install the existing release of _version.txt" >&2
 	echo "  -n  skip git fetch and git pull (offline, local changes, or not a git checkout)" >&2
 	exit 2
 }

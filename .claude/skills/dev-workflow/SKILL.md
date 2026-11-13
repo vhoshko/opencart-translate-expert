@@ -210,6 +210,8 @@ Adapt the template. Drop the steps that do not apply. If you skip a standard ste
 
 Follow the conventions in `project-workflows.md` and `CLAUDE.md`. Put throwaway scripts in `docs/tasks/<slug>/tmp/`.
 
+Give probe commands absolute paths. Start a multi-line probe with `set -e`. If you `cd` into a probe folder and the `cd` fails, the shell does not stop at the next line. The next lines then run in the repo root and can overwrite real files. A subagent can remove `tmp/` before your probe runs. Use `mkdir -p` on the absolute path first. (Task 46: a failed `cd` overwrote and then deleted `_version.txt`. Task 3 had the same `cd` issue.)
+
 The non-negotiables for this repo:
 - Edit `sources/` only.
 - Keep every file PHP 5.6 compatible. Put PHP 7+ syntax only between `// OC4_EVENT_START` and `// OC4_EVENT_END` **in the admin controller**. This is the one file whose marker blocks `build.sh` strips. In other files, gate OC4-only behavior at runtime with `version_compare(VERSION, '4.0', '>=')`.
