@@ -23,6 +23,15 @@ The stripped-down flow has these steps:
 6. Dispatch one independent review (Phase 4). If fixes follow, do Phase 5 as usual.
 7. Write the improvements file and fill the Done block (Phases 6 and 7).
 
+If a task changes only files under `docs/**` (for example a PoC or a design document), use the docs-only flow. Do these steps:
+
+1. Run `ote-build-test` in **checks-only** mode one time before the change and one time after the change.
+2. Do not bump `_version.txt` and do not build, because no package content changes.
+3. If the review fixes change only Markdown, skip the verify loop in Phase 5. Still ask the re-review question.
+4. Before the review, check each number, field name and data shape in the document against the code with a grep or a file read. A mock-up can look right and still be wrong (task 2-admin-design-poc: a wrong count of language columns and a wrong monthly limit).
+
+Record the docs-only flow in the `## Settings` block of the plan.
+
 Project-specific config (repo, commands, source layout, conventions, gotchas) is in `.claude/project-workflows.md`. The definitions of the subagents that this workflow dispatches are in `.claude/agents/`. Each subagent pins its own model. Dispatch by `subagent_type`. Pass `model:` only to override.
 
 ### Context budget principle
@@ -124,6 +133,8 @@ Give the agent these items:
   - The data flow (JS → AJAX action → controller → core library → model / Google API)
   - The OC versions that run the touched code
   - Any design corrections it finds
+
+If the task changes a response format (for example HTML to JSON), also tell the agent to list, for each response field, the data that the front end reads from it. A list of field names only is not sufficient. A proposed format can then drop data that the front end needs (task 2-admin-design-poc: `full_text` and the batch-0 totals of `analizeLocalization`).
 
 The main context receives only the summary of the agent. It does not receive hundreds of lines of source code. Use this summary to write the plan.
 

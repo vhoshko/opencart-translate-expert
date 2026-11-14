@@ -14,6 +14,7 @@ Use ASD-STE100 Simplified Technical English (STE) writing rules for:
 
 - All answers in this repository
 - New plan, review and improvements files under `docs/tasks/**`
+- New PoC and design files under `docs/pocs/**`
 - Changes to `CLAUDE.md` and `.claude/**`
 
 The source is ASD-STE100 Issue 9 (January 2025), DOI https://doi.org/10.5281/zenodo.23666005. The document is free. ASD owns it, and its license is CC BY-NC-ND 4.0. Use the writing rules (Part 1) only. Do not do a dictionary check. Do not copy rule text into the repository.
@@ -64,6 +65,8 @@ The build uses bash and `zip`. The build reads the version from `_version.txt`.
 The build makes OCMOD `.zip` packages for each OpenCart version (1.5, 2.0–2.3, 3.0, 4.x) in the `releases/` directory. One 4.x package (`oc4.x` folder) covers OpenCart 4.0.2.x and 4.1.0.x.
 
 **After you make changes, always run `./build.release.sh`. This command shows that the build succeeds.**
+
+If a change touches only files under `docs/**`, run the unit tests. Do not bump the version and do not build.
 
 **Before you run a build script, bump the patch version in `_version.txt`.** The format is `MM.mm.pppp`, for example `04.01.0101` → `04.01.0102`. Every build run needs a new patch version. Never build twice with the same version number.
 
