@@ -276,6 +276,16 @@ class LocalizationChildTest
 			writeFile("$tmp/extension/ukrainian/admin/language/en-gb/stray.php", langFile(array('text_stray' => 'Stray')));
 			// A folder name that is not a safe extension name
 			writeFile("$tmp/extension/bad name/admin/language/en-gb/x.php", langFile(array('heading_title' => 'Bad')));
+
+			// Catalog files of extensions (issue #49). The include is read from the catalog language folder.
+			writeFile("$tmp/extension/opencart/catalog/language/en-gb/payment/cod.php",
+				"<?php\n\$_['text_title'] = 'Cash On Delivery';\ninclude(DIR_LANGUAGE . 'en-gb/common/inc.php');\n");
+			// An extension with catalog files only: a catalog root, not an admin root
+			writeFile("$tmp/extension/catalogonly/catalog/language/en-gb/module/latest.php", langFile(array('heading_title' => 'Latest')));
+			// The core catalog folder of uk-ua, with a stray en-gb folder that must not be an extension root
+			writeFile("$tmp/extension/ukrainian/catalog/language/uk-ua/product/product.php", langFile(array('text_product' => 'Товар')));
+			writeFile("$tmp/extension/ukrainian/catalog/language/en-gb/stray.php", langFile(array('text_stray' => 'Stray')));
+			writeFile("$tmp/extension/bad name/catalog/language/en-gb/x.php", langFile(array('heading_title' => 'Bad')));
 		}
 	}
 
@@ -322,8 +332,18 @@ class LocalizationChildTest
 		$langs = $this->languages();
 
 		$roots = $lib->roots('catalog', $langs['1'], $langs['2']);
-		$this->check(array_keys($roots), array('core'), 'catalog scope has the core root only');
 		$this->check($roots['core']['from'], $this->tmp . '/catalog/language/' . $this->from . '/', 'catalog core source folder');
+		if ($this->isOc4)
+		{
+			$this->check(array_keys($roots), array('core', 'ext:catalogonly', 'ext:opencart'), 'catalog roots: core and the extensions with catalog source files only');
+			$this->check($roots['core']['to'], $this->tmp . '/extension/ukrainian/catalog/language/uk-ua/', 'catalog core target folder is in the language extension');
+			$this->check(isset($roots['ext:opencart']) ? $roots['ext:opencart']['to'] : null, $this->tmp . '/extension/opencart/catalog/language/uk-ua/', 'catalog extension target folder is in the same extension');
+			$this->check(isset($roots['ext:catalogonly']) ? $roots['ext:catalogonly']['name'] : null, 'catalogonly', 'catalog extension root name');
+		}
+		else
+		{
+			$this->check(array_keys($roots), array('core'), 'catalog scope has the core root only before OC 4.0');
+		}
 
 		$roots = $lib->roots('admin', $langs['1'], $langs['2']);
 		$this->check($roots['core']['from'], $this->tmp . '/admin/language/' . $this->from . '/', 'admin core source folder');
@@ -405,8 +425,26 @@ class LocalizationChildTest
 			return;
 		$rows = $this->analysisRows($res);
 		$expected = array("core|/{$this->mainFrom}.php", 'core|/common/inc.php', 'core|/product/product.php');
+		if ($this->isOc4)
+		{
+			$expected[] = 'ext:catalogonly|/module/latest.php';
+			$expected[] = 'ext:opencart|/payment/cod.php';
+		}
 		sort($expected);
-		$this->check(array_keys($rows), $expected, 'catalog analysis files');
+		$this->check(array_keys($rows), $expected, 'catalog analysis files (stray files of the language extension are not included)');
+		if ($this->isOc4 && isset($rows['ext:opencart|/payment/cod.php']))
+		{
+			$cod = $rows['ext:opencart|/payment/cod.php'];
+			$this->check($cod['rootName'], 'opencart', 'catalog extension root name in the analysis');
+			$this->check($cod['pathTo'], '/payment/cod.php', 'catalog extension file keeps its path');
+			$this->check($cod['targetExists'], false, 'missing catalog extension target file is reported');
+			$this->check(strpos($cod['contentFrom'], 'text_catalog_inc') !== false && strpos($cod['contentFrom'], 'text_admin_inc') === false,
+				true, 'catalog extension include is read from the catalog language folder');
+			$this->check(isset($rows['core|/product/product.php']['toTranslate']['text_product']), false,
+				'existing catalog target file in the language extension is read');
+			$this->check(strpos($res->detailsHtml, '[opencart] /payment/cod.php') !== false && strpos($res->detailsHtml, "data-root='ext:opencart'") !== false,
+				true, 'catalog extension row shows the extension name and has data-root');
+		}
 		$this->check($rows["core|/{$this->mainFrom}.php"]['pathTo'], "/{$this->mainTo}.php", $this->isOc4 ? 'catalog default.php keeps its name on OC 4' : 'catalog main file is renamed to the target language');
 		$product = $rows['core|/product/product.php'];
 		$this->check(strpos($product['contentFrom'], 'text_catalog_inc') !== false && strpos($product['contentFrom'], 'text_admin_inc') === false,
@@ -512,14 +550,23 @@ class LocalizationChildTest
 			array('/a\\evil.php', 'admin', 'core', 'path with a backslash'),
 			array('/evil.php', 'other', 'core', 'unknown scope'),
 			array('/evil.php', 'admin', 'unknown', 'unknown root'),
-			array('/evil.php', 'catalog', 'ext:opencart', 'extension root in the catalog scope'),
+			array('/evil.php', 'other', 'ext:opencart', 'extension root in an unknown scope'),
 			array('/evil.php', 'admin', 'ext:../admin', 'extension root with ..'),
+			array('/evil.php', 'catalog', 'ext:../catalog', 'catalog extension root with ..'),
 			array('/evil.php', 'admin', 'ext:ukrainian', 'language extension of the target as an extension root'),
+			array('/evil.php', 'catalog', 'ext:ukrainian', 'language extension of the target as a catalog extension root'),
 			array('/evil.php', 'admin', 'ext:client_translate_expert', 'extension without an admin language folder'),
+			array('/evil.php', 'catalog', 'ext:client_translate_expert', 'extension without a catalog language folder'),
+			array('/evil.php', 'admin', 'ext:catalogonly', 'catalog-only extension in the admin scope'),
+			array('/evil.php', 'catalog', 'ext:emptyext', 'admin-only extension in the catalog scope'),
 			array('/evil.php', 'admin', 'ext:bad name', 'extension root with an unsafe name'),
+			array('/evil.php', 'catalog', 'ext:bad name', 'catalog extension root with an unsafe name'),
 		);
 		if (!$this->isOc4)
+		{
 			$bad[] = array('/evil.php', 'admin', 'ext:opencart', 'extension root before OC 4.0');
+			$bad[] = array('/evil.php', 'catalog', 'ext:opencart', 'catalog extension root before OC 4.0');
+		}
 		foreach ($bad as $case)
 		{
 			$res = $lib->saveLocalizationFile($content, '2', $case[0], $case[1], $case[2]);
@@ -568,6 +615,13 @@ class LocalizationChildTest
 			$this->check($res->success, 1, 'extension save succeeds');
 			$this->check(is_file($this->tmp . '/extension/opencart/admin/language/uk-ua/module/account.php'), true,
 				'extension file is in the admin language folder of the same extension');
+
+			$res = $lib->saveLocalizationFile($content, '2', '/payment/cod.php', 'catalog', 'ext:opencart');
+			$this->check($res->success, 1, 'catalog extension save succeeds');
+			$this->check(is_file($this->tmp . '/extension/opencart/catalog/language/uk-ua/payment/cod.php'), true,
+				'catalog extension file is in the catalog language folder of the same extension');
+			$this->check(is_file($this->tmp . '/extension/opencart/admin/language/uk-ua/payment/cod.php'), false,
+				'catalog extension file is not in the admin language folder');
 		}
 	}
 
@@ -605,6 +659,19 @@ class LocalizationChildTest
 			$this->check(array_keys($rows), array('core|/common/header.php'), 'reverse direction: analysis files');
 			$this->check(isset($rows['core|/common/header.php']['toTranslate']['heading_title']), false,
 				'reverse direction: existing target file in the admin folder is read');
+		}
+
+		$roots = $lib->roots('catalog', $langs['2'], $langs['1']);
+		$this->check(array_keys($roots), array('core'), 'reverse direction: language extension of the source is not a catalog extension root');
+		$this->check($roots['core']['from'], $this->tmp . '/extension/ukrainian/catalog/language/uk-ua/', 'reverse direction: catalog core source folder is in the language extension');
+		$this->check($roots['core']['to'], $this->tmp . '/catalog/language/en-gb/', 'reverse direction: catalog core target folder is the catalog folder');
+
+		$res = $lib->analizeLocalization('2', '1', 0, 'catalog');
+		$this->check($res->success, 1, 'reverse direction: catalog analysis succeeds');
+		if ($res->success)
+		{
+			$rows = $this->analysisRows($res);
+			$this->check(array_keys($rows), array('core|/product/product.php'), 'reverse direction: catalog analysis files');
 		}
 	}
 

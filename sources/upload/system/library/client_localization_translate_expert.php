@@ -170,11 +170,13 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 		return $scope === self::SCOPE_ADMIN ? DIR_APPLICATION . 'language/' : DIR_CATALOG . 'language/';
 	}
 
-	protected function isOc4ExtensionName($name)
+	// OC 4.x: a safe extension folder name with a language folder for the scope (DIR_EXTENSION/<name>/<scope>/language).
+	protected function isOc4ExtensionName($name, $scope)
 	{
 		return is_string($name) && preg_match('/^[A-Za-z0-9_\-]+$/', $name)
+			&& $this->isLocalizationScope($scope)
 			&& version_compare(VERSION, '4.0', '>=') && defined('DIR_EXTENSION')
-			&& is_dir(DIR_EXTENSION . $name . '/admin/language');
+			&& is_dir(DIR_EXTENSION . $name . '/' . $scope . '/language');
 	}
 
 	// The folder to save a translated file into. Returns false for an unknown scope or root.
@@ -189,12 +191,12 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 			return false;
 		}
 
-		// OC 4.x: the admin language folder of an installed extension (root "ext:<extension folder>").
-		if ($scope === self::SCOPE_ADMIN && is_string($root) && substr($root, 0, 4) === 'ext:')
+		// OC 4.x: the admin or catalog language folder of an installed extension (root "ext:<extension folder>").
+		if (is_string($root) && substr($root, 0, 4) === 'ext:')
 		{
 			$name = substr($root, 4);
-			if ($this->isOc4ExtensionName($name) && (empty($languageTo['extension']) || $name !== $languageTo['extension']))
-				return DIR_EXTENSION . $name . '/admin/language/' . $languageTo['code'] . '/';
+			if ($this->isOc4ExtensionName($name, $scope) && (empty($languageTo['extension']) || $name !== $languageTo['extension']))
+				return DIR_EXTENSION . $name . '/' . $scope . '/language/' . $languageTo['code'] . '/';
 		}
 
 		return false;
@@ -209,10 +211,10 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 			'to' => $this->getLocalizationTargetFolder($scope, self::ROOT_CORE, $languageTo),
 			'name' => '');
 
-		if ($scope !== self::SCOPE_ADMIN || version_compare(VERSION, '4.0', '<') || !defined('DIR_EXTENSION') || !is_dir(DIR_EXTENSION))
+		if (!$this->isLocalizationScope($scope) || version_compare(VERSION, '4.0', '<') || !defined('DIR_EXTENSION') || !is_dir(DIR_EXTENSION))
 			return $roots;
 
-		// The language extensions of the two languages hold the core admin files of these languages: the core root covers them.
+		// The language extensions of the two languages hold the core files of these languages: the core root covers them.
 		$skip = array();
 		if (!empty($languageFrom['extension']))
 			$skip[] = $languageFrom['extension'];
@@ -223,9 +225,9 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 		sort($names);
 		foreach ($names as $name)
 		{
-			if ($name == '.' || $name == '..' || in_array($name, $skip, true) || !$this->isOc4ExtensionName($name))
+			if ($name == '.' || $name == '..' || in_array($name, $skip, true) || !$this->isOc4ExtensionName($name, $scope))
 				continue;
-			$from = DIR_EXTENSION . $name . '/admin/language/' . $languageFrom['code'] . '/';
+			$from = DIR_EXTENSION . $name . '/' . $scope . '/language/' . $languageFrom['code'] . '/';
 			if (!is_dir($from))
 				continue;
 			$rootId = 'ext:' . $name;
