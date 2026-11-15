@@ -211,6 +211,15 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['entry_table_product_stock_status_filter'] = $this->language->get('entry_table_product_stock_status_filter');
 		$data['entry_table_product_manufacturer_filter'] = $this->language->get('entry_table_product_manufacturer_filter');
 
+		// Front-end strings of the new admin design: the template writes them as document.te_i18n (read with teT() in the JS).
+		$te_i18n = array();
+		foreach (array('te_alert_details', 'te_alert_close', 'te_alert_not_json', 'te_error_internal') as $te_i18n_key) {
+			$te_i18n[$te_i18n_key] = $this->language->get($te_i18n_key);
+		}
+		// The JSON_HEX_* flags escape <, >, &, ' and ", so a value cannot close the <script> block.
+		$te_i18n_json = json_encode($te_i18n, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+		$data['te_i18n_json'] = is_string($te_i18n_json) && $te_i18n_json !== '' ? $te_i18n_json : '{}';
+
 		if (isset($this->error['warning'])) {
 			$data['error_warning'] = $this->error['warning'];
 		} else {
@@ -928,6 +937,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			. 'document.js_const_client_translate_expert_is_enabled = ' . (int)$isEnabled . ';'
 			. 'document.js_const_client_translate_expert_show_char_count_is_enabled = ' . (int)$showCharCount . ';'
 			. 'document.js_const_client_translate_expert_languages = ' . ($languagesJson ? $languagesJson : '{}') . ';'
+			. 'document.te_i18n_global = ' . $this->getGlobalI18nJson() . ';'
 			. '</script>';
 
 		$output = str_replace('</head>', $js . $css . '</head>', $output);
@@ -938,6 +948,25 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 				$output = substr_replace($output, '>' . $config, $headerClosePos, 1);
 			}
 		}
+	}
+
+	// Strings of the header items for all admin pages (document.te_i18n_global).
+	// The library reads the module language file in a function scope, so the shared language object of the page does not change.
+	private function getGlobalI18nJson(): string {
+		$libFile = DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert_i18n.php';
+		if (!is_file($libFile)) {
+			return '{}';
+		}
+		require_once($libFile);
+
+		$i18n = '\Opencart\Extension\ClientTranslateExpert\System\Library\ClientTranslateExpertI18n';
+		$langDir = DIR_EXTENSION . 'client_translate_expert/admin/language/';
+		$subPaths = array('/module/client_translate_expert.php');
+
+		return $i18n::toJson($i18n::loadGlobal(
+			$i18n::candidateFiles($langDir, array((string)$this->config->get('config_language_admin')), $subPaths),
+			$i18n::candidateFiles($langDir, array('en-gb'), $subPaths)
+		));
 	}
 
 	// The rules are in system/library/client_translate_expert_route_filter.php (shared with the OCMOD header op for OC 1.5–3.0).

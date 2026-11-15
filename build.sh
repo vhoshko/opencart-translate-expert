@@ -204,7 +204,7 @@ for lang in en-gb uk-ua ru-ru; do
 done
 
 # Move library files
-for lib in client_translate_expert_core.php client_translate_expert.php client_localization_translate_expert.php vh_google_translator.php client_translate_expert_route_filter.php client_translate_expert_cron_helper.php; do
+for lib in client_translate_expert_core.php client_translate_expert.php client_localization_translate_expert.php vh_google_translator.php client_translate_expert_route_filter.php client_translate_expert_cron_helper.php client_translate_expert_i18n.php; do
     mv "sources_release_40/upload/system/library/${lib}" "$EXT_DIR/system/library/${lib}"
 done
 # Also copy google-cloud-translate if present
@@ -248,6 +248,7 @@ OC4_LIB_LOC="$EXT_DIR/system/library/client_localization_translate_expert.php"
 OC4_LIB_GOOGLE="$EXT_DIR/system/library/vh_google_translator.php"
 OC4_LIB_ROUTE_FILTER="$EXT_DIR/system/library/client_translate_expert_route_filter.php"
 OC4_LIB_CRON_HELPER="$EXT_DIR/system/library/client_translate_expert_cron_helper.php"
+OC4_LIB_I18N="$EXT_DIR/system/library/client_translate_expert_i18n.php"
 OC4_CATALOG_CRON="$EXT_DIR/catalog/controller/module/client_translate_expert_cron.php"
 
 # --- Add namespace declarations (insert after <?php on line 1) ---
@@ -271,6 +272,7 @@ add_namespace "$OC4_LIB_LOC" 'Opencart\\Extension\\ClientTranslateExpert\\System
 add_namespace "$OC4_LIB_GOOGLE" 'Opencart\\Extension\\ClientTranslateExpert\\System\\Library'
 add_namespace "$OC4_LIB_ROUTE_FILTER" 'Opencart\\Extension\\ClientTranslateExpert\\System\\Library'
 add_namespace "$OC4_LIB_CRON_HELPER" 'Opencart\\Extension\\ClientTranslateExpert\\System\\Library'
+add_namespace "$OC4_LIB_I18N" 'Opencart\\Extension\\ClientTranslateExpert\\System\\Library'
 add_namespace "$OC4_CATALOG_CRON" 'Opencart\\Catalog\\Controller\\Extension\\ClientTranslateExpert\\Module'
 
 # --- Update class extends for OC4 fully-qualified base classes ---

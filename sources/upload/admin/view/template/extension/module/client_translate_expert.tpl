@@ -423,6 +423,8 @@
 	// removing
 	document.js_const_entry_remove_translation_records_from_db_confirmation = "<?php echo $entry_remove_translation_records_from_db_confirmation; ?>";
 	document.js_const_entry_removing_data_from_db_process_is_started = "<?php echo $entry_removing_data_from_db_process_is_started; ?>";
+	// Front-end strings of the new admin design (read with teT() in the JS). The controller makes the JSON.
+	document.te_i18n = <?php echo $te_i18n_json; ?>;
 	
 	// The key input is a text input masked with CSS, so password managers do not suggest or save a password for it.
 	// If the browser does not support -webkit-text-security, fall back to a password input.
