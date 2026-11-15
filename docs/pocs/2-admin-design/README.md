@@ -37,5 +37,9 @@ Status: PoC. This folder contains only Markdown. No file under `sources/upload/*
 3. Change `analizeTableDetail` and `analize` to JSON data, and make the "Translate site" tab with the new design.
 4. Change `analizeLocalization` to JSON data, and make the two localization tabs with the new design.
 5. Make the "Settings", "Debug" and "About" tabs with the new design.
+6. Fix the out-of-scope items of `endpoints-json.md`, section 6, as one separate task after all other tasks:
+   - Change `removeDataFromDb` and `resetCache` from GET to POST, because they change data.
+   - Show a success message after `resetCache`.
+   - Return a JSON error, not an OpenCart HTML error page, when the model re-throws a PHP exception.
 
 Each step must keep OpenCart 1.5–4.1 working. Each step must pass the tests and the build.

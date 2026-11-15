@@ -289,7 +289,7 @@ For each step:
 
 ## 6. Out of scope (found during the inventory)
 
-These items are not about HTML in the responses. Record them for later tasks:
+These items are not about HTML in the responses, so they are out of scope for the JSON change. But we decided to fix them as part of this work. Do them as one separate task, after all other tasks of the migration (see `README.md`, "Next tasks", step 6):
 
 1. `removeDataFromDb` (#5) and `resetCache` (#10) change data, but they use GET.
 2. `resetCache` (#10) gives no success message to the user.
