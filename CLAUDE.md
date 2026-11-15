@@ -98,6 +98,9 @@ php tests/test_client_translate_expert_localization.php
 
 # Header strings tests: language file candidates, English fallback, JSON escaping (temp folders, no DB, no API key)
 php tests/test_client_translate_expert_i18n.php
+
+# JS helper tests: teT, teIcon, teBs, teAlerts in jsdom with jQuery 3.7.1 and 1.7.1 (Node, no browser, no OpenCart)
+cd tests/js && npm ci && node test_client_translate_expert_js_helpers.js
 ```
 
 The `VHGoogleTranslator` tests cover language code mapping, format parameter preservation, batch processing and API integration.
@@ -107,6 +110,8 @@ The `ClientTranslateExpertRouteFilter` tests cover the excluded-routes rules. An
 The `ClientTranslateExpertCronHelper` tests cover the cron secret rules, the request parameters and the setting key prefix. Any PHP warning fails these tests.
 
 The `ClientTranslateExpertI18n` tests cover the language file candidates, the English fallback, the global keys in the 3 module language files and the JSON escaping for a `<script>` block. Any PHP warning fails these tests.
+
+The JS helper tests load the real `client_translate_expert.js` in jsdom. They cover the `teT` lookup and placeholders, the FA 4 and FA 6 icon classes, the Bootstrap adapter with BS5 and with no Bootstrap, and the `teAlerts` text-only rendering of JSON, non-JSON and jqXHR responses. `npm ci` installs the pinned dev dependencies (jsdom, jQuery 3.7.1) into `tests/js/node_modules/`, which git ignores. jQuery 1.7.1 is the OC 1.5 file in `tests/js/vendor/`.
 
 The OC4 Twig name test reads each `.twig` file under `sources/`. It fails on a filter, test, function or tag that Twig v3.4.2 (OpenCart 4.0.2.x) or Twig v3.18.0 (OpenCart 4.1.0.x) does not define. Such a name breaks the OC4 admin page with "Could not load template". It also fails on syntax that only Twig v3.18.0 accepts (`has some`, `has every`, `xor`, the `...` spread, `name: value` arguments) and on an unclosed comment, block, string or `verbatim` block. The test skips comments and `verbatim` blocks, and it checks string interpolation.
 

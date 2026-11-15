@@ -49,6 +49,7 @@ Edit `sources/` only. `sources_release*/` and `releases/` are build output.
 | Route filter unit tests | `php tests/test_client_translate_expert_route_filter.php` | No API key needed. Any PHP warning fails a test |
 | Cron helper unit tests | `php tests/test_client_translate_expert_cron_helper.php` | No API key needed. Any PHP warning fails a test |
 | Header strings tests | `php tests/test_client_translate_expert_i18n.php` | No DB and no API key needed. Any PHP warning fails a test |
+| JS helper tests | `cd tests/js && npm ci && node test_client_translate_expert_js_helpers.js` | Node and npm (allowed by the firewall). jsdom with jQuery 3.7.1 (npm) and 1.7.1 (`tests/js/vendor/`, the OC 1.5 file). `npm ci` is part of the command, so it runs each time |
 | Translate loop tests | `php tests/test_client_translate_expert_translate_loop.php` | No DB and no API key needed. Any PHP warning fails a test |
 | OC4 Twig name test | `php tests/test_oc4_twig_filters.php` | Static check. Fails on a filter, test, function or tag that Twig v3.4.2 (OC 4.0.2.x) or v3.18.0 (OC 4.1.0.x) does not define |
 | Bump version | `/bump-version` | Changes the patch part of `_version.txt` (`MM.mm.pppp`). **Do it before every build** |

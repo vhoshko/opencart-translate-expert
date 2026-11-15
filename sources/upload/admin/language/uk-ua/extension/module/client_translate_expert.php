@@ -180,7 +180,6 @@ $_['entry_table_product_manufacturer_filter'] = 'Фільтр по виробн�
 $_['te_alert_details'] = 'Докладніше';
 $_['te_alert_close'] = 'Закрити';
 $_['te_alert_not_json'] = 'Сервер не надіслав відповідь у форматі JSON.';
-$_['te_error_internal'] = 'Внутрішня помилка, подробиці в журналі консолі!';
 
 // Front-end strings for all admin pages (document.te_i18n_global, written by the admin header)
 $_['te_global_char_count'] = 'Перекладено символів';

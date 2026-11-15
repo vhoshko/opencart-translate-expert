@@ -179,7 +179,6 @@ $_['entry_table_product_manufacturer_filter'] = 'Product manufacturer filter';
 $_['te_alert_details'] = 'Details';
 $_['te_alert_close'] = 'Close';
 $_['te_alert_not_json'] = 'The server did not send a JSON answer.';
-$_['te_error_internal'] = 'Internal error, more info in console log!';
 
 // Front-end strings for all admin pages (document.te_i18n_global, written by the admin header)
 $_['te_global_char_count'] = 'Translated characters';

@@ -213,7 +213,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 		// Front-end strings of the new admin design: the template writes them as document.te_i18n (read with teT() in the JS).
 		$te_i18n = array();
-		foreach (array('te_alert_details', 'te_alert_close', 'te_alert_not_json', 'te_error_internal') as $te_i18n_key) {
+		foreach (array('te_alert_details', 'te_alert_close', 'te_alert_not_json') as $te_i18n_key) {
 			$te_i18n[$te_i18n_key] = $this->language->get($te_i18n_key);
 		}
 		// The JSON_HEX_* flags escape <, >, &, ' and ", so a value cannot close the <script> block.
@@ -953,20 +953,17 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	// Strings of the header items for all admin pages (document.te_i18n_global).
 	// The library reads the module language file in a function scope, so the shared language object of the page does not change.
 	private function getGlobalI18nJson(): string {
-		$libFile = DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert_i18n.php';
-		if (!is_file($libFile)) {
-			return '{}';
-		}
-		require_once($libFile);
+		require_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert_i18n.php');
 
-		$i18n = '\Opencart\Extension\ClientTranslateExpert\System\Library\ClientTranslateExpertI18n';
 		$langDir = DIR_EXTENSION . 'client_translate_expert/admin/language/';
 		$subPaths = array('/module/client_translate_expert.php');
 
-		return $i18n::toJson($i18n::loadGlobal(
-			$i18n::candidateFiles($langDir, array((string)$this->config->get('config_language_admin')), $subPaths),
-			$i18n::candidateFiles($langDir, array('en-gb'), $subPaths)
-		));
+		return \Opencart\Extension\ClientTranslateExpert\System\Library\ClientTranslateExpertI18n::toJson(
+			\Opencart\Extension\ClientTranslateExpert\System\Library\ClientTranslateExpertI18n::loadGlobal(
+				\Opencart\Extension\ClientTranslateExpert\System\Library\ClientTranslateExpertI18n::candidateFiles($langDir, array((string)$this->config->get('config_language_admin')), $subPaths),
+				\Opencart\Extension\ClientTranslateExpert\System\Library\ClientTranslateExpertI18n::candidateFiles($langDir, array('en-gb'), $subPaths)
+			)
+		);
 	}
 
 	// The rules are in system/library/client_translate_expert_route_filter.php (shared with the OCMOD header op for OC 1.5–3.0).

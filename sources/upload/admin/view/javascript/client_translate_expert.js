@@ -1529,6 +1529,7 @@ var teBs = {
 };
 
 // Alert area of a tab (.te-alerts). All text goes in with .text().
+// The container must be inside .te-app: the te-alert and te-hidden rules of the CSS exist only under .te-app.
 var teAlerts = {
 	detailsMaxLength: 2000,
 	handlersBound: false,
@@ -1584,7 +1585,7 @@ var teAlerts = {
 			}
 			var message = typeof parsed.data.message === 'string' && parsed.data.message !== ''
 				? parsed.data.message
-				: teT('te_error_internal');
+				: teT('te_global_error_internal');
 			var details = typeof parsed.data.additional_message === 'string' ? parsed.data.additional_message : '';
 			return teAlerts.show(container, 'error', message, details);
 		}
@@ -1595,10 +1596,11 @@ var teAlerts = {
 	parseResponse: function(response) {
 		if (response && typeof response === 'object') {
 			var isXhr = typeof response.readyState !== 'undefined' && typeof response.getResponseHeader === 'function';
+			// An array is not a JSON object here, the same as in parseJsonObject().
 			if (!isXhr) {
-				return { data: response };
+				return Array.isArray(response) ? { text: JSON.stringify(response) } : { data: response };
 			}
-			if (response.responseJSON && typeof response.responseJSON === 'object') {
+			if (response.responseJSON && typeof response.responseJSON === 'object' && !Array.isArray(response.responseJSON)) {
 				return { data: response.responseJSON };
 			}
 			var xhrText = typeof response.responseText === 'string' ? response.responseText : '';

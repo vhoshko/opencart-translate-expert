@@ -18,3 +18,6 @@
 
 # Throwaway scripts from dev-workflow task folders
 /docs/tasks/*/tmp/
+
+# Node modules of the JS unit tests (install with: cd tests/js && npm ci)
+/tests/js/node_modules/
