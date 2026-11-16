@@ -895,6 +895,7 @@ limit {$limit} offset {$offset}
 	{
 		$this->gebugLog('removeDataFromTable: ============START============', $startTime);
 
+		$langIdToInt = (int)$langIdToParam;
 		$tableHasProductId = $this->tableHasFIeld($tableName, 'product_id');
 
 		$stockIds = $this->normalizeIdList($stock_status);
@@ -917,7 +918,7 @@ limit {$limit} offset {$offset}
 update `{$tableName}` t
 {$productJoin}
 set t.{$textColumnName} = ''
-where t.language_id = {$langIdToParam}
+where t.language_id = {$langIdToInt}
   {$categoryCondition}
   and t.{$textColumnName} <> ''
   and t.{$textColumnName} is not null
@@ -925,8 +926,10 @@ where t.language_id = {$langIdToParam}
 
 		$this->gebugLog($sql);
 		$this->_model->db->query($sql);
+		$clearedRows = (int)$this->_model->db->countAffected();
 
 		$this->gebugLog('removeDataFromTable: ============FINISH============', $startTime);
+		return $clearedRows;
 	}
 
 }

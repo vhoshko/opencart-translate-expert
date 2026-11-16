@@ -284,11 +284,27 @@ class LibraryClientTranslateExpertCore
 
 	public function removeDataFromDb($languageIdTo, $filterTable = '', $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null)
 	{
-		if (is_null($languageIdTo))
+		$this->loadLanguage($this->_modulePrefix . '/client_translate_expert');
+		$languages = $this->getLanguages();
+
+		$targetLanguage = null;
+		if (is_int($languageIdTo) && $languageIdTo > 0)
+		{
+			foreach ($languages as $language)
+			{
+				if ((int)$language['language_id'] === $languageIdTo)
+				{
+					$targetLanguage = $language;
+					break;
+				}
+			}
+		}
+
+		if (is_null($targetLanguage))
 		{
 			return (object)array(
-				'success' => false,
-				'message' => "parameter languageIdTo is required",
+				'success' => 0,
+				'message' => $this->_model->language->get('error_language_to_required'),
 			);
 		}
 
@@ -301,45 +317,42 @@ class LibraryClientTranslateExpertCore
 
 		$tables = $this->selectTables($this->normalizeList($filterTable));
 
-		$this->loadLanguage($this->_modulePrefix . '/client_translate_expert');
-		$languages = $this->getLanguages();
-		$results = array();
-		$results[] = $this->_model->language->get('message_remove_data_from_db_start');
+		$steps = array(array('type' => 'start'));
 
 		foreach($tables as $table)
 		{
 			$tableResult = $this->getTableToTranslateAnalizationInfo($languageIdFrom, $table, $languages, $mode, $languageIdTo, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, false);
 
-			$resultLines = array();
-
 			if ($tableResult->tableTranslationIsSuppported)
 			{
-				$results[] = str_replace(array('{table}'), array($tableResult->table), $this->_model->language->get('message_remove_data_from_table'));
+				$tableStepIndex = count($steps);
+				$steps[] = array('type' => 'table', 'table' => $tableResult->table, 'clearedRows' => 0);
+				$tableClearedRows = 0;
 				foreach($tableResult->textColumnNames as $textColumnName)
 				{
-					foreach($languages as $code => $language)
-					{
-						if ($languageIdTo && ($languageIdTo != $language['language_id']))
-							continue;
-
-						$this->removeDataFromTable($languageIdTo, $tableResult->table, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
-						$results[] = str_replace(array('{textColumnName}'), array($textColumnName), $this->_model->language->get('message_remove_data_from_table_column'));
-					}
+					$clearedRows = (int)$this->removeDataFromTable($languageIdTo, $tableResult->table, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
+					$tableClearedRows += $clearedRows;
+					$steps[] = array('type' => 'column', 'table' => $tableResult->table, 'column' => $textColumnName, 'clearedRows' => $clearedRows);
 				}
+				$steps[$tableStepIndex]['clearedRows'] = $tableClearedRows;
 			}
 		}
-		$results[] = $this->_model->language->get('message_remove_data_from_db_finish');
+		$steps[] = array('type' => 'finish');
 
-		$time_elapsed_secs = microtime(true) - $start;
-		$time_elapsed_secs = number_format((float)$time_elapsed_secs, 4, '.', '');
+		$timeInSec = round(microtime(true) - $start, 4);
 
 		$this->gebugLog('removeDataFromDb: ============FINISH============', $startTime);
 
 		return (object)array(
-			'success' => true,
-			'headerHTML' => $this->_model->language->get('message_remove_data_from_db_completed'),
-			'body' => implode('<br>', $results),
-			'timeInSecInfo' => str_replace('{timeInSec}', $time_elapsed_secs, $this->_model->language->get('entry_time_in_sec')),
+			'success' => 1,
+			'target' => array(
+				'language_id' => (int)$targetLanguage['language_id'],
+				'code' => $targetLanguage['code'],
+				'name' => html_entity_decode($targetLanguage['name'], ENT_QUOTES, 'UTF-8'),
+				'image' => $this->getLangImgUrl($targetLanguage['code']),
+			),
+			'steps' => $steps,
+			'timeInSec' => $timeInSec,
 		);
 	}
 

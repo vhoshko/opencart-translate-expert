@@ -21,6 +21,8 @@ Base path: `docs/tasks/<slug>/`
 | `<slug>-improvements.md` | Reflection after the task |
 | `tmp/` | Throwaway scripts. Git ignores this folder, so never commit it |
 
+If a task does one step of a PoC under `docs/pocs/**`, add a "Status: done in issue N" note to each changed section of the PoC document. Keep the old text as the record (task 57).
+
 ## Source Layout
 
 | Path | What |
