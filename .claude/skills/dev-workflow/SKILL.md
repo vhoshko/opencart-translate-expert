@@ -11,6 +11,8 @@ This workflow orchestrates a coding task end-to-end through 7 phases. Each phase
 
 If the user asks for a commit, a push or a PR, do it after Phase 7. Use the commit format of `project-workflows.md`. Record the request in the `## Settings` block of the plan.
 
+If the user approves a WIP push for a store run, commit and push after the first green build. Push the review fixes to the same branch. If the user also asks for a PR, open it after the WIP push. Say in the PR body that the review is not done. Update the PR body when the review is done (tasks 35, 56 and 57).
+
 For a trivial task (a single file, under 20 lines, no schema or build-script impact), propose a stripped-down flow. Proceed only if the user agrees.
 
 The stripped-down flow has these steps:
@@ -248,6 +250,8 @@ The non-negotiables for this repo:
 - The approved plan
 - The investigation summary
 - An instruction to make the changes and report what it did
+
+If the brief lists tests, name a test for each function that selects between code paths, for example page checks, flags and error routing. Do not list tests only for the render helpers (task 57: the review found no test for `showTranslatedCharCount()`).
 
 **Verify the report before you build on it.** An implementer report is a claim, not evidence. For each change that the report says is done, check it in the main context with one grep or file read. Do this before you dispatch `ote-build-test`.
 
