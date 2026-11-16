@@ -1707,6 +1707,8 @@ function teSiteNewState(filters) {
 		timeInSec: 0,
 		requestNumber: 0,
 		tableTotal: 0,
+		tableList: [],
+		tablePos: 0,
 		running: false,
 		stopRequested: false,
 		mode: null
@@ -1783,17 +1785,22 @@ function teSiteRefreshRow(row, entry, column, charCount) {
 	row.children('td.te-num').text(teFormatInt(charCount));
 	var actions = row.children('td.te-site-actions');
 	var attrs = { 'data-table': entry.table, 'data-column': column };
-	if (column !== '' && charCount > 0 && !actions.children('.te-js-site-detail').length) {
-		actions.prepend(teSiteButton('te-js-site-detail', teT('te_site_details'), attrs));
-	}
+	// "Translate" is always the first button, so that it is in one line in the table rows and the column rows.
 	if (entry.supported && charCount > 0 && !actions.children('.te-js-site-translate').length) {
 		var btn = teSiteButton('te-js-site-translate', teT('te_site_translate'), attrs);
 		btn.prop('disabled', teSiteIsRunning());
+		actions.prepend(btn);
+	}
+	if (column !== '' && charCount > 0 && !actions.children('.te-js-site-detail').length) {
+		var detail = teSiteButton('te-js-site-detail', teT('te_site_details'), attrs);
+		var translate = actions.children('.te-js-site-translate');
 		var slot = actions.children('.te-site-badge');
-		if (slot.length) {
-			slot.before(btn);
+		if (translate.length) {
+			translate.after(detail);
+		} else if (slot.length) {
+			slot.before(detail);
 		} else {
-			actions.append(btn);
+			actions.append(detail);
 		}
 	}
 }
@@ -1811,6 +1818,10 @@ function teSiteMergeTable(state, t) {
 		entry.lastRow = entry.row;
 		state.tables[t.table] = entry;
 		state.order.push(t.table);
+		// An empty row between 2 tables, so that the column rows of one table do not run into the next table.
+		if (tbody.children('tr').length) {
+			tbody.append(teEl('tr', { 'class': 'te-table__spacer', 'aria-hidden': 'true' }).append(teEl('td', { 'colspan': '3' })));
+		}
 		tbody.append(entry.row);
 	}
 	entry.charCount += Number(t.charCount) || 0;
@@ -1882,7 +1893,9 @@ function teSiteStartAnalysis() {
 	teAlerts.clear('#te-site-alerts');
 	var filters = teSiteFilters();
 	teSiteState = teSiteNewState(filters);
-	teSiteState.tableTotal = filters.tables.length || $('#te-analization-table option').length;
+	// The server goes through the tables in the order of the select options (getTables()), so the position of a table in this list is its number.
+	teSiteState.tableList = filters.tables.length ? filters.tables.slice(0) : $('#te-analization-table option').map(function() { return $(this).val(); }).get();
+	teSiteState.tableTotal = teSiteState.tableList.length;
 	teSiteState.running = true;
 	teSiteState.mode = 'analyze';
 	$('#te-analization-result').empty().append(teSiteBuildTableSkeleton());
@@ -1933,36 +1946,37 @@ function teSiteOnAnalysisBatch(state, data) {
 	}
 	teSiteUpdateTotals(state);
 
-	var seen = state.order.length;
-	var total = state.tableTotal;
-	var n = total > 0 ? Math.min(seen, total) : seen;
-	// Tables with 0 characters are not in the response, so the count can stay below the total until the end.
-	if (data.done && total > 0) {
-		n = total;
-	}
+	var lastTable = tables.length && tables[tables.length - 1] ? tables[tables.length - 1].table : '';
+	// Non-deep mode: a batch with no tables is the end, also when the server sends done = 0.
+	var finished = !!data.done || (!state.stopRequested && !state.filters.deep && !lastTable);
 	// lastProcessed* names the position before the cut, so show the last table of this batch.
-	var current = tables.length && tables[tables.length - 1] ? tables[tables.length - 1].table : (data.lastProcessedTable || '');
+	var current = lastTable || data.lastProcessedTable || '';
+	var total = state.tableTotal;
+	// Tables with 0 characters are not in the response, so count by the position in the table list, not by the rows.
+	var pos = current ? $.inArray(current, state.tableList) + 1 : 0;
+	state.tablePos = Math.max(state.tablePos, pos, Math.min(state.order.length, total));
+	var n = finished ? total : state.tablePos;
+	var counters = [];
+	if (!finished && current) {
+		counters.push(teT('te_site_cnt_current', { current: current }));
+	}
+	counters.push(teT('te_site_cnt_table', { n: n, total: total }));
+	counters.push(teT('te_site_cnt_request', { request: state.requestNumber }));
+	counters.push(teT('te_site_cnt_chars', { chars: teFormatInt(state.globalCharCount) }));
+	counters.push(teT('te_site_cnt_time', { sec: state.timeInSec.toFixed(1) }));
 	teProgress.update('#te-site-progress', {
 		percent: total > 0 ? n / total * 100 : null,
-		counters: [
-			teT('te_site_cnt_current', { current: current }),
-			teT('te_site_cnt_table', { n: n, total: total > 0 ? total : seen }),
-			teT('te_site_cnt_request', { request: state.requestNumber }),
-			teT('te_site_cnt_chars', { chars: teFormatInt(state.globalCharCount) }),
-			teT('te_site_cnt_time', { sec: state.timeInSec.toFixed(1) })
-		]
+		counters: counters
 	});
 
-	if (data.done) {
+	if (finished) {
 		teSiteEndRun('done');
 	} else if (state.stopRequested) {
 		teSiteEndRun('stopped');
 	} else if (state.filters.deep) {
 		teSiteRequestAnalysis({ table: data.lastProcessedTable, column: data.lastProcessedColumn, offset: data.lastProcessedOffset });
-	} else if (tables.length && tables[tables.length - 1]) {
-		teSiteRequestAnalysis({ table: tables[tables.length - 1].table });
 	} else {
-		teSiteEndRun('done');
+		teSiteRequestAnalysis({ table: lastTable });
 	}
 }
 

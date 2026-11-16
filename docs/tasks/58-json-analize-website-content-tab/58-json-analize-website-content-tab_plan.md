@@ -164,3 +164,21 @@ Key files (from the investigation, checked with reads and greps):
 ## Done
 
 <fill at the end>
+
+## Update 2026-11-16 (store run feedback)
+
+The user did a store run of v04.01.0183. The user asked for 2 layout changes in the result table:
+
+- A table row has only "Translate", and a column row had "Details" and then "Translate". So the "Translate" buttons were not in one line. Now "Translate" is always the first button (`teSiteRefreshRow`).
+- The tables and their columns were too close together, and the result was difficult to read. Now an empty spacer row `tr.te-table__spacer` (one `td` with `colspan="3"`, 16px, no border, no background) comes before each table except the first. A CSS padding on the group row does not give an empty line, because the group row has a grey background.
+- New JS checks: the button order and the spacer rows. JS tests: 403.
+- Build of the 2 layout changes: green, 04.01.0184, 1597 tests pass.
+
+## Update 2026-11-16 (store run feedback, progress counters)
+
+The user saw a done analysis with "Now: oc_weight_class_description" and "Table 17 of 25".
+
+- Cause: in non-deep mode, the server can send a last batch with no tables and `done` = 0. The loop then ended in its last `else` branch. That branch did not set N to the total and kept the old table name. Also, N counted the result rows, and tables with 0 characters are not in the response.
+- Fix: N is the position of the current table in the table list (the selected tables, or all options). The server goes through the tables in the order of `getTables()`, which is also the option order. An empty batch in non-deep mode ends the run. At the end, the panel shows N of N and no "Now:" line.
+- Mutation check: with `finished = !!data.done` only, the new test "an empty batch ends the run" fails. I restored the fix from a byte copy and checked it with grep.
+- JS tests: 407. Build: green, 04.01.0185, 1608 tests pass. Pushed to PR #64.

@@ -535,6 +535,12 @@
 .te-app .te-table__sub {
   padding-left: 28px;
 }
+.te-app .te-table .te-table__spacer td {
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
 .te-app .te-table__text {
   white-space: pre-wrap;
   word-break: break-word;

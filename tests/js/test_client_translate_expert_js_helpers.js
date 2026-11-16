@@ -605,8 +605,18 @@ function testSiteAnalysis(w) {
 	check('batch 2: the new column is appended after the last column of its table, then the next tables', () => w.$('#te-analization-result tbody tr').map(function() {
 		return w.$(this).attr('data-column') || w.$(this).attr('data-table');
 	}).get().join() === 'oc_a,name,description,zero,meta_title,oc_b,title,oc_c,text');
+	check('a column row: Translate is the first button, then Details', () => {
+		const btns = w.$(nameRow).find('td.te-site-actions button');
+		return btns.length === 2 && w.$(btns[0]).hasClass('te-js-site-translate') && w.$(btns[1]).hasClass('te-js-site-detail');
+	});
+	check('one empty spacer row between 2 tables, none before the first table', () => {
+		const rows = w.$('#te-analization-result tbody tr');
+		return w.$('#te-analization-result tbody tr.te-table__spacer').length === 2 && !w.$(rows[0]).hasClass('te-table__spacer')
+			&& w.$('tr.te-table__group[data-table="oc_b"]').prev().hasClass('te-table__spacer') && w.$('tr.te-table__group[data-table="oc_c"]').prev().hasClass('te-table__spacer')
+			&& w.$('tr.te-table__spacer td').attr('colspan') === '3';
+	});
 	check('batch 2: the total and the counters come from the state, no request after done', () => w.$('#te-analization-result tfoot .te-num').text() === '180' && calls.get.length === 2
-		&& w.$('#te-site-progress .te-progress__counters').text() === 'Now: oc_cTable 3 of 3Request 2Characters found: 180Time: 0.7 s'
+		&& w.$('#te-site-progress .te-progress__counters').text() === 'Table 3 of 3Request 2Characters found: 180Time: 0.7 s'
 		&& w.$('#te-site-progress .te-progress__fill')[0].style.width === '100%');
 	check('done: the panel is done, the stop button is hidden, the buttons work again', () => w.$('#te-site-progress').hasClass('te-progress--done') && w.$('#te-site-progress .te-js-stop').hasClass('te-hidden')
 		&& w.$('#te-begin-analization').prop('disabled') === false && w.$('#te-begin-removing_data_from_db').prop('disabled') === false
@@ -638,6 +648,20 @@ function testSiteAnalysis(w) {
 	check('M is the number of selected tables', () => w.$('#te-site-progress .te-progress__counters').text().indexOf('Table 2 of 2') >= 0);
 	calls.get[1].dfd.resolve({ success: 1, done: 1, target: TARGET, globalCharCount: 0, timeInSec: 0, tables: [], lastProcessedTable: null, lastProcessedColumn: null, lastProcessedOffset: 0 });
 	w.$('#te-analization-table').val([]);
+
+	console.log('\nAnalysis: non-deep, a last batch with no tables and done = 0 (store run 2026-11-16):');
+	calls.get.length = 0;
+	w.$('#te-analization-table-deep').prop('checked', false);
+	w.$('#te-begin-analization').trigger('click');
+	calls.get[0].dfd.resolve({ success: 1, done: 0, target: TARGET, globalCharCount: 5, timeInSec: 0.1, tables: [tableBatch('oc_c', 1, 5, [['text', 5]])],
+		lastProcessedTable: 'oc_c', lastProcessedColumn: 'text', lastProcessedOffset: 0 });
+	check('the number of a table is its position in the table list (tables with 0 characters are not in the response)', () => w.$('#te-site-progress .te-progress__counters').text().indexOf('Now: oc_cTable 3 of 3') === 0);
+	calls.get[1].dfd.resolve({ success: 1, done: 0, target: TARGET, globalCharCount: 0, timeInSec: 0.1, tables: [],
+		lastProcessedTable: 'oc_weight', lastProcessedColumn: 'name', lastProcessedOffset: 0 });
+	check('an empty batch ends the run: N of N, no "Now:", the panel is done, no next request', () => calls.get.length === 2
+		&& w.$('#te-site-progress .te-progress__counters').text().indexOf('Table 3 of 3') === 0 && w.$('#te-site-progress .te-progress__counters').text().indexOf('Now:') < 0
+		&& w.$('#te-site-progress').hasClass('te-progress--done') && w.teSiteState.running === false);
+	w.$('#te-analization-table-deep').prop('checked', true);
 
 	console.log('\nAnalysis: done with tables that have 0 characters:');
 	calls.get.length = 0;
