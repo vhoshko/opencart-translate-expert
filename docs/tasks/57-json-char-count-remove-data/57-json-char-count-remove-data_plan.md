@@ -119,3 +119,4 @@ The user did the store run. The change works, but the header item showed on one 
 - The CSS sets the item height per version. Evidence (OpenCart `admin/view/stylesheet/stylesheet.css`): OC 2.3.0.2 lines 99-105 (44px, left border `#E1E1E1`), OC 3.0.3.8 lines 104-149 (45px, 60px from 768px), OC 4.0.2.3 lines 58-64 (hover `#EEEEEE`). OC 2.x and 3.0 get the `#eee` hover from Bootstrap 3 `.nav > li > a:hover`.
 - A new JS test checks the 2-line structure.
 - Build: green, 04.01.0181. 1340 tests pass (JS 206, 6 integration tests skipped, no key). No independent review of this CSS change. The user checks the look on the stores.
+- Store run: the user confirmed the new look on 2026-11-16 (v04.01.0181). The user did not name the checked versions.
