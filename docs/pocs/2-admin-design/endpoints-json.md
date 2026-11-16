@@ -23,16 +23,16 @@ All endpoints set `Content-Type: application/json; Charset=UTF-8` (12 `addHeader
 | 2 | `translateTable` (507) | POST | JSON | none | `doTranslateTableExpertRecursive` |
 | 3 | `analizeTableDetail` (536) | POST | JSON with HTML | `result` | `analizeTableDetail` |
 | 4 | `analize` (560) | GET | JSON with HTML | `analizeHeadInfo`, `result[].headerHTML`, `result[].columns[].html`, `timeInSecInfo` | `makeAnalizeRequest` |
-| 5 | `removeDataFromDb` (599) | GET | JSON with HTML | `body`, `timeInSecInfo` | `makeRemovingDataFromDbRequest` |
+| 5 | `removeDataFromDb` (599) | GET | JSON with HTML | `body`, `timeInSecInfo` (data only since issue 57) | `makeRemovingDataFromDbRequest` |
 | 6 | `analizeLocalization` (630) | GET | JSON with HTML | `html`, `detailsHtml` | `makeLocalizationAnalizeRequest` |
 | 7 | `saveLocalizationFile` (768) | POST | JSON | none | `doSaveLocalizationExpert` |
-| 8 | `translatedCharCountInfo` (648) | GET | JSON with HTML | `info` | `showTranslatedCharCount` |
+| 8 | `translatedCharCountInfo` (648) | GET | JSON with HTML | `info` (data only since issue 57) | `showTranslatedCharCount` |
 | 9 | `resetCharCount` (685) | GET | JSON | none | `resetTranslationCharCount` |
 | 10 | `resetCache` (698) | GET | JSON | none | `resetTranslationCache` |
 
 `downloadDebugLog` (791) and `clearDebugLog` (812) are not AJAX. They are plain links (a file download and a redirect).
 
-5 endpoints return HTML: #3, #4, #5, #6 and #8.
+5 endpoints return HTML: #3, #4, #5, #6 and #8. Issue 57 changed #5 and #8 to the proposed format of sections 3.3 and 3.5.
 
 ## 2. Problems of the current HTML responses
 
@@ -145,6 +145,8 @@ Notes:
 
 ### 3.3 `removeDataFromDb`
 
+Status: done in issue 57. The "Now" line below is the state before issue 57.
+
 Now: `{ "success": true, "headerHTML": "<plain text>", "body": "line<br>line<br>...", "timeInSecInfo": "<HTML>" }`. The `body` is `implode('<br>', $results)` (CORE:341).
 
 Proposed:
@@ -217,6 +219,8 @@ Notes:
 8. **Test impact.** `tests/test_client_translate_expert_localization.php` reads `$res->detailsHtml` (lines 411, 445, 513) and `$res->html` (line 524). The change of this endpoint must change these checks to the new `files[]` fields.
 
 ### 3.5 `translatedCharCountInfo`
+
+Status: done in issue 57. The "Now" line below is the state before issue 57.
 
 Now: the data fields and the field `info`. `info` is the language string `entry_server_translation_char_count_info` with placeholders filled. It contains a `<div>` with an inline `onclick=confirm()...resetTranslationCharCount()` (LANG:88-92).
 

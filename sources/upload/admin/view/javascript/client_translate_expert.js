@@ -1748,7 +1748,7 @@ function teRenderRemoveLog(data) {
 	var root = teEl('div', { 'class': 'te-app' });
 	root.append(teEl('h2', {}, teT('te_remove_completed', { language: data.target ? data.target.name : '' })));
 	var log = teEl('div', { 'class': 'te-log' });
-	var steps = data.steps && typeof data.steps.length === 'number' ? data.steps : [];
+	var steps = $.isArray(data.steps) ? data.steps : [];
 	for (var i = 0; i < steps.length; i++) {
 		var step = steps[i];
 		var line = null;
@@ -1769,6 +1769,6 @@ function teRenderRemoveLog(data) {
 		}
 	}
 	root.append(log);
-	root.append(teEl('div', { 'class': 'te-log__time' }, teT('te_time_in_sec', { sec: data.timeInSec })));
+	root.append(teEl('div', { 'class': 'te-log__time' }, teT('te_time_in_sec', { sec: Number(data.timeInSec) || 0 })));
 	return root;
 }

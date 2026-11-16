@@ -256,6 +256,10 @@ function testRemoveLog(w) {
 	check('the time line', () => log.find('.te-log__time').text() === 'Time 0.1234');
 	check('no target gives an empty language', () => w.teRenderRemoveLog({ steps: [], timeInSec: 0 }).find('h2').text() === 'Done: .');
 
+	check('steps absent: no step lines and no exception', () => w.teRenderRemoveLog({ timeInSec: 1 }).find('.te-log__line').length === 0);
+	check('steps as a string: no step lines and no exception', () => w.teRenderRemoveLog({ steps: 'abc', timeInSec: 1 }).find('.te-log__line').length === 0);
+	check('timeInSec missing shows 0', () => w.teRenderRemoveLog({ steps: [] }).find('.te-log__time').text() === 'Time 0');
+
 	console.log('\nmakeRemovingDataFromDbRequest:');
 	const origGet = w.$.get;
 	const origErr = w.showTranslateExpertErrorMessage;
@@ -279,6 +283,67 @@ function testRemoveLog(w) {
 	w.$.get = origGet;
 	w.showTranslateExpertErrorMessage = origErr;
 	w.hideTranslateExpertModal = origHide;
+}
+
+function testShowCharCount(w) {
+	console.log('\nshowTranslatedCharCount, showTeCharCountError:');
+	const origGet = w.$.get;
+	const origLog = w.console.log;
+	w.console.log = function() {};
+	w.document.js_const_module_prefix = 'extension/module';
+	w.document.te_i18n_global = { te_global_char_count: 'Chars', te_global_reset: 'Reset', te_global_error_internal: 'Internal' };
+	let requests = 0;
+	let reply = null;
+	w.$.get = function() {
+		requests++;
+		return reply === 'fail' ? w.$.Deferred().reject({ status: 500, responseText: 'x' }).promise() : w.$.Deferred().resolve(reply).promise();
+	};
+	const ok = { success: 1, charCount: 300000, monthFreeLimit: 500000, costOverFreeLimit: 0 };
+	const body = w.$('body');
+	const clean = function() { w.$('#te-summary-count, #te-summary-alerts, #header, #te-translated-char-count-info').remove(); requests = 0; };
+
+	clean();
+	body.append('<div id="te-summary-count"></div><div id="te-summary-alerts"></div>');
+	w.document.js_const_client_translate_expert_show_char_count_is_enabled = false;
+	reply = ok;
+	w.showTranslatedCharCount();
+	check('module page: the meter is in #te-summary-count, no header item, flag off still runs', () => requests === 1
+		&& w.$('#te-summary-count .te-meter').length === 1 && w.$('#te-translated-char-count-info').length === 0);
+
+	reply = { success: 0, message: 'Bad' };
+	w.showTranslatedCharCount();
+	check('module page: success 0 shows an alert in #te-summary-alerts', () => w.$('#te-summary-alerts .te-alert').length === 1);
+	reply = 'fail';
+	w.showTranslatedCharCount();
+	check('module page: a rejected request shows one alert', () => w.$('#te-summary-alerts .te-alert').length === 1);
+
+	clean();
+	body.append('<div id="header"><ul class="nav pull-right"></ul></div>');
+	reply = ok;
+	w.document.js_const_client_translate_expert_show_char_count_is_enabled = false;
+	w.showTranslatedCharCount();
+	check('other page: flag off sends no request', () => requests === 0 && w.$('#te-translated-char-count-info').length === 0);
+
+	w.document.js_const_client_translate_expert_show_char_count_is_enabled = true;
+	w.showTranslatedCharCount();
+	check('other page: the first call creates one li under the header', () => requests === 1
+		&& w.$('#te-translated-char-count-info').length === 1 && w.$('#header > ul.nav > li#te-translated-char-count-info .te-header-count').length === 1);
+	reply = { success: 1, charCount: 600000, monthFreeLimit: 500000, costOverFreeLimit: 1 };
+	w.showTranslatedCharCount();
+	check('other page: the second call reuses the li and updates it', () => w.$('#te-translated-char-count-info').length === 1
+		&& w.$('#te-translated-char-count-info .te-header-count--over').length === 1);
+
+	const countAlerts = function() { return w.$('.te-alert').length; };
+	reply = { success: 0, message: 'Bad' };
+	w.showTranslatedCharCount();
+	check('other page: success 0 adds no alert and does not throw', () => countAlerts() === 0);
+	reply = 'fail';
+	w.showTranslatedCharCount();
+	check('other page: a rejected request adds no alert and does not throw', () => countAlerts() === 0 && w.$('#te-translated-char-count-info').length === 1);
+
+	clean();
+	w.console.log = origLog;
+	w.$.get = origGet;
 }
 
 function testBs5(w) {
@@ -320,6 +385,7 @@ for (const version of JQUERY_VERSIONS) {
 	testAlerts(w);
 	testCharCountHelpers(w);
 	testRemoveLog(w);
+	testShowCharCount(w);
 	w = makeWindow(version.file, true);
 	testBs5(w);
 	testCharCountHelpers(w);

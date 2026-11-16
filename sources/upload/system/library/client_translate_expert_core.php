@@ -330,15 +330,9 @@ class LibraryClientTranslateExpertCore
 				$tableClearedRows = 0;
 				foreach($tableResult->textColumnNames as $textColumnName)
 				{
-					foreach($languages as $code => $language)
-					{
-						if ($languageIdTo != $language['language_id'])
-							continue;
-
-						$clearedRows = (int)$this->removeDataFromTable($languageIdTo, $tableResult->table, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
-						$tableClearedRows += $clearedRows;
-						$steps[] = array('type' => 'column', 'table' => $tableResult->table, 'column' => $textColumnName, 'clearedRows' => $clearedRows);
-					}
+					$clearedRows = (int)$this->removeDataFromTable($languageIdTo, $tableResult->table, $textColumnName, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
+					$tableClearedRows += $clearedRows;
+					$steps[] = array('type' => 'column', 'table' => $tableResult->table, 'column' => $textColumnName, 'clearedRows' => $clearedRows);
 				}
 				$steps[$tableStepIndex]['clearedRows'] = $tableClearedRows;
 			}

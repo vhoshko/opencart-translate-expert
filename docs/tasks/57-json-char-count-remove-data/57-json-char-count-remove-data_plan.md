@@ -84,10 +84,19 @@ Key files (from the investigation, checked with reads):
 - [x] Bump version + build + test
   - Findings: green. 04.01.0179. 1292 tests pass (6 integration tests skipped, no key). The rewrite checks in the OC 1.5, 2.2, 3.0 and 4.x packages pass.
 - [ ] Store run on OC 2.3, 3.0 and 4.x (only if the user approves a WIP push)
-- [ ] Independent review → 57-json-char-count-remove-data-review.md
-- [ ] Address review findings (auto-approve)
-- [ ] Bump version + build + tests (verify loop)
-- [ ] Re-review? (ask the user)
+  - Findings: WIP push and PR #63 on 2026-11-16 (commit with v04.01.0179). The user does the store run.
+- [x] Independent review → 57-json-char-count-remove-data-review.md
+  - Findings: Fable 5.1. Ready to merge with fixes. 1 Important, 5 Minor, no Critical.
+- [x] Address review findings (auto-approve)
+  - 1 (Important, no test for the gating and the error routing of `showTranslatedCharCount`): fix. Add jsdom tests. The file has the `$.get` stub pattern.
+  - 2 (Minor, dead inner language loop in CORE `removeDataFromDb`): fix. Call `removeDataFromTable()` one time for each column.
+  - 3 (Minor, the steps guard accepts a string): fix. Use `$.isArray` (jQuery 1.7.1 has it). Add a test.
+  - 4 (Minor, a missing `timeInSec` shows `{sec}`): fix. Use `Number(data.timeInSec) || 0`.
+  - 5 (Minor, `endpoints-json.md` inventory and "Now" lines show the old state): fix. The inventory is a dated record, so I added status notes and did not rewrite the "Now" lines.
+  - 6 (Minor, no `hasPermission` check in `translatedCharCountInfo`, `resetCharCount` and `removeDataFromDb`): skip. The issue is older than this change and is out of scope. Follow-up: add it to the PoC step 6 task (GET to POST).
+- [x] Bump version + build + tests (verify loop)
+  - Findings: green. 04.01.0180. 1314 tests pass (JS 202, 6 integration tests skipped, no key). I checked the fix diff in the main context before the build.
+- [x] Re-review? (ask the user)
 - [ ] Improvements pass → 57-json-char-count-remove-data-improvements.md
 - [ ] Commit, push, PR
 
