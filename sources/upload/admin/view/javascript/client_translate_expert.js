@@ -59,14 +59,14 @@ var translateExpertLocalizationIds = {
 	catalog: {
 		from: '#te-langbar-from',
 		to: '#te-langbar-to',
-		anchor: '#te-langbar-app',
+		anchor: '#te-begin-localization-analization',
 		button: '#te-begin-localization-analization',
 		result: '#te-localization-analization-result'
 	},
 	admin: {
 		from: '#te-langbar-from',
 		to: '#te-langbar-to',
-		anchor: '#te-langbar-app',
+		anchor: '#te-begin-admin-localization-analization',
 		button: '#te-begin-admin-localization-analization',
 		result: '#te-admin-localization-analization-result'
 	}
@@ -1936,10 +1936,12 @@ function teSiteOnAnalysisBatch(state, data) {
 	var seen = state.order.length;
 	var total = state.tableTotal;
 	var n = total > 0 ? Math.min(seen, total) : seen;
-	var current = data.lastProcessedTable || (tables.length && tables[tables.length - 1] ? tables[tables.length - 1].table : '');
-	if (current && data.lastProcessedColumn) {
-		current += '.' + data.lastProcessedColumn;
+	// Tables with 0 characters are not in the response, so the count can stay below the total until the end.
+	if (data.done && total > 0) {
+		n = total;
 	}
+	// lastProcessed* names the position before the cut, so show the last table of this batch.
+	var current = tables.length && tables[tables.length - 1] ? tables[tables.length - 1].table : (data.lastProcessedTable || '');
 	teProgress.update('#te-site-progress', {
 		percent: total > 0 ? n / total * 100 : null,
 		counters: [
@@ -2002,7 +2004,7 @@ function teRenderSiteDetail(data) {
 			var textTo = row.textTo === null || typeof row.textTo === 'undefined' ? '' : String(row.textTo);
 			var fromCell = teEl('td').append(teEl('span', { 'class': 'te-table__text' }, textFrom));
 			if (Number(row.count) > 1) {
-				fromCell.append(teEl('span', { 'class': 'te-muted' }, ' ×' + Number(row.count)));
+				fromCell.append(teEl('span', { 'class': 'te-muted' }, ' \u00d7' + Number(row.count)));
 			}
 			var toCell = teEl('td');
 			if (textTo === '') {

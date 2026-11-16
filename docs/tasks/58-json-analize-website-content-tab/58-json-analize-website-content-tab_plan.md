@@ -145,9 +145,18 @@ Key files (from the investigation, checked with reads and greps):
 - [x] WIP commit, push and PR (the review is not done)
   - Findings: WIP commit with v04.01.0182 on 2026-11-16.
 - [ ] Store run on OC 1.5, 2.3, 3.0 and 4.x (the user)
-- [ ] Independent review → 58-json-analize-website-content-tab-review.md
-- [ ] Address review findings (auto-approve)
-- [ ] Bump version + build + tests (verify loop)
+- [x] Independent review → 58-json-analize-website-content-tab-review.md
+  - Findings: Fable 5.1. Ready to merge. No Critical, no Important, 7 Minor. The usage limit stopped the first run. The same agent continued after the reset.
+- [x] Address review findings (auto-approve)
+  - 1 (non-ASCII `×` in the JS): fix. `\u00d7`.
+  - 2 (`ctype_digit` is a new extension dependency): fix. `preg_match('/^[0-9]+$/')`.
+  - 3 (`langIdTo` = 0 means all languages in `analize` and `translateTable`): fix. CTRL returns `badFilterResponse()` when `langIdFrom` or `langIdTo` is not positive, in the 3 endpoints.
+  - 4 (the progress counters): fix. At `done`, N is M, so the bar is full. "Now:" shows the last table of the batch, because `lastProcessed*` names the position before the cut.
+  - 5 (the localization alerts go before the langbar, so they show on all tabs): fix. This task caused it. The anchor is now the Analyze button of each localization tab. Before this task, it was the source select in the tab.
+  - 6 (test gaps): fix. New JS checks: a new column of a collapsed table is hidden, an existing button stays the same node, done gives "3 of 3", the mode radios have `form="te-no-form"` in both templates, the localization anchors.
+  - 7 (`showTranslateExpertErrorMessage` inserts `responseText` as HTML): skip. The code is older than this task, and only the removal and localization flows use it. PoC step 4 changes it.
+- [x] Bump version + build + tests (verify loop)
+  - Findings: green. 04.01.0183. 1596 tests pass (JS 399, 6 integration tests skipped, no key). I checked the fix diff in the main context before the build. Pushed to PR #64.
 - [ ] Re-review? (ask the user)
 - [ ] Improvements pass → 58-json-analize-website-content-tab-improvements.md
 - [ ] Update the PR body (the review is done)

@@ -516,7 +516,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$stock_status = $this->readStrictListParam($this->request->post, 'stock_status', false);
 		$manufacturer_id = $this->readStrictListParam($this->request->post, 'manufacturer_id', false);
 
-		if (!in_array($mode, array('both', 'only_empty', 'same_value'), true) || $product_category_id === false || $stock_status === false || $manufacturer_id === false) {
+		if ($langIdFrom <= 0 || $langIdTo <= 0 || !in_array($mode, array('both', 'only_empty', 'same_value'), true) || $product_category_id === false || $stock_status === false || $manufacturer_id === false) {
 			$this->badFilterResponse();
 			return;
 		}
@@ -545,7 +545,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$stock_status = $this->readStrictListParam($this->request->post, 'stock_status', false);
 		$manufacturer_id = $this->readStrictListParam($this->request->post, 'manufacturer_id', false);
 
-		if (!in_array($mode, array('both', 'only_empty', 'same_value'), true) || $product_category_id === false || $stock_status === false || $manufacturer_id === false) {
+		if ($langIdFrom <= 0 || $langIdTo <= 0 || !in_array($mode, array('both', 'only_empty', 'same_value'), true) || $product_category_id === false || $stock_status === false || $manufacturer_id === false) {
 			$this->badFilterResponse();
 			return;
 		}
@@ -568,7 +568,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$stock_status = $this->readStrictListParam($this->request->get, 'stock_status', false);
 		$manufacturer_id = $this->readStrictListParam($this->request->get, 'manufacturer_id', false);
 
-		if (!in_array($mode, array('both', 'only_empty', 'same_value'), true) || $product_category_id === false || $stock_status === false || $manufacturer_id === false || $table === false) {
+		if ($langIdFrom <= 0 || $langIdTo <= 0 || !in_array($mode, array('both', 'only_empty', 'same_value'), true) || $product_category_id === false || $stock_status === false || $manufacturer_id === false || $table === false) {
 			$this->badFilterResponse();
 			return;
 		}

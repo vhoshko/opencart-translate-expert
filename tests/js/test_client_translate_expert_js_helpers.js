@@ -580,16 +580,24 @@ function testSiteAnalysis(w) {
 	});
 	check('batch 1: the group row has an expanded toggle and a Translate button, the translate buttons are off while running', () => w.$(groupRow).find('button.te-table__expand.te-js-site-toggle').attr('aria-expanded') === 'true'
 		&& w.$(groupRow).find('.te-js-site-translate[data-table="oc_a"]').length === 1 && w.$(nameRow).find('.te-js-site-translate').prop('disabled') === true);
-	check('batch 1: the progress shows the counters from the state', () => w.$('#te-site-progress .te-progress__counters').text() === 'Now: oc_a.descriptionTable 1 of 3Request 1Characters found: 100Time: 0.5 s'
+	check('batch 1: the progress shows the counters from the state', () => w.$('#te-site-progress .te-progress__counters').text() === 'Now: oc_aTable 1 of 3Request 1Characters found: 100Time: 0.5 s'
 		&& w.$('#te-site-progress .te-progress__fill')[0].style.width.indexOf('33.3') === 0);
 	check('the deep request 2 sends the continue parameters of lastProcessed*', () => calls.get.length === 2 && calls.get[1].data.continue_after_table === 'oc_a'
 		&& calls.get[1].data.continue_after_column === 'description' && calls.get[1].data.continue_offset === 50);
 
+	const nameTranslateBtn = w.$(nameRow).find('.te-js-site-translate')[0];
+	w.$(groupRow).find('.te-js-site-toggle').trigger('click');
 	calls.get[1].dfd.resolve({
 		success: 1, done: 1, target: TARGET, globalCharCount: 80, timeInSec: 0.2,
 		tables: [tableBatch('oc_a', 1, 20, [['name', 10], ['meta_title', 10]]), tableBatch('oc_b', 1, 50, [['title', 50]]), tableBatch('oc_c', 0, 10, [['text', 10]])],
 		lastProcessedTable: 'oc_c', lastProcessedColumn: 'text', lastProcessedOffset: 0
 	});
+	check('batch 2: a new column of a collapsed table is hidden', () => w.$('tr[data-table="oc_a"][data-column="meta_title"]').hasClass('te-hidden')
+		&& w.$(groupRow).find('.te-js-site-toggle').attr('aria-expanded') === 'false');
+	w.$(groupRow).find('.te-js-site-toggle').trigger('click');
+	check('batch 2: the expand shows the new column too', () => !w.$('tr[data-table="oc_a"][data-column="meta_title"]').hasClass('te-hidden'));
+	check('batch 2: an existing Translate button stays the same node, no second button', () => w.$(nameRow).find('.te-js-site-translate').length === 1
+		&& w.$(nameRow).find('.te-js-site-translate')[0] === nameTranslateBtn && w.$(nameRow).find('.te-js-site-detail').length === 1);
 	check('batch 2: the same table has no second group row, its counts are added', () => w.$('tr.te-table__group[data-table="oc_a"]').length === 1 && w.$(groupRow).children('td.te-num').text() === '120'
 		&& w.$(nameRow).children('td.te-num').text() === '50');
 	check('batch 2: the old row nodes are the same nodes and still in the document', () => w.$('tr.te-table__group[data-table="oc_a"]')[0] === groupRow
@@ -598,7 +606,7 @@ function testSiteAnalysis(w) {
 		return w.$(this).attr('data-column') || w.$(this).attr('data-table');
 	}).get().join() === 'oc_a,name,description,zero,meta_title,oc_b,title,oc_c,text');
 	check('batch 2: the total and the counters come from the state, no request after done', () => w.$('#te-analization-result tfoot .te-num').text() === '180' && calls.get.length === 2
-		&& w.$('#te-site-progress .te-progress__counters').text() === 'Now: oc_c.textTable 3 of 3Request 2Characters found: 180Time: 0.7 s'
+		&& w.$('#te-site-progress .te-progress__counters').text() === 'Now: oc_cTable 3 of 3Request 2Characters found: 180Time: 0.7 s'
 		&& w.$('#te-site-progress .te-progress__fill')[0].style.width === '100%');
 	check('done: the panel is done, the stop button is hidden, the buttons work again', () => w.$('#te-site-progress').hasClass('te-progress--done') && w.$('#te-site-progress .te-js-stop').hasClass('te-hidden')
 		&& w.$('#te-begin-analization').prop('disabled') === false && w.$('#te-begin-removing_data_from_db').prop('disabled') === false
@@ -630,6 +638,14 @@ function testSiteAnalysis(w) {
 	check('M is the number of selected tables', () => w.$('#te-site-progress .te-progress__counters').text().indexOf('Table 2 of 2') >= 0);
 	calls.get[1].dfd.resolve({ success: 1, done: 1, target: TARGET, globalCharCount: 0, timeInSec: 0, tables: [], lastProcessedTable: null, lastProcessedColumn: null, lastProcessedOffset: 0 });
 	w.$('#te-analization-table').val([]);
+
+	console.log('\nAnalysis: done with tables that have 0 characters:');
+	calls.get.length = 0;
+	w.$('#te-begin-analization').trigger('click');
+	calls.get[0].dfd.resolve({ success: 1, done: 1, target: TARGET, globalCharCount: 5, timeInSec: 0.1, tables: [tableBatch('oc_a', 1, 5, [['name', 5]])],
+		lastProcessedTable: null, lastProcessedColumn: null, lastProcessedOffset: 0 });
+	check('done: the count of tables is the total, the bar is full', () => w.$('#te-site-progress .te-progress__counters').text().indexOf('Table 3 of 3') >= 0
+		&& w.$('#te-site-progress .te-progress__fill')[0].style.width === '100%');
 
 	console.log('\nAnalysis: errors and stop:');
 	calls.get.length = 0;
@@ -908,6 +924,18 @@ for (const version of JQUERY_VERSIONS) {
 	testCharCountHelpers(w);
 	w = makeSiteWindow(version.file, true);
 	testSiteBs5(w);
+}
+
+console.log('\nTemplates (static):');
+for (const tpl of ['client_translate_expert.tpl', 'client_translate_expert.oc4.twig']) {
+	const text = fs.readFileSync(path.join(__dirname, '../../sources/upload/admin/view/template/extension/module', tpl), 'utf8');
+	const radios = text.match(/<input[^>]*name="te-analization-mode"[^>]*>/g) || [];
+	check(tpl + ': the 3 mode radios are outside the settings form (form="te-no-form")', () => radios.length === 3 && radios.every((r) => r.indexOf('form="te-no-form"') >= 0));
+}
+{
+	const w = makeWindow(JQUERY_VERSIONS[0].file, false);
+	check('the localization alerts go before the Analyze button of their own tab', () => w.translateExpertLocalizationIds.catalog.anchor === '#te-begin-localization-analization'
+		&& w.translateExpertLocalizationIds.admin.anchor === '#te-begin-admin-localization-analization');
 }
 
 console.log('\n=== Results: ' + passed + ' passed, ' + failed + ' failed, 0 skipped ===');

@@ -88,7 +88,7 @@ class LibraryClientTranslateExpertCore
 			foreach($idColumns as $idColumn)
 			{
 				$value = isset($textToTranslateRow[$idColumn]) ? $textToTranslateRow[$idColumn] : '';
-				$ids[$idColumn] = (is_string($value) && ctype_digit($value)) ? (int)$value : $value;
+				$ids[$idColumn] = (is_string($value) && preg_match('/^[0-9]+$/', $value)) ? (int)$value : $value;
 			}
 			$rows[] = array(
 				'ids' => $ids,
