@@ -97,7 +97,15 @@ Key files (from the investigation, checked with reads):
 - [x] Bump version + build + tests (verify loop)
   - Findings: green. 04.01.0180. 1314 tests pass (JS 202, 6 integration tests skipped, no key). I checked the fix diff in the main context before the build.
 - [x] Re-review? (ask the user)
-- [ ] Improvements pass → 57-json-char-count-remove-data-improvements.md
-- [ ] Commit, push, PR
+  - Findings: the user said no on 2026-11-16.
+- [x] Improvements pass → 57-json-char-count-remove-data-improvements.md
+- [x] Commit, push, PR
+  - Findings: PR #63. Commits: the first green build (v04.01.0179), the review fixes (v04.01.0180), then the improvements and this plan.
 
 ## Done
+
+- Landed: `translatedCharCountInfo` and `removeDataFromDb` return JSON data only. The header item and the new `te-summary` bar render from the JSON. The removal log shows `clearedRows` from `countAffected()`. `langIdTo` is cast to int. Final version: 04.01.0180, 1314 tests pass.
+- Review: Fable 5.1, 1 Important and 5 Minor findings. 5 fixed, 1 skipped (`hasPermission`, older than this task). No re-review (the user decided).
+- Gotchas: the session-start git status was stale (PR #62 was merged). `build.sh` rewrites `$data[` only for OC 1.5.
+- Deferred: `hasPermission` on 3 endpoints, GET to POST and the model re-throw (PoC step 6). The header item on OC 1.5 (no selector matches). `showTranslateExpertModal` calls `teBs.modal` (task 56 follow-up).
+- Store run: the user tests PR #63 on the stores.
