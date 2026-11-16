@@ -1699,8 +1699,11 @@ function teCountValueText(data) {
 function teRenderHeaderCount(data) {
 	var valueText = teCountValueText(data);
 	var root = teEl('span', { 'class': 'te-header-count te-header-count--' + teCountState(data), 'title': valueText });
-	root.append(teEl('span', { 'class': 'te-header-count__label' }, teT('te_global_char_count')));
-	root.append(teEl('span', { 'class': 'te-header-count__value' }, valueText));
+	// Two lines: the label above the value (te-header-count__text is a flex column).
+	var text = teEl('span', { 'class': 'te-header-count__text' });
+	text.append(teEl('span', { 'class': 'te-header-count__label' }, teT('te_global_char_count')));
+	text.append(teEl('span', { 'class': 'te-header-count__value' }, valueText));
+	root.append(text);
 	root.append(teEl('button', { 'type': 'button', 'class': 'te-header-count__reset te-js-reset-char-count' }, teT('te_global_reset')));
 	return root;
 }

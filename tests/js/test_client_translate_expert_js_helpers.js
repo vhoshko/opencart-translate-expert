@@ -187,6 +187,11 @@ function testCharCountHelpers(w) {
 	check('ok class and value text', () => ok.hasClass('te-header-count') && ok.hasClass('te-header-count--ok')
 		&& ok.find('.te-header-count__value').text() === '300 000 / 500 000 ($0.00)');
 	check('the title is the value text', () => ok.attr('title') === '300 000 / 500 000 ($0.00)');
+	check('two lines: label then value in __text, reset after it', () => {
+		const lines = ok.children('.te-header-count__text').children();
+		return lines.length === 2 && w.$(lines[0]).hasClass('te-header-count__label') && w.$(lines[1]).hasClass('te-header-count__value')
+			&& ok.children().last().hasClass('te-header-count__reset');
+	});
 	check('a label with HTML stays text', () => ok.find('.te-header-count__label').text() === 'Chars <b>' && ok.find('b').length === 0);
 	check('the reset button', () => {
 		const b = ok.find('button.te-header-count__reset.te-js-reset-char-count');

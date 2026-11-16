@@ -109,3 +109,13 @@ Key files (from the investigation, checked with reads):
 - Gotchas: the session-start git status was stale (PR #62 was merged). `build.sh` rewrites `$data[` only for OC 1.5.
 - Deferred: `hasPermission` on 3 endpoints, GET to POST and the model re-throw (PoC step 6). The header item on OC 1.5 (no selector matches). `showTranslateExpertModal` calls `teBs.modal` (task 56 follow-up).
 - Store run: the user tests PR #63 on the stores.
+
+## Update 2026-11-16 (store run feedback)
+
+The user did the store run. The change works, but the header item showed on one long line. It did not look like the other header items. The next PoC steps do not change the header item, so this task fixes it.
+
+- The user chose the 2-line neutral design, with a grey hover background like the other header items.
+- The JS wraps the label and the value in `te-header-count__text` (a flex column). The reset button stays at the right.
+- The CSS sets the item height per version. Evidence (OpenCart `admin/view/stylesheet/stylesheet.css`): OC 2.3.0.2 lines 99-105 (44px, left border `#E1E1E1`), OC 3.0.3.8 lines 104-149 (45px, 60px from 768px), OC 4.0.2.3 lines 58-64 (hover `#EEEEEE`). OC 2.x and 3.0 get the `#eee` hover from Bootstrap 3 `.nav > li > a:hover`.
+- A new JS test checks the 2-line structure.
+- Build: green, 04.01.0181. 1340 tests pass (JS 206, 6 integration tests skipped, no key). No independent review of this CSS change. The user checks the look on the stores.
