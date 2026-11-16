@@ -28,3 +28,11 @@
 1. `dev-workflow`, **Phase 5**, after the re-review gate. This friction came up in 2 tasks (57 and 58), so the skill must change. Add: "If the user sends store run feedback after the review, record each change in the plan under `## Update <date> (store run feedback)`. Run the verify loop. If a change touches logic (not only CSS or text), ask the re-review question again before Phase 6."
 2. `dev-workflow`, **Phase 2**, implementer brief: add "If the change adds a request loop, name one test for each branch that ends or continues the loop."
 3. `project-workflows.md`, **Known Environment Gotchas**: add a row. Symptom: a grep for a language key finds a use, but the key is not used. Cause: the key name is a substring of another key. What to do: use `grep -rnw "<key>"`.
+
+## 6. Applied edits
+
+The user approved the edits on 2026-11-16. All 3 edits of section 5 are applied:
+
+- Edit 1: `dev-workflow`, Phase 5, "Store run feedback after the review".
+- Edit 2: `dev-workflow`, Phase 2, the test rule for request loops.
+- Edit 3: `project-workflows.md`, a new row in **Known Environment Gotchas** for `grep -rnw`.
