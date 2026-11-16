@@ -72,7 +72,7 @@ Ask the user for two models:
 Keep both choices through Phase 0. Write them into the `## Settings` block of the plan when Phase 1 creates the file. The choices apply for the rest of the task, across sessions, unless the user changes them.
 
 **To apply the choice:**
-- **Planning:** If the planning model is the current session model, write the plan inline as usual. If the user chose a different model, dispatch it with `Agent` (`subagent_type: Plan`, `model: <chosen>`) to produce the plan content. Then bring the content into the main conversation for the Phase 1 checkpoint. Planning subagents do not talk to the user directly.
+- **Planning:** If the planning model is the current session model, write the plan inline as usual. If the user chose a different model, dispatch it with `Agent` (`subagent_type: general-purpose`, `model: <chosen>`). Tell it to write the plan file `docs/tasks/<slug>/<slug>_plan.md` itself and to edit no other file. Do not use `subagent_type: Plan`, because it has no Write tool. The main context must then write the whole plan again, and this costs much context (task 59). Read the plan file for the Phase 1 checkpoint. Planning subagents do not talk to the user directly.
 - **Independent review:** `ote-code-reviewer` pins Opus. Pass `model: <chosen>` on Phase 4 and Phase 5 re-review dispatches only when the chosen model differs from that pin.
 
 ### Input parsing
@@ -178,7 +178,7 @@ In checks-only mode, the agent runs `php -l` and the unit tests. It does not bum
 
 ## Phase 1 — Plan
 
-Use the planning model from Phase 0. If it matches the session model, plan inline in the main context. Otherwise use a `Plan` subagent (see Phase 0). Write the plan to `docs/tasks/<slug>/<slug>_plan.md`.
+Use the planning model from Phase 0. If it matches the session model, plan inline in the main context. Otherwise use a `general-purpose` subagent that writes the plan file (see Phase 0). Write the plan to `docs/tasks/<slug>/<slug>_plan.md`.
 
 Write the plan in ASD-STE100 Simplified Technical English. See **Writing style (ASD-STE100)** in `CLAUDE.md`.
 
@@ -251,6 +251,8 @@ The non-negotiables for this repo:
 - The investigation summary
 - An instruction to make the changes and report what it did
 
+If the change splits into a server part (library, controller, PHP tests) and a front-end part (JS, CSS, templates, language files, JS tests), dispatch 2 implementers in one message. Give each agent a disjoint file list. Give each cross-file item to one owner, for example the controller `$data` keys that the templates need. Tell the other agent that the item is not its work (task 59).
+
 If the brief lists tests, name a test for each function that selects between code paths, for example page checks, flags and error routing. Do not list tests only for the render helpers (task 57: the review found no test for `showTranslatedCharCount()`).
 
 If the change adds a request loop, name one test for each branch that ends or continues the loop. A branch without a test can end the loop in a wrong state (task 58: a non-deep batch with no tables ended the analysis with a wrong progress counter).
@@ -300,6 +302,7 @@ Dispatch `ote-code-reviewer` (`subagent_type: ote-code-reviewer`). The agent pin
 - Repo access: the agent inspects the repo and writes that one file, plus probe scripts under `docs/tasks/<slug>/tmp/` only
 - Which guards in the diff are safety nets for cases nobody has observed. The reviewer gives them proportionate attention, not worst-case scenario after scenario
 - If the diff changes SQL, an instruction to run the real query on a throwaway MariaDB instance (see Phase 0)
+- If the front end builds content that the server parses or writes (for example a PHP language file), an instruction to run a round-trip probe. The probe runs the real JS helpers in jsdom and sends the result through the real server code. Task 59: such a probe found 2 Important findings that the unit tests did not find
 
 The reviewer must NOT see your reasoning.
 
@@ -397,7 +400,7 @@ Surface a summary of 3–5 bullets in chat. Do not edit skills without the go-ah
 | 0 — Investigation | Yes (Explore) | Foreground | Source files stay out of the main context |
 | 0 — Sanity check | Yes | Background · `ote-build-test` (checks only) | Test output is noise. This step does not build, so it does not use a version number |
 | 0 — Verify external assumptions | No | Inline | You must judge what to probe and how to read the answer. The result shapes the plan |
-| 1 — Plan | Only if the user chose a non-default planning model | Foreground (`Plan`) | Otherwise you need the user, so you write the plan inline |
+| 1 — Plan | Only if the user chose a non-default planning model | Foreground (`general-purpose`, writes the plan file) | Otherwise you need the user, so you write the plan inline |
 | 2 — Implement | Sometimes | Foreground · `ote-implementer` | Use it only for large changes (more than 3 files or 50 lines) |
 | 3 — Build+Test | Yes | Foreground · `ote-build-test` | Build and test logs are the biggest context waste |
 | 4 — Independent review | Yes | Foreground · `ote-code-reviewer` | Fresh eyes, no reasoning context |
