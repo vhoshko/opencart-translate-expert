@@ -144,7 +144,8 @@ Key files (from the investigation, checked with reads and greps):
   - Findings: green. 04.01.0182. 1585 tests pass (JS 388, translate loop 304, 6 integration tests skipped, no key). The rewrite checks in the OC 1.5, 2.2, 3.0 and 4.x packages pass.
 - [x] WIP commit, push and PR (the review is not done)
   - Findings: WIP commit with v04.01.0182 on 2026-11-16.
-- [ ] Store run on OC 1.5, 2.3, 3.0 and 4.x (the user)
+- [x] Store run on OC 1.5, 2.3, 3.0 and 4.x (the user)
+  - Findings: the user did the store run on 2026-11-16 and reported 3 changes. See the 2 updates below. The user did not name the checked versions.
 - [x] Independent review → 58-json-analize-website-content-tab-review.md
   - Findings: Fable 5.1. Ready to merge. No Critical, no Important, 7 Minor. The usage limit stopped the first run. The same agent continued after the reset.
 - [x] Address review findings (auto-approve)
@@ -157,13 +158,18 @@ Key files (from the investigation, checked with reads and greps):
   - 7 (`showTranslateExpertErrorMessage` inserts `responseText` as HTML): skip. The code is older than this task, and only the removal and localization flows use it. PoC step 4 changes it.
 - [x] Bump version + build + tests (verify loop)
   - Findings: green. 04.01.0183. 1596 tests pass (JS 399, 6 integration tests skipped, no key). I checked the fix diff in the main context before the build. Pushed to PR #64.
-- [ ] Re-review? (ask the user)
-- [ ] Improvements pass → 58-json-analize-website-content-tab-improvements.md
-- [ ] Update the PR body (the review is done)
+- [x] Re-review? (ask the user)
+  - Findings: the user said no on 2026-11-16, also for the store run changes.
+- [x] Improvements pass → 58-json-analize-website-content-tab-improvements.md
+- [x] Update the PR body (the review is done)
 
 ## Done
 
-<fill at the end>
+- Landed: `analizeTableDetail` and `analize` return JSON data only. The "Website content" tab has the new design with the `te-langbar`, an inline `te-progress`, a result table with `append()` and the detail modal. The counters are in JS state objects. The 2 HTML builders are gone. `langIdFrom`, `langIdTo` and `mode` are validated in 3 endpoints. Final version: 04.01.0185, 1608 tests pass.
+- Review: Fable 5.1, 7 Minor findings. 6 fixed, 1 skipped (`showTranslateExpertErrorMessage` inserts HTML, older than this task, PoC step 4). No re-review (the user decided).
+- Store run: 3 changes after the review (the button order, a spacer row between tables, the progress counter at the end of a non-deep analysis). They have tests and a green build, but no independent review.
+- Gotchas: the usage limit stopped the review agent. The same agent continued after the reset. A substring grep gave a false "still used" for a language key.
+- Deferred: the localization tabs (PoC step 4, also the HTML in `showTranslateExpertErrorMessage`). GET to POST, `hasPermission` and the model re-throw (PoC step 6). The stop button stops only the next request.
 
 ## Update 2026-11-16 (store run feedback)
 
