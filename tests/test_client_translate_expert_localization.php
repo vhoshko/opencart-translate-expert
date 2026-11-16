@@ -23,6 +23,7 @@ if ($isChild)
 		public function roots($scope, $from, $to) { return $this->getLocalizationRoots($scope, $from, $to); }
 		public function mainName($language) { return $this->getMainLanguageFileName($language); }
 		public function parseByRegExp($content) { return $this->parseLocalizationFileByRegExp($content); }
+		public function imgUrl($code) { return $this->getLangImgUrl($code); }
 	}
 
 	$childTest->run();
@@ -183,7 +184,7 @@ class FakeLoader
 
 class FakeLanguage
 {
-	public function get($key) { return strpos($key, 'file_to_translate_info') !== false ? $key . ': {path}' : $key; }
+	public function get($key) { return $key; }
 	public function load($route) {}
 }
 
@@ -314,6 +315,8 @@ class LocalizationChildTest
 			$this->testCatalogAnalysis();
 			$this->testParser();
 			$this->testConcatenatedValueWithoutTarget();
+			$this->testBatching();
+			$this->testAnalysisErrors();
 			// Before the save tests: these write target files that the reverse direction would read as source files.
 			if ($this->isOc4)
 				$this->testOc4SourceFromLanguageExtension();
@@ -370,10 +373,29 @@ class LocalizationChildTest
 	private function analysisRows($res)
 	{
 		$rows = array();
-		foreach ($res->analize as $item)
+		$files = isset($res->files) ? $res->files : array();
+		foreach ($files as $item)
 			$rows[$item['root'] . '|' . $item['pathFrom']] = $item;
 		ksort($rows);
 		return $rows;
+	}
+
+	private function keyNames($file)
+	{
+		$names = array();
+		$keys = isset($file['keys']) ? $file['keys'] : array();
+		foreach ($keys as $key)
+			$names[] = $key['key'];
+		return $names;
+	}
+
+	private function keyItem($file, $name)
+	{
+		$keys = isset($file['keys']) ? $file['keys'] : array();
+		foreach ($keys as $key)
+			if ($key['key'] === $name)
+				return $key;
+		return null;
 	}
 
 	private function testAdminAnalysis()
@@ -383,6 +405,11 @@ class LocalizationChildTest
 		$this->check($res->success, 1, 'admin analysis succeeds');
 		if (!$res->success)
 			return;
+
+		$this->checkResponseShape($res, 'admin');
+		$lib2 = $this->newLibrary();
+		$this->check($res->languageFrom, array('language_id' => 1, 'code' => $this->oldOc ? 'en' : 'en-gb', 'name' => 'English', 'image' => $lib2->imgUrl($this->oldOc ? 'en' : 'en-gb')), 'languageFrom object');
+		$this->check($res->languageTo['language_id'], 2, 'languageTo language_id is int');
 
 		$rows = $this->analysisRows($res);
 		$expected = array(
@@ -402,18 +429,46 @@ class LocalizationChildTest
 		$header = $rows['core|/common/header.php'];
 		$this->check(strpos($header['contentFrom'], 'text_admin_inc') !== false && strpos($header['contentFrom'], 'text_catalog_inc') === false,
 			true, 'admin include is read from the admin language folder');
-		$this->check(isset($header['toTranslate']['heading_title']), !$this->isOc4,
+		$this->check($this->keyNames($header), $this->isOc4 ? array('text_admin_inc') : array('heading_title', 'text_admin_inc'),
 			$this->isOc4 ? 'existing target file in the language extension is read (heading_title is translated)' : 'missing target file: heading_title needs translation');
+		$inc = $this->keyItem($header, 'text_admin_inc');
+		$this->check($inc, array('key' => 'text_admin_inc', 'text' => 'Admin include', 'fullText' => "\$_['text_admin_inc'] = 'Admin include';", 'expression' => 0),
+			'key item has key, text, fullText and an int expression');
+		$this->check($header['targetExists'], $this->isOc4 ? 1 : 0, 'targetExists is an int');
+		$fields = array_keys($header);
+		sort($fields);
+		$this->check($fields, array('contentFrom', 'contentTo', 'keys', 'pathFrom', 'pathTo', 'root', 'rootName', 'targetExists'), 'file item has exactly 8 fields');
+
+		$quote = $rows["core|/quote'name.php"];
+		$this->check($quote['pathTo'], "/quote'name.php", 'pathTo is the raw value');
+		$this->check($this->keyNames($quote), array('text_q'), 'keys of the quote file');
+		$this->check($quote['rootName'], '', 'core root has an empty root name');
 
 		if ($this->isOc4)
+		{
 			$this->check($rows['ext:opencart|/module/account.php']['rootName'], 'opencart', 'extension root name');
+			$this->check($rows['ext:opencart|/module/account.php']['root'], 'ext:opencart', 'extension root id');
+		}
 
-		$html = $res->detailsHtml;
-		$this->check(strpos($html, "data-path-to='/quote&#039;name.php'") !== false, true, 'data-path-to is escaped');
-		$this->check(strpos($html, "quote'name") === false, true, 'no unescaped quote in the HTML');
-		$this->check(strpos($html, "data-root='core'") !== false, true, 'data-root is in the HTML');
-		if ($this->isOc4)
-			$this->check(strpos($html, '[opencart] /module/account.php') !== false, true, 'display path shows the extension name');
+		$totals = isset($res->totals) ? $res->totals : array();
+		$this->check($totals, array(
+			'fileCount' => $this->isOc4 ? 5 : 4,
+			'needToTranslateFileCount' => $this->isOc4 ? 5 : 4,
+			'needToTranslateValueCount' => 6,
+			'needToTranslateCharCount' => $this->isOc4 ? 43 : 42,
+		), 'admin totals are computed from the fixture');
+	}
+
+	private function checkResponseShape($res, $prefix)
+	{
+		$vars = array_keys(get_object_vars($res));
+		sort($vars);
+		$this->check($vars, array('done', 'files', 'languageFrom', 'languageTo', 'nextFileIndex', 'success', 'totals'), $prefix . ': top-level fields');
+		foreach (array('html', 'detailsHtml', 'analize') as $old)
+			$this->check(isset($res->$old), false, $prefix . ': no ' . $old . ' field');
+		$this->check($res->success, 1, $prefix . ': success is int 1');
+		$this->check($res->done, 1, $prefix . ': done is int 1');
+		$this->check($res->nextFileIndex, 10, $prefix . ': nextFileIndex is int');
 	}
 
 	private function testCatalogAnalysis()
@@ -423,6 +478,7 @@ class LocalizationChildTest
 		$this->check($res->success, 1, 'catalog analysis (default scope) succeeds');
 		if (!$res->success)
 			return;
+		$this->checkResponseShape($res, 'catalog');
 		$rows = $this->analysisRows($res);
 		$expected = array("core|/{$this->mainFrom}.php", 'core|/common/inc.php', 'core|/product/product.php');
 		if ($this->isOc4)
@@ -437,13 +493,13 @@ class LocalizationChildTest
 			$cod = $rows['ext:opencart|/payment/cod.php'];
 			$this->check($cod['rootName'], 'opencart', 'catalog extension root name in the analysis');
 			$this->check($cod['pathTo'], '/payment/cod.php', 'catalog extension file keeps its path');
-			$this->check($cod['targetExists'], false, 'missing catalog extension target file is reported');
+			$this->check($cod['targetExists'], 0, 'missing catalog extension target file is reported');
+			$this->check($this->keyNames($cod), array('text_title', 'text_catalog_inc'), 'catalog extension keys');
+			$this->check($this->keyItem($cod, 'text_title'), array('key' => 'text_title', 'text' => 'Cash On Delivery', 'fullText' => "\$_['text_title'] = 'Cash On Delivery';", 'expression' => 0), 'catalog extension key item');
 			$this->check(strpos($cod['contentFrom'], 'text_catalog_inc') !== false && strpos($cod['contentFrom'], 'text_admin_inc') === false,
 				true, 'catalog extension include is read from the catalog language folder');
-			$this->check(isset($rows['core|/product/product.php']['toTranslate']['text_product']), false,
+			$this->check(in_array('text_product', $this->keyNames($rows['core|/product/product.php'])), false,
 				'existing catalog target file in the language extension is read');
-			$this->check(strpos($res->detailsHtml, '[opencart] /payment/cod.php') !== false && strpos($res->detailsHtml, "data-root='ext:opencart'") !== false,
-				true, 'catalog extension row shows the extension name and has data-root');
 		}
 		$this->check($rows["core|/{$this->mainFrom}.php"]['pathTo'], "/{$this->mainTo}.php", $this->isOc4 ? 'catalog default.php keeps its name on OC 4' : 'catalog main file is renamed to the target language');
 		$product = $rows['core|/product/product.php'];
@@ -452,6 +508,7 @@ class LocalizationChildTest
 
 		$res = $lib->analizeLocalization('1', '2', 0, 'other');
 		$this->check($res->success, 0, 'unknown scope is rejected');
+		$this->check($res->error_code, 3004, 'unknown scope error code');
 	}
 
 	private function testParser()
@@ -496,32 +553,113 @@ class LocalizationChildTest
 	{
 		$footer = "<?php\n// Text\n\$_['text_footer'] = '<a href=\"http://www.opencart.com\">OpenCart</a> &copy; 2009-' . date('Y') . ' All Rights Reserved.<br />Version %s';\n?>\n";
 		$path = $this->tmp . '/catalog/language/' . $this->from . '/common/footer.php';
-		writeFile($path, $footer);
 
 		$lib = $this->newLibrary();
+		$baseRes = $lib->analizeLocalization('1', '2', 0);
+		writeFile($path, $footer);
 		$res = $lib->analizeLocalization('1', '2', 0);
 		unlink($path);
 		$this->check($res->success, 1, 'analysis with a concatenated value succeeds');
-		if (!$res->success)
+		if (!$res->success || !$baseRes->success)
 			return;
 		$rows = $this->analysisRows($res);
 		$row = isset($rows['core|/common/footer.php']) ? $rows['core|/common/footer.php'] : null;
-		$this->check($row !== null && isset($row['toTranslate']['text_footer']), true, 'concatenated key without a target file needs attention');
-		$this->check($row !== null && !empty($row['toTranslate']['text_footer']['expression']), true, 'concatenated key is marked as an expression');
-		$this->check($row !== null ? $row['targetExists'] : null, false, 'missing target file is reported');
+		$this->check($row !== null && $this->keyNames($row) === array('text_footer'), true, 'concatenated key without a target file needs attention');
+		$item = $row !== null ? $this->keyItem($row, 'text_footer') : null;
+		$this->check($item !== null ? $item['expression'] : null, 1, 'concatenated key is marked as an expression');
+		$this->check($item !== null ? $item['text'] : null, '', 'an expression has no text');
+		$this->check($item !== null && substr($item['fullText'], -1) === ';' && strpos($footer, $item['fullText']) !== false, true, 'expression fullText is the source statement');
+		$this->check($row !== null ? $row['targetExists'] : null, 0, 'missing target file is reported');
 
-		$html = $res->detailsHtml;
-		$pos = strpos($html, "data-path-to='/common/footer.php'");
-		$this->check($pos !== false, true, 'footer row is in the HTML');
-		if ($pos === false)
+		$base = $baseRes->totals;
+		$totals = $res->totals;
+		$this->check($totals['needToTranslateFileCount'] >= 1, true, 'file with only an expression is counted as a file to translate');
+		$this->check($totals['fileCount'], $base['fileCount'] + 1, 'expression file is counted in the file count');
+		$this->check($totals['needToTranslateFileCount'], $base['needToTranslateFileCount'] + 1, 'expression file needs translation');
+		$this->check($totals['needToTranslateValueCount'], $base['needToTranslateValueCount'] + 1, 'expression is counted in the value count');
+		$this->check($totals['needToTranslateCharCount'], $base['needToTranslateCharCount'], 'expression adds no chars');
+	}
+
+	private function testBatching()
+	{
+		$dir = $this->tmp . '/catalog/language/' . $this->from . '/batch';
+		for ($i = 1; $i <= 12; $i++)
+			writeFile($dir . '/f' . $i . '.php', langFile(array('text_b' . $i => 'Batch ' . $i)));
+
+		$lib = $this->newLibrary();
+		$first = $lib->analizeLocalization('1', '2', 0);
+		$this->check($first->success, 1, 'batching: first batch succeeds');
+		if (!$first->success)
+		{
+			removeTree($dir);
 			return;
-		$next = strpos($html, "data-path-to=", $pos + 1);
-		$rowHtml = $next === false ? substr($html, $pos) : substr($html, $pos, $next - $pos);
-		$this->check(strpos($rowHtml, 'full_translated') === false, true, 'footer is not "Fully translated"');
-		$this->check(strpos($rowHtml, 'entry_localization_file_expression_info') !== false, true, 'info line shows the values with PHP code');
-		$this->check(strpos($rowHtml, 'entry_localization_file_target_missing') !== false, true, 'info line shows the missing target file');
-		$this->check(strpos($rowHtml, 'translate_localization_button') !== false, true, 'footer has the Translate button');
-		$this->check($res->html !== '' && strpos($res->html, 'translate_localization_all_button') !== false, true, 'totals show Translate all');
+		}
+		$all = $first->totals['fileCount'];
+		$this->check($all >= 15, true, 'batching: more than one batch of files');
+		$this->check($first->done, 0, 'batching: first batch is not done');
+		$this->check($first->nextFileIndex, 10, 'batching: first batch nextFileIndex');
+		$this->check(count($first->files), 10, 'batching: first batch has 10 files');
+		$this->check(isset($first->totals), true, 'batching: first batch has totals');
+		$this->check($first->languageFrom['language_id'], 1, 'batching: first batch has languageFrom');
+
+		$second = $lib->analizeLocalization('1', '2', 10);
+		$this->check($second->done, $all <= 20 ? 1 : 0, 'batching: second batch done');
+		$this->check($second->nextFileIndex, 20, 'batching: second batch nextFileIndex');
+		$this->check(count($second->files), min(10, $all - 10), 'batching: second batch has the rest');
+		$this->check(property_exists($second, 'totals'), false, 'batching: later batch has no totals key');
+		$this->check(isset($second->languageTo['code']), true, 'batching: later batch has languageTo');
+
+		$firstPaths = array();
+		foreach ($first->files as $file)
+			$firstPaths[] = $file['root'] . '|' . $file['pathFrom'];
+		$secondPaths = array();
+		foreach ($second->files as $file)
+			$secondPaths[] = $file['root'] . '|' . $file['pathFrom'];
+		$this->check(count(array_intersect($firstPaths, $secondPaths)), 0, 'batching: batches do not overlap');
+
+		$last = $lib->analizeLocalization('1', '2', 1000);
+		$this->check($last->success, 1, 'batching: index past the end succeeds');
+		$this->check($last->done, 1, 'batching: index past the end is done');
+		$this->check($last->files, array(), 'batching: index past the end has no files');
+		$this->check(property_exists($last, 'totals'), false, 'batching: index past the end has no totals key');
+
+		$string = $lib->analizeLocalization('1', '2', '10');
+		$this->check($string->files, $second->files, 'batching: string index is the same as int index');
+		$this->check($string->nextFileIndex, 20, 'batching: string index nextFileIndex is int');
+
+		$negative = $lib->analizeLocalization('1', '2', -5);
+		$this->check($negative->files, $first->files, 'batching: negative index starts at 0');
+		$this->check(isset($negative->totals), true, 'batching: negative index has totals');
+
+		removeTree($dir);
+	}
+
+	private function testAnalysisErrors()
+	{
+		$lib = $this->newLibrary();
+		$res = $lib->analizeLocalization('1', '1', 0);
+		$this->check(array($res->success, $res->error_code), array(0, 3003), 'same language gives 3003');
+		$this->check(array_keys(get_object_vars($res)), array('success', 'error_code', 'message', 'additional_message'), 'error response shape');
+
+		$res = $lib->analizeLocalization('1', '9', 0);
+		$this->check(array($res->success, $res->error_code), array(0, 3002), 'unknown target language gives 3002');
+		$this->check($res->additional_message, 'error_bad_filter', 'bad language message is the error_bad_filter text');
+		$res = $lib->analizeLocalization('9', '2', 0);
+		$this->check(array($res->success, $res->error_code), array(0, 3002), 'unknown source language gives 3002');
+
+		$model = new FakeLocalizationModel();
+		$model->load = new FakeLoader();
+		$model->language = new FakeLanguage();
+		$model->model_localisation_language = new FakeLocalisationLanguageModel();
+		$languages = $this->languages();
+		$third = $this->oldOc
+			? array('language_id' => '3', 'name' => 'German', 'code' => 'de', 'directory' => 'german', 'filename' => 'german')
+			: array('language_id' => '3', 'name' => 'German', 'code' => 'de-de', 'directory' => 'german', 'extension' => '');
+		$languages['3'] = $third;
+		$model->model_localisation_language->languages = $languages;
+		$lib = new TestableLocalizationLibrary($model, false);
+		$res = $lib->analizeLocalization('3', '2', 0);
+		$this->check(array($res->success, $res->error_code), array(0, 3001), 'source language without a folder gives 3001');
 	}
 
 	private function testSaveEmpty()
@@ -657,7 +795,7 @@ class LocalizationChildTest
 		{
 			$rows = $this->analysisRows($res);
 			$this->check(array_keys($rows), array('core|/common/header.php'), 'reverse direction: analysis files');
-			$this->check(isset($rows['core|/common/header.php']['toTranslate']['heading_title']), false,
+			$this->check(in_array('heading_title', $this->keyNames($rows['core|/common/header.php'])), false,
 				'reverse direction: existing target file in the admin folder is read');
 		}
 

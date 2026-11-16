@@ -130,9 +130,6 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['entry_table_deep'] = $this->language->get('entry_table_deep');
 		$data['entry_table_deep_description'] = $this->language->get('entry_table_deep_description');
 
-		$data['entry_localization_analization'] = $this->language->get('entry_localization_analization');
-		$data['entry_localization_analization_result'] = $this->language->get('entry_localization_analization_result');
-
 		$data['text_enabled'] = $this->language->get('text_enabled');
 		$data['text_disabled'] = $this->language->get('text_disabled');
 		$data['text_login_is_correct'] = $this->language->get('text_login_is_correct');
@@ -146,10 +143,6 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['text_you_have_the_newest_version_of_module'] = $this->language->get('text_you_have_the_newest_version_of_module');
 		$data['text_debug_log'] = $this->language->get('text_debug_log');
 		$data['text_clear_confirm'] = $this->language->get('text_clear_confirm');
-
-		$data['js_const_saved'] = $this->language->get('js_const_saved');
-		$data['js_const_localization_translate_progress'] = $this->language->get('js_const_localization_translate_progress');
-		$data['js_const_localization_translate_done'] = $this->language->get('js_const_localization_translate_done');
 
 		$data['value_analization_mode_only_empty'] = $this->language->get('value_analization_mode_only_empty');
 		$data['value_analization_mode_same_value'] = $this->language->get('value_analization_mode_same_value');
@@ -199,10 +192,10 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		// Front-end strings of the new admin design: the template writes them as document.te_i18n (read with teT() in the JS).
 		$te_i18n = array();
 		foreach (array('te_alert_details', 'te_alert_close', 'te_alert_not_json', 'te_summary_month', 'te_summary_cost', 'te_remove_completed', 'te_remove_start', 'te_remove_table', 'te_remove_column', 'te_remove_finish', 'te_time_in_sec',
-			'te_site_stop', 'te_site_log', 'te_site_analyzing', 'te_site_translating', 'te_site_col_table', 'te_site_col_chars', 'te_site_col_chars_lang', 'te_site_col_actions', 'te_site_total', 'te_site_translate', 'te_site_translate_all', 'te_site_details', 'te_site_not_supported', 'te_site_done', 'te_site_toggle', 'te_site_cnt_current', 'te_site_cnt_table', 'te_site_cnt_request', 'te_site_cnt_chars', 'te_site_cnt_time', 'te_site_cnt_translated', 'te_site_translate_confirm', 'te_site_translate_all_confirm', 'te_site_log_table_done', 'te_site_detail_loading', 'te_site_detail_source', 'te_site_detail_target', 'te_site_empty', 'te_site_identical', 'te_site_detail_none', 'te_site_detail_more', 'te_site_state_done', 'te_site_state_stopped', 'te_site_state_error', 'value_analization_mode_both', 'value_analization_mode_only_empty', 'value_analization_mode_same_value') as $te_i18n_key) {
+			'te_site_stop', 'te_site_log', 'te_site_analyzing', 'te_site_translating', 'te_site_col_table', 'te_site_col_chars', 'te_site_col_chars_lang', 'te_site_col_actions', 'te_site_total', 'te_site_translate', 'te_site_translate_all', 'te_site_details', 'te_site_not_supported', 'te_site_done', 'te_site_toggle', 'te_site_cnt_current', 'te_site_cnt_table', 'te_site_cnt_request', 'te_site_cnt_chars', 'te_site_cnt_time', 'te_site_cnt_translated', 'te_site_translate_confirm', 'te_site_translate_all_confirm', 'te_site_log_table_done', 'te_site_detail_loading', 'te_site_detail_source', 'te_site_detail_target', 'te_site_empty', 'te_site_identical', 'te_site_detail_none', 'te_site_detail_more', 'te_site_state_done', 'te_site_state_stopped', 'te_site_state_error', 'te_loc_analyzing', 'te_loc_translating', 'te_loc_cnt_files', 'te_loc_totals_files', 'te_loc_totals_to_translate', 'te_loc_totals_values', 'te_loc_totals_chars', 'te_loc_col_file', 'te_loc_col_keys', 'te_loc_col_state', 'te_loc_state_missing', 'te_loc_state_partial', 'te_loc_state_saved', 'te_loc_toggle', 'te_loc_root', 'te_loc_expression', 'te_loc_source_file', 'te_loc_translate_file', 'te_loc_save_file', 'te_loc_saved', 'te_loc_nothing_to_save', 'te_loc_no_files', 'te_loc_translate_all_confirm', 'te_loc_translate_all', 'value_analization_mode_both', 'value_analization_mode_only_empty', 'value_analization_mode_same_value') as $te_i18n_key) {
 			$te_i18n[$te_i18n_key] = $this->language->get($te_i18n_key);
 		}
-		foreach (array('te_site_lang_from', 'te_site_lang_to', 'te_site_lang_swap', 'te_site_card_what', 'te_site_more_filters', 'te_summary_status', 'te_summary_enabled', 'te_summary_disabled', 'te_summary_api_key', 'te_summary_key_set', 'te_summary_key_not_set') as $te_text_key) {
+		foreach (array('te_site_lang_from', 'te_site_lang_to', 'te_site_lang_swap', 'te_site_card_what', 'te_site_more_filters', 'te_loc_card_files', 'te_loc_analyze', 'te_loc_translate_all', 'te_summary_status', 'te_summary_enabled', 'te_summary_disabled', 'te_summary_api_key', 'te_summary_key_set', 'te_summary_key_not_set') as $te_text_key) {
 			$data[$te_text_key] = $this->language->get($te_text_key);
 		}
 		$data['te_summary_status_on'] = $this->config->get('client_translate_expert_status') ? 1 : 0;
@@ -628,10 +621,18 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	}
 
 	public function analizeLocalization() {
-		$langIdFrom = isset($this->request->get['langIdFrom']) ? html_entity_decode($this->request->get['langIdFrom']) : null;
-		$langIdTo = isset($this->request->get['langIdTo']) ? html_entity_decode($this->request->get['langIdTo']) : null;
-		$nextFileIndex = isset($this->request->get['nextFileIndex']) ? html_entity_decode($this->request->get['nextFileIndex']) : 0;
+		$langIdFrom = isset($this->request->get['langIdFrom']) ? (int)$this->request->get['langIdFrom'] : 0;
+		$langIdTo = isset($this->request->get['langIdTo']) ? (int)$this->request->get['langIdTo'] : 0;
+		$nextFileIndex = isset($this->request->get['nextFileIndex']) ? (int)$this->request->get['nextFileIndex'] : 0;
 		$scope = (isset($this->request->get['scope']) && $this->request->get['scope'] === 'admin') ? 'admin' : 'catalog';
+
+		if ($langIdFrom <= 0 || $langIdTo <= 0) {
+			$this->badFilterResponse();
+			return;
+		}
+		if ($nextFileIndex < 0) {
+			$nextFileIndex = 0;
+		}
 
 		$this->session->data['te_langIdFrom'] = $langIdFrom;
 		$this->session->data['te_langIdTo'] = $langIdTo;

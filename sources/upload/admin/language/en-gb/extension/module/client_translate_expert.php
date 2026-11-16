@@ -80,24 +80,13 @@ $_['help_excluded_routes'] = 'Enter one admin page route on each line. End a lin
 // reset cache
 $_['entry_reset_translation_cache'] = 'Reset translation cache';
 
-$_['entry_localization_analization'] = 'Analyze unlocalized values';
-$_['entry_localization_analization_result'] = 'Analysis result';
-$_['entry_localization_file_to_translate_info'] = '{path}: <b>{count} values not translated</b>';
-$_['entry_localization_file_to_translate_info_full_translated'] = '{path}: Fully translated';
-$_['entry_localization_file_expression_info'] = '<b>({count} with PHP code: copied unchanged, edit them by hand)</b>';
-$_['entry_localization_file_target_missing'] = '<b>(the target file does not exist)</b>';
 
-$_['entry_fileCount'] = 'Total files';
-$_['entry_needToTranslateFileCount'] = 'No files translated';
-$_['entry_needToTranslateValueCount'] = 'Values not translated';
-$_['entry_needToTranslateCharCount'] = 'Number of characters not translated';
-$_['entry_TranslateAll'] = 'Translate All';
 
 // Tabs;
 $_['tab_general'] = 'General';
 $_['tab_translate_site'] = 'Website content translation';
-$_['tab_localization']   = 'Localization files translation';
-$_['tab_admin_localization']   = 'Admin localization files translation';
+$_['tab_localization']   = 'Catalog files';
+$_['tab_admin_localization']   = 'Admin files';
 $_['tab_debug']          = 'Debug';
 $_['tab_about'] = 'About module';
 
@@ -108,11 +97,6 @@ $_['value_analization_mode_both'] = 'Search for empty and identical values';
 
 
 // js constants;
-$_['js_const_saved'] = 'Saved!';
-$_['js_const_localization_translate_progress'] = 'Translation of localization file {currIndex} of {count}: {path}.';
-$_['js_const_localization_translate_done'] = 'Translation of localization file {currIndex} of {count}: Done!';
-$_['button_localization_translate'] = 'Translate';
-$_['button_localization_save'] = 'Save';
 
 // Error;
 $_['error_permission'] = 'You do not have permission to manage this module!';
@@ -206,3 +190,29 @@ $_['te_site_detail_more'] = 'Only the first 100 values show.';
 $_['te_site_state_done'] = 'Done';
 $_['te_site_state_stopped'] = 'Stopped';
 $_['te_site_state_error'] = 'Error';
+$_['te_loc_card_files'] = 'Language files';
+$_['te_loc_analyze'] = 'Analyze files';
+$_['te_loc_translate_all'] = 'Translate all';
+$_['te_loc_analyzing'] = 'File analysis in progress';
+$_['te_loc_translating'] = 'Translation: {path}';
+$_['te_loc_cnt_files'] = 'Files {n} of {total}';
+$_['te_loc_totals_files'] = 'Files: {count}';
+$_['te_loc_totals_to_translate'] = 'Files to translate: {count}';
+$_['te_loc_totals_values'] = 'Values to translate: {count}';
+$_['te_loc_totals_chars'] = 'Characters to translate: {count}';
+$_['te_loc_col_file'] = 'File';
+$_['te_loc_col_keys'] = 'Keys to translate';
+$_['te_loc_col_state'] = 'State';
+$_['te_loc_state_missing'] = 'missing';
+$_['te_loc_state_partial'] = 'partial';
+$_['te_loc_state_saved'] = 'saved';
+$_['te_loc_toggle'] = 'Show or hide the keys of {path}';
+$_['te_loc_root'] = 'Extension: {name}';
+$_['te_loc_expression'] = 'PHP code, copied unchanged';
+$_['te_loc_source_file'] = 'Source file';
+$_['te_loc_translate_file'] = 'Translate file';
+$_['te_loc_save_file'] = 'Save file';
+$_['te_loc_saved'] = 'Saved: {path}';
+$_['te_loc_nothing_to_save'] = 'Nothing to save: {path}';
+$_['te_loc_no_files'] = 'All files are translated.';
+$_['te_loc_translate_all_confirm'] = 'Are you sure you want to translate and save all files in the list ({lang})?';

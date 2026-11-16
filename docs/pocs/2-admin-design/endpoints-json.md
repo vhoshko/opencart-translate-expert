@@ -193,6 +193,18 @@ Notes:
 
 ### 3.4 `analizeLocalization`
 
+Status: done in issue 59. The "Now" line below is the state before issue 59.
+
+Changes in issue 59:
+
+- `languageFrom` and `languageTo` stay in each batch.
+- `pathFrom` and `pathTo` are relative to the language folder, for example `/payment/cod.php`. The example below with a full extension path is wrong.
+- `targetExists` and `expression` are the integers 0 and 1.
+- `totals` is absent when `nextFileIndex` is more than 0. `calcAnalizeTotals` runs only for batch 0.
+- A file item has no language rows.
+- The controller casts the integers. It rejects a language ID that is not positive.
+- The library returns the error code 3002 for an unknown language ID.
+
 Now: `analize[]` (data), `html` (totals block and an empty table, used only for batch 0) and `detailsHtml` (the file rows, LOC:288-368).
 
 Proposed:

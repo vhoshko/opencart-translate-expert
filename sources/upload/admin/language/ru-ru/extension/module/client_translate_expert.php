@@ -48,12 +48,6 @@ $_['entry_table']     = 'Таблица';
 $_['entry_table_deep']     = 'Глубокий анализ';
 $_['entry_table_deep_description']     = 'Полный анализ таблицы (Выключите, если анализ происходит очень долго)';
 
-$_['entry_localization_analization'] = 'Анализировать не переведенные значения';
-$_['entry_localization_analization_result'] = 'Результат анализа';
-$_['entry_localization_file_to_translate_info'] = '{path}: <b>не переведено {count} значений</b>';
-$_['entry_localization_file_to_translate_info_full_translated'] = '{path}: Полностью переведен';
-$_['entry_localization_file_expression_info'] = '<b>({count} с PHP-кодом: копируются без изменений, отредактируйте их вручную)</b>';
-$_['entry_localization_file_target_missing'] = '<b>(целевой файл не существует)</b>';
 
 $_['entry_info']          = 'Информация';
 $_['entry_char_quantity'] = 'Количество символов доступных для перевода';
@@ -88,17 +82,12 @@ $_['help_excluded_routes'] = 'Укажите один маршрут стран�
 // сброс кеша
 $_['entry_reset_translation_cache'] = 'Сбросить кеш перевода';
 
-$_['entry_fileCount'] = 'Файлы всего';
-$_['entry_needToTranslateFileCount'] = 'Файлы не переведены';
-$_['entry_needToTranslateValueCount'] = 'Значение не переведено';
-$_['entry_needToTranslateCharCount'] = 'Количество символов не переведено';
-$_['entry_TranslateAll'] = 'Перевести всё';
 
 // Tabs
 $_['tab_general']        = 'Общее';
 $_['tab_translate_site'] = 'Перевод контента сайта';
-$_['tab_localization']   = 'Перевод файлов локализации';
-$_['tab_admin_localization']   = 'Перевод файлов локализации админки';
+$_['tab_localization']   = 'Файлы магазина';
+$_['tab_admin_localization']   = 'Файлы админки';
 $_['tab_debug']          = 'Отладка';
 $_['tab_about']          = 'Про модуль';
 
@@ -109,11 +98,6 @@ $_['value_analization_mode_both'] = 'Искать пустые и одинако
 
 
 // js constants
-$_['js_const_saved'] = 'Сохранено!';
-$_['js_const_localization_translate_progress'] = 'Перевод файла локализации {currIndex} из {count}: {path}.';
-$_['js_const_localization_translate_done'] = 'Перевод файла локализации {currIndex} из {count}: Готово!';
-$_['button_localization_translate'] = 'Перевести';
-$_['button_localization_save'] = 'Сохранить';
 
 // Error
 $_['error_permission'] = 'У вас нет прав для управления этим модулем!';
@@ -206,3 +190,29 @@ $_['te_site_detail_more'] = 'Показаны только первые 100 зн
 $_['te_site_state_done'] = 'Завершено';
 $_['te_site_state_stopped'] = 'Остановлено';
 $_['te_site_state_error'] = 'Ошибка';
+$_['te_loc_card_files'] = 'Файлы локализации';
+$_['te_loc_analyze'] = 'Анализировать файлы';
+$_['te_loc_translate_all'] = 'Перевести все';
+$_['te_loc_analyzing'] = 'Идет анализ файлов';
+$_['te_loc_translating'] = 'Перевод: {path}';
+$_['te_loc_cnt_files'] = 'Файлы {n} из {total}';
+$_['te_loc_totals_files'] = 'Файлов: {count}';
+$_['te_loc_totals_to_translate'] = 'Файлов для перевода: {count}';
+$_['te_loc_totals_values'] = 'Значений для перевода: {count}';
+$_['te_loc_totals_chars'] = 'Символов для перевода: {count}';
+$_['te_loc_col_file'] = 'Файл';
+$_['te_loc_col_keys'] = 'Ключей для перевода';
+$_['te_loc_col_state'] = 'Состояние';
+$_['te_loc_state_missing'] = 'нет файла';
+$_['te_loc_state_partial'] = 'частично';
+$_['te_loc_state_saved'] = 'сохранено';
+$_['te_loc_toggle'] = 'Показать или скрыть ключи файла {path}';
+$_['te_loc_root'] = 'Расширение: {name}';
+$_['te_loc_expression'] = 'PHP-код, копируется без изменений';
+$_['te_loc_source_file'] = 'Исходный файл';
+$_['te_loc_translate_file'] = 'Перевести файл';
+$_['te_loc_save_file'] = 'Сохранить файл';
+$_['te_loc_saved'] = 'Сохранено: {path}';
+$_['te_loc_nothing_to_save'] = 'Нечего сохранять: {path}';
+$_['te_loc_no_files'] = 'Все файлы переведены.';
+$_['te_loc_translate_all_confirm'] = 'Вы уверены, что хотите перевести и сохранить все файлы из списка ({lang})?';
