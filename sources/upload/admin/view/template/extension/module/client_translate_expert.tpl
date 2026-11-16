@@ -19,6 +19,14 @@
       <button type="button" class="close" data-dismiss="alert">&times;</button>
     </div>
     <?php } ?>
+    <div class="te-app" id="te-app">
+      <div class="te-alerts" id="te-summary-alerts"></div>
+      <div class="te-summary" id="te-summary">
+        <span class="te-summary__item"><?php echo $te_summary_status; ?>: <span class="te-badge <?php echo $te_summary_status_on ? 'te-badge--ok' : 'te-badge--muted'; ?>"><?php echo $te_summary_status_on ? $te_summary_enabled : $te_summary_disabled; ?></span></span>
+        <span class="te-summary__item"><?php echo $te_summary_api_key; ?>: <span class="te-badge <?php echo $te_summary_key_set_on ? 'te-badge--ok' : 'te-badge--error'; ?>"><?php echo $te_summary_key_set_on ? $te_summary_key_set : $te_summary_key_not_set; ?></span></span>
+        <div class="te-summary__meter" id="te-summary-count"></div>
+      </div>
+    </div>
     <div class="panel panel-default">
       <div class="panel-heading">
         <h3 class="panel-title"><i class="fa fa-pencil"></i> <?php echo $text_edit; ?></h3>

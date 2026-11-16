@@ -19,6 +19,14 @@
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
     {% endif %}
+    <div class="te-app" id="te-app">
+      <div class="te-alerts" id="te-summary-alerts"></div>
+      <div class="te-summary" id="te-summary">
+        <span class="te-summary__item">{{ te_summary_status }}: <span class="te-badge {% if te_summary_status_on %}te-badge--ok{% else %}te-badge--muted{% endif %}">{% if te_summary_status_on %}{{ te_summary_enabled }}{% else %}{{ te_summary_disabled }}{% endif %}</span></span>
+        <span class="te-summary__item">{{ te_summary_api_key }}: <span class="te-badge {% if te_summary_key_set_on %}te-badge--ok{% else %}te-badge--error{% endif %}">{% if te_summary_key_set_on %}{{ te_summary_key_set }}{% else %}{{ te_summary_key_not_set }}{% endif %}</span></span>
+        <div class="te-summary__meter" id="te-summary-count"></div>
+      </div>
+    </div>
     <div class="card">
       <div class="card-header">
         <h3 class="card-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>

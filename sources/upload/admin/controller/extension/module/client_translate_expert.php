@@ -100,11 +100,6 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['entity_begin_removing_data_from_db'] = $this->language->get('entity_begin_removing_data_from_db');
 		$data['entry_remove_translation_records_from_db_confirmation'] = $this->language->get('entry_remove_translation_records_from_db_confirmation');
 		$data['entry_removing_data_from_db_process_is_started'] = $this->language->get('entry_removing_data_from_db_process_is_started');
-		$data['message_remove_data_from_db_start'] = $this->language->get('message_remove_data_from_db_start');
-		$data['message_remove_data_from_table'] = $this->language->get('message_remove_data_from_table');
-		$data['message_remove_data_from_table_column'] = $this->language->get('message_remove_data_from_table_column');
-		$data['message_remove_data_from_db_finish'] = $this->language->get('message_remove_data_from_db_finish');
-		$data['message_remove_data_from_db_completed'] = $this->language->get('message_remove_data_from_db_completed');
 
 		// char count
 		$data['entry_server_show_translation_char_count_globally'] = $this->language->get('entry_server_show_translation_char_count_globally');
@@ -213,9 +208,14 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 		// Front-end strings of the new admin design: the template writes them as document.te_i18n (read with teT() in the JS).
 		$te_i18n = array();
-		foreach (array('te_alert_details', 'te_alert_close', 'te_alert_not_json') as $te_i18n_key) {
+		foreach (array('te_alert_details', 'te_alert_close', 'te_alert_not_json', 'te_summary_month', 'te_summary_cost', 'te_remove_completed', 'te_remove_start', 'te_remove_table', 'te_remove_column', 'te_remove_finish', 'te_time_in_sec') as $te_i18n_key) {
 			$te_i18n[$te_i18n_key] = $this->language->get($te_i18n_key);
 		}
+		foreach (array('te_summary_status', 'te_summary_enabled', 'te_summary_disabled', 'te_summary_api_key', 'te_summary_key_set', 'te_summary_key_not_set') as $te_text_key) {
+			$data[$te_text_key] = $this->language->get($te_text_key);
+		}
+		$data['te_summary_status_on'] = $this->config->get('client_translate_expert_status') ? 1 : 0;
+		$data['te_summary_key_set_on'] = trim((string)$this->config->get('client_translate_expert_key')) !== '' ? 1 : 0;
 		// The JSON_HEX_* flags escape <, >, &, ' and ", so a value cannot close the <script> block.
 		$te_i18n_json = json_encode($te_i18n, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 		$data['te_i18n_json'] = is_string($te_i18n_json) && $te_i18n_json !== '' ? $te_i18n_json : '{}';
@@ -498,7 +498,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	private function badFilterResponse() {
 		$this->load->language('extension/module/client_translate_expert');
 		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
-		$this->response->setOutput(json_encode(array('success' => false, 'message' => $this->language->get('error_bad_filter'))));
+		$this->response->setOutput(json_encode(array('success' => 0, 'message' => $this->language->get('error_bad_filter'))));
 	}
 
 	private function readSessionList($key) {
@@ -606,7 +606,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	}
 
 	public function removeDataFromDb() {
-		$langIdTo = isset($this->request->get['langIdTo']) ? html_entity_decode($this->request->get['langIdTo']) : null;
+		$langIdTo = isset($this->request->get['langIdTo']) ? (int)$this->request->get['langIdTo'] : 0;
 		$table = $this->readStrictListParam($this->request->get, 'table', true);
 		$product_status = isset($this->request->get['product_status']) ? boolval(html_entity_decode($this->request->get['product_status'])) : false;
 		$product_quantity = isset($this->request->get['product_quantity']) ? boolval(html_entity_decode($this->request->get['product_quantity'])) : false;
@@ -657,34 +657,19 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	public function translatedCharCountInfo()
 	{
 		$this->resetCharCountOnStartMonth();
-		$this->load->language('extension/module/client_translate_expert');
 
 		$this->load->model('extension/module/client_translate_expert');
-		$charCount = $this->model_extension_module_client_translate_expert->getCharCount();
+		$charCount = (int)$this->model_extension_module_client_translate_expert->getCharCount();
 		$monthFreeLimit = 500*1000;
 		$priceFor20MInUSD = 20;
-		$costOverFreeLimit = $charCount <= $monthFreeLimit ? 0 : ($charCount- $monthFreeLimit) / (1000 * 1000) * $priceFor20MInUSD;
-		$costOverFreeLimitDisplay = '$' . number_format($costOverFreeLimit, 2, '.', '`');
-		$charCountDisplay = number_format($charCount, 0, '.', '`');
-		$monthFreeLimitDisplay = number_format($monthFreeLimit, 0, '.', '`');
-		$color = $charCount <= $monthFreeLimit ? 'green' : 'red';
-		$info = $this->language->get('entry_server_translation_char_count_info');
-		$info = str_replace(
-			array('{charCount}', '{monthFreeLimit}', '{costOverFreeLimit}', '{color}' ),
-			array($charCountDisplay, $monthFreeLimitDisplay, $costOverFreeLimitDisplay, $color ),
-			$info);
+		$costOverFreeLimit = $charCount <= $monthFreeLimit ? 0 : round(($charCount - $monthFreeLimit) / (1000 * 1000) * $priceFor20MInUSD, 2);
 
 		$result = (object)array(
-			'success' => true,
+			'success' => 1,
 			'charCount' => $charCount,
-			'charCountDisplay' => $charCountDisplay,
 			'monthFreeLimit' => $monthFreeLimit,
-			'monthFreeLimitDisplay' => $monthFreeLimitDisplay,
 			'priceFor20MInUSD' => $priceFor20MInUSD,
-			'costOverFreeLimit' => $costOverFreeLimit,
-			'costOverFreeLimitDisplay' => $costOverFreeLimitDisplay,
-			'color' => $color,
-			'info' => $info
+			'costOverFreeLimit' => $costOverFreeLimit
 		);
 
 		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
@@ -697,7 +682,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$this->model_extension_module_client_translate_expert->resetCharCount(date('m'));
 
 		$result = (object)array(
-			'success' => true,
+			'success' => 1,
 		);
 
 		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');

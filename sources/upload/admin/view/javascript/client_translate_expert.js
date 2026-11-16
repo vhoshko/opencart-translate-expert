@@ -28,6 +28,13 @@ function initTranslateExpert() {
 
 		initModule();
 	}
+	else if ($('#te-summary-count').length)
+	{
+		document.js_const_module_prefix = 'extension/module';
+		showTranslatedCharCount();
+	}
+
+	bindTeResetCharCountHandler();
 }
 
 function clickTranslateExpertLocalizationHeader(el)
@@ -1085,11 +1092,7 @@ function makeRemovingDataFromDbRequest() {
 
 		console.log(data);
 
-		$('#te-analization-result').html(
-			'<div id="analizeHeadInfo" class="container"><h2>' + data.headerHTML + '</h2></div><br><br>' +
-			'<div id="analizeBody" class="container">' + data.body + '</div><br><br>' +
-			'<div id="timeInSecInfo" class="container">' + data.timeInSecInfo + '</div>'
-		);
+		$('#te-analization-result').empty().append(teRenderRemoveLog(data));
 
 		$('#te-begin-analization').prop('disabled', false);
 
@@ -1098,13 +1101,14 @@ function makeRemovingDataFromDbRequest() {
 	}).fail(function(data) {
 		console.log(data);
 		showTranslateExpertErrorMessage(data, null);
-		$('#te-analization-result').html(data);
 	});
 }
 
 function showTranslatedCharCount()
 {
-	if (!document.js_const_client_translate_expert_show_char_count_is_enabled)
+	var onModulePage = $('#te-summary-count').length > 0;
+
+	if (!onModulePage && !document.js_const_client_translate_expert_show_char_count_is_enabled)
 	{
 		return;
 	}
@@ -1117,13 +1121,18 @@ function showTranslatedCharCount()
 	).done(function(data) {
 		if (!data.success)
 		{
-			showTranslateExpertErrorMessage(data, null);
+			showTeCharCountError(data);
 			return;
 		}
 
-		console.log(data);
+		if (onModulePage)
+		{
+			$('#te-summary-count').empty().append(teRenderSummaryCount(data));
+			return;
+		}
 
-		if ($('#te-translated-char-count-info').length == 0)
+		var item = $('#te-translated-char-count-info');
+		if (item.length == 0)
 		{
 			var parentElement = $('#header > .nav.pull-right');
 			if (parentElement.length == 0)
@@ -1134,16 +1143,24 @@ function showTranslatedCharCount()
 			{
 				parentElement = $('#header .navbar-nav');
 			}
-			parentElement.prepend('<li class="dropdown nav-item" id="te-translated-char-count-info">' + data.info + '</li>');
+			item = teEl('li', { 'class': 'dropdown nav-item', 'id': 'te-translated-char-count-info' });
+			parentElement.prepend(item);
 		}
-		else
-		{
-			$('#te-translated-char-count-info').html(data.info);
-		}
+		item.empty().append(teRenderHeaderCount(data));
 	}).fail(function(data) {
-		console.log(data);
-		showTranslateExpertErrorMessage(data, null);
+		showTeCharCountError(data);
 	});
+}
+
+// Module page: shows the error in the summary alerts. Other admin pages have no alert area: write to the console.
+function showTeCharCountError(response)
+{
+	console.log(response);
+	if ($('#te-summary-alerts').length)
+	{
+		teAlerts.clear('#te-summary-alerts');
+		teAlerts.fromResponse('#te-summary-alerts', response);
+	}
 }
 
 function resetTranslationCharCount()
@@ -1156,16 +1173,13 @@ function resetTranslationCharCount()
 	).done(function(data) {
 		if (!data.success)
 		{
-			showTranslateExpertErrorMessage(data, null);
+			showTeCharCountError(data);
 			return;
 		}
 
-		console.log(data);
-
 		showTranslatedCharCount();
 	}).fail(function(data) {
-		console.log(data);
-		showTranslateExpertErrorMessage(data, null);
+		showTeCharCountError(data);
 	});
 }
 
@@ -1379,7 +1393,7 @@ function updateTranslateExpertCronLink()
 
 // ==========================================================================
 // Render helpers of the new admin design (docs/pocs/2-admin-design).
-// The current functions above do not use them yet. Keep this block in ES5 (var, function).
+// The char count and removal log functions use them. Keep this block in ES5 (var, function).
 // This file loads on all admin pages: on OC 1.5 pages other than the module page there is
 // jQuery 1.7.1 and no Bootstrap, so each helper must work without Bootstrap.
 // ==========================================================================
@@ -1647,3 +1661,114 @@ var teAlerts = {
 		});
 	}
 };
+
+// ==========================================================================
+// Render helpers for the char count (header item and module page summary) and for the removal log.
+// ==========================================================================
+
+// Returns n as an integer with groups of 3 digits separated by a space. A value that is not a number gives 0.
+function teFormatInt(n) {
+	n = Math.round(Number(n));
+	if (!isFinite(n)) {
+		n = 0;
+	}
+	var sign = n < 0 ? '-' : '';
+	return sign + String(Math.abs(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+// Returns an amount in USD with 2 decimals. A value that is not a number gives $0.00.
+function teFormatCost(x) {
+	x = Number(x);
+	if (!isFinite(x)) {
+		x = 0;
+	}
+	return '$' + x.toFixed(2);
+}
+
+// Returns 'over' if the month count is above the free limit, else 'ok'.
+function teCountState(data) {
+	return Number(data && data.charCount) > Number(data && data.monthFreeLimit) ? 'over' : 'ok';
+}
+
+// Returns the value text of the header item, for example "300 000 / 500 000 ($0.00)".
+function teCountValueText(data) {
+	return teFormatInt(data.charCount) + ' / ' + teFormatInt(data.monthFreeLimit) + ' (' + teFormatCost(data.costOverFreeLimit) + ')';
+}
+
+// Returns the char count item of the admin header. No Bootstrap is needed.
+function teRenderHeaderCount(data) {
+	var valueText = teCountValueText(data);
+	var root = teEl('span', { 'class': 'te-header-count te-header-count--' + teCountState(data), 'title': valueText });
+	root.append(teEl('span', { 'class': 'te-header-count__label' }, teT('te_global_char_count')));
+	root.append(teEl('span', { 'class': 'te-header-count__value' }, valueText));
+	root.append(teEl('button', { 'type': 'button', 'class': 'te-header-count__reset te-js-reset-char-count' }, teT('te_global_reset')));
+	return root;
+}
+
+// Returns the usage meter of the module page summary.
+function teRenderSummaryCount(data) {
+	var count = Number(data.charCount);
+	var limit = Number(data.monthFreeLimit);
+	var percent = limit > 0 && isFinite(count) ? Math.min(100, Math.round(count / limit * 100)) : 0;
+	var root = teEl('div', { 'class': 'te-meter te-meter--' + teCountState(data) });
+
+	var label = teEl('div', { 'class': 'te-meter__label' });
+	label.append(teEl('span', {}, teT('te_summary_month', { count: teFormatInt(count), limit: teFormatInt(limit) })));
+	label.append(teEl('span', {}, percent + ' %'));
+	root.append(label);
+
+	var fill = teEl('div', { 'class': 'te-meter__fill' });
+	fill.css('width', percent + '%');
+	root.append(teEl('div', { 'class': 'te-meter__bar' }).append(fill));
+
+	var cost = teEl('div', { 'class': 'te-meter__cost' });
+	cost.append(teEl('span', {}, teT('te_summary_cost', { cost: teFormatCost(data.costOverFreeLimit) })));
+	var btnClass = teIsBs5() ? 'btn btn-light btn-sm' : 'btn btn-default btn-xs';
+	cost.append(teEl('button', { 'type': 'button', 'class': btnClass + ' te-js-reset-char-count' }, teT('te_global_reset')));
+	root.append(cost);
+	return root;
+}
+
+// Binds one delegated click handler for all reset buttons (header item and summary).
+var teResetHandlerBound = false;
+function bindTeResetCharCountHandler() {
+	if (teResetHandlerBound) {
+		return;
+	}
+	teResetHandlerBound = true;
+	$(document).on('click', '.te-js-reset-char-count', function() {
+		if (confirm(teT('te_global_reset_confirm'))) {
+			resetTranslationCharCount();
+		}
+	});
+}
+
+// Returns the log of the data removal: a heading, one line for each step and the time.
+function teRenderRemoveLog(data) {
+	var root = teEl('div', { 'class': 'te-app' });
+	root.append(teEl('h2', {}, teT('te_remove_completed', { language: data.target ? data.target.name : '' })));
+	var log = teEl('div', { 'class': 'te-log' });
+	var steps = data.steps && typeof data.steps.length === 'number' ? data.steps : [];
+	for (var i = 0; i < steps.length; i++) {
+		var step = steps[i];
+		var line = null;
+		if (!step) {
+			continue;
+		}
+		if (step.type === 'start') {
+			line = teT('te_remove_start');
+		} else if (step.type === 'table') {
+			line = teT('te_remove_table', { table: step.table, rows: teFormatInt(step.clearedRows) });
+		} else if (step.type === 'column') {
+			line = teT('te_remove_column', { column: step.column, rows: teFormatInt(step.clearedRows) });
+		} else if (step.type === 'finish') {
+			line = teT('te_remove_finish');
+		}
+		if (line !== null) {
+			log.append(teEl('div', { 'class': 'te-log__line' }, line));
+		}
+	}
+	root.append(log);
+	root.append(teEl('div', { 'class': 'te-log__time' }, teT('te_time_in_sec', { sec: data.timeInSec })));
+	return root;
+}

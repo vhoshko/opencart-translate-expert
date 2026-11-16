@@ -33,6 +33,12 @@ class FakeDb
 {
 	public $queries = array();
 	public $throwOnRelease = false;
+	public $affected = 0;
+
+	public function countAffected()
+	{
+		return $this->affected;
+	}
 
 	public function query($sql)
 	{
@@ -106,7 +112,59 @@ class RealSqlLibrary extends LibraryClientTranslateExpert
 
 	public function remove($cat, $stock, $manufacturer = array(), $status = false, $quantity = false)
 	{
-		$this->removeDataFromTable(2, 'oc_product_description', 'name', $status, $quantity, $cat, $stock, $manufacturer);
+		return $this->removeDataFromTable(2, 'oc_product_description', 'name', $status, $quantity, $cat, $stock, $manufacturer);
+	}
+}
+
+class RemoveLanguage
+{
+	public function get($key)
+	{
+		return 'L_' . $key;
+	}
+}
+
+class RemoveLibrary extends LibraryClientTranslateExpert
+{
+	public $removeCalls = array();
+	public $clearedByColumn = array('name' => 3, 'description' => 4, 'meta_title' => 0);
+	public $tableColumns = array('oc_a' => array('name', 'description'), 'oc_b' => array('meta_title'), 'oc_c' => array());
+	public $unsupported = array('oc_c');
+
+	public function __construct()
+	{
+		$this->_debug = false;
+		$this->_modulePrefix = 'extension/module';
+		$this->_model = new FakeModel();
+		$this->_model->language = new RemoveLanguage();
+	}
+
+	protected function loadLanguage($module)
+	{
+	}
+
+	protected function getLanguages()
+	{
+		return array(
+			'en' => array('language_id' => '1', 'code' => 'en', 'name' => 'English'),
+			'uk' => array('language_id' => '2', 'code' => 'uk', 'name' => 'Ukrainian &amp; Co'),
+		);
+	}
+
+	public function getTables()
+	{
+		return array('oc_a', 'oc_b', 'oc_c');
+	}
+
+	protected function getTableToTranslateAnalizationInfo($languageIdFrom, $table, $languages, $mode = null, $langIdToParam = null, $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null, $calcCounts = true, $continueAfterColumn = null, $offset = 0)
+	{
+		return (object)array('tableTranslationIsSuppported' => !in_array($table, $this->unsupported), 'textColumnNames' => $this->tableColumns[$table], 'table' => $table);
+	}
+
+	protected function removeDataFromTable($langIdToParam, $tableName, $textColumnName, $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null)
+	{
+		$this->removeCalls[] = array($langIdToParam, $tableName, $textColumnName);
+		return $this->clearedByColumn[$textColumnName];
 	}
 }
 
@@ -414,6 +472,8 @@ class TranslateLoopTest
 		$this->testBatchSizeUsesSentLength();
 		$this->testZeroLengthTextIsSent();
 		$this->testRealSqlText();
+		$this->testRemoveDataFromTableCount();
+		$this->testRemoveDataFromDb();
 
 		restore_error_handler();
 
@@ -1140,6 +1200,63 @@ class TranslateLoopTest
 		$whereAt = strpos($sql, 'where (l1.language_id');
 		$existsAt = strpos($sql, $existsFor('10,11'));
 		$this->check($whereAt !== false && $existsAt !== false && $existsAt > $whereAt, true, 'select: exists is in the WHERE');
+	}
+
+	private function testRemoveDataFromTableCount()
+	{
+		echo "\nremoveDataFromTable returns the number of cleared rows:\n";
+		$db = new SqlDb();
+		$db->affected = '7';
+		$model = new FakeModel();
+		$model->db = $db;
+		$model->config = new FakeConfig();
+		$lib = new RealSqlLibrary($model);
+		$cleared = $lib->remove(array(), array());
+		$this->check($cleared, 7, 'the countAffected value comes back as int');
+		$sql = '';
+		foreach ($db->queries as $q)
+			if (stripos($q, 'update ') !== false)
+				$sql = strtolower(trim(preg_replace('/\s+/', ' ', $q)));
+		$this->check(strpos($sql, 'where t.language_id = 2 ') !== false, true, 'the SQL has language_id = 2');
+	}
+
+	private function testRemoveDataFromDb()
+	{
+		echo "\nremoveDataFromDb:\n";
+		$lib = new RemoveLibrary();
+		$r = $lib->removeDataFromDb(2, '');
+		$this->check(isset($r->success) ? $r->success : null, 1, 'success is 1');
+		$t = isset($r->target) ? $r->target : array();
+		$this->check(isset($t['language_id']) ? $t['language_id'] : null, 2, 'target language_id is int 2');
+		$this->check(isset($t['code']) ? $t['code'] : null, 'uk', 'target code');
+		$this->check(isset($t['name']) ? $t['name'] : null, 'Ukrainian & Co', 'target name is decoded');
+		$this->check(isset($t['image']) ? $t['image'] : null, 'language/uk/uk.png', 'target image');
+		$steps = isset($r->steps) ? $r->steps : array();
+		$types = array();
+		foreach ($steps as $st)
+			$types[] = $st['type'] . (isset($st['column']) ? ':' . $st['column'] : (isset($st['table']) ? ':' . $st['table'] : ''));
+		$this->check($types, array('start', 'table:oc_a', 'column:name', 'column:description', 'table:oc_b', 'column:meta_title', 'finish'), 'step order, the unsupported table has no step');
+		$this->check(isset($steps[1]['clearedRows']) ? $steps[1]['clearedRows'] : null, 7, 'table clearedRows is the sum of its columns');
+		$this->check(isset($steps[2]['clearedRows']) ? $steps[2]['clearedRows'] : null, 3, 'column clearedRows');
+		$this->check(isset($steps[4]['clearedRows']) ? $steps[4]['clearedRows'] : null, 0, 'table with no cleared rows has 0');
+		$this->check(count($lib->removeCalls), 3, 'only the target language is cleared');
+		$this->check(isset($lib->removeCalls[0][0]) ? $lib->removeCalls[0][0] : null, 2, 'the removal gets language id 2');
+		$this->check(isset($r->timeInSec) && is_float($r->timeInSec), true, 'timeInSec is float');
+		$this->check(isset($r->headerHTML) || isset($r->body), false, 'old HTML fields are gone');
+
+		foreach (array(0, -1) as $bad)
+		{
+			$lib = new RemoveLibrary();
+			$r = $lib->removeDataFromDb($bad, '');
+			$this->check(isset($r->success) ? $r->success : null, 0, "language id {$bad}: success is 0");
+			$this->check(isset($r->message) ? $r->message : null, 'L_error_language_to_required', "language id {$bad}: message from the language file");
+			$this->check(count($lib->removeCalls), 0, "language id {$bad}: nothing is cleared");
+		}
+		$lib = new RemoveLibrary();
+		$r = $lib->removeDataFromDb(99, '');
+		$this->check(isset($r->success) ? $r->success : null, 0, 'a language that is not in the store: success is 0');
+		$this->check(isset($r->message) ? $r->message : null, 'L_error_language_to_required', 'a language that is not in the store: message');
+		$this->check(count($lib->removeCalls), 0, 'a language that is not in the store: nothing is cleared');
 	}
 
 	private function check($actual, $expected, $label)

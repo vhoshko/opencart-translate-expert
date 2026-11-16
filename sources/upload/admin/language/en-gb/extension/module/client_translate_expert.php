@@ -75,22 +75,11 @@ $_['entry_remove_translation_records_from_db'] = 'Remove translation value from 
 $_['entity_begin_removing_data_from_db'] = 'Remove translation';
 $_['entry_remove_translation_records_from_db_confirmation'] = 'WARNING! We strongly recommend making a backup of the database. Are you sure you want to delete the {langCode} language translation value from the database?';
 $_['entry_removing_data_from_db_process_is_started'] = 'Removing data from the database is started.';
-$_['message_remove_data_from_db_start'] = 'Removing data from the database is started.';
-$_['message_remove_data_from_table'] = 'Translation of Table {table} is started.';
-$_['message_remove_data_from_table_column'] = '- {textColumnName}.';
-$_['message_remove_data_from_db_finish'] = 'Removing data from the database is finished.';
-$_['message_remove_data_from_db_completed'] = 'Removing data from the database is completed.';
 
 // char count
 $_['entry_server_show_translation_char_count_globally'] = 'Show translation char count globally in the header';
 $_['entry_server_reset_translation_char_count_on_start_month'] = 'Reset the character count for translations at the beginning of every month';
 $_['entry_server_translation_char_count'] = 'Translation char count';
-$_['entry_server_translation_char_count_info'] = "
-<div id='translation_char_count_info_container' title='Translated char count: {charCount}. Month free limit: {monthFreeLimit}. Estimated cost: {costOverFreeLimit}.'>
-	<div id='translation_char_count_info' class='{color}'>Translated char count:<br>{charCount} / {monthFreeLimit} ({costOverFreeLimit})</div>
-	<div id='reset_translation_char_count' class='{color}' title='Reset translated char count' onclick='if (confirm(\"Are you sure you want to reset the translation char count?\")) resetTranslationCharCount()'>Reset</div>
-</div>
-";
 
 // excluded routes
 $_['entry_excluded_routes'] = 'Do not load the module on these pages';
@@ -150,6 +139,7 @@ $_['button_localization_save'] = 'Save';
 // Error;
 $_['error_permission'] = 'You do not have permission to manage this module!';
 $_['error_bad_filter'] = 'The filter values are not valid. Reload the page and select the filters again.';
+$_['error_language_to_required'] = 'Select the language to remove the translations from.';
 $_['error_width'] =' You must specify the width! ';
 $_['error_height'] =' You must specify the height! ';
 $_['error_unlicensed'] = 'You are using the unlicensed version of the module! <br> We recommend buying the module on the website <a href="https://github.com/vhoshko/opencart-translate-expert" target="_blank">https://github.com/vhoshko/opencart-translate-expert</a> or contact the module support via <a href="https://github.com/vhoshko/opencart-translate-expert/issues" target="_blank">GitHub Issues</a>';
@@ -179,6 +169,20 @@ $_['entry_table_product_manufacturer_filter'] = 'Product manufacturer filter';
 $_['te_alert_details'] = 'Details';
 $_['te_alert_close'] = 'Close';
 $_['te_alert_not_json'] = 'The server did not send a JSON answer.';
+$_['te_summary_month'] = 'This month: {count} / {limit}';
+$_['te_summary_cost'] = 'Cost over free limit: {cost}';
+$_['te_remove_completed'] = 'Removing data from the database is completed: {language}.';
+$_['te_remove_start'] = 'Removing data from the database is started.';
+$_['te_remove_table'] = 'Table {table}: {rows} values cleared.';
+$_['te_remove_column'] = '- {column}: {rows} values cleared.';
+$_['te_remove_finish'] = 'Removing data from the database is finished.';
+$_['te_time_in_sec'] = 'Time: {sec} seconds';
+$_['te_summary_status'] = 'Status';
+$_['te_summary_enabled'] = 'Enabled';
+$_['te_summary_disabled'] = 'Disabled';
+$_['te_summary_api_key'] = 'API key';
+$_['te_summary_key_set'] = 'Set';
+$_['te_summary_key_not_set'] = 'Not set';
 
 // Front-end strings for all admin pages (document.te_i18n_global, written by the admin header)
 $_['te_global_char_count'] = 'Translated characters';

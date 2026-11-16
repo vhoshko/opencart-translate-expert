@@ -76,22 +76,11 @@ $_['entry_remove_translation_records_from_db'] = 'Видалити значен�
 $_['entity_begin_removing_data_from_db'] = 'Видалити переклад';
 $_['entry_remove_translation_records_from_db_confirmation'] = 'УВАГА! Ми настійно рекомендуємо зробити резервну копію бази даних. Ви впевнені, що бажаєте видалити значення перекладу мови {langCode} з бази даних?';
 $_['entry_removing_data_from_db_process_is_started'] = 'Розпочато видалення даних із бази даних.';
-$_['message_remove_data_from_db_start'] = 'Розпочато видалення даних із бази даних.';
-$_['message_remove_data_from_table'] = 'Переклад таблиці {table} розпочато.';
-$_['message_remove_data_from_table_column'] = '- {textColumnName}.';
-$_['message_remove_data_from_db_finish'] = 'Видалення даних із бази даних завершено.';
-$_['message_remove_data_from_db_completed'] = 'Видалення даних із бази даних завершено.';
 
 // кількість символів
 $_['entry_server_show_translation_char_count_globally'] = 'Показати глобальну кількість символів перекладу в заголовку';
 $_['entry_server_reset_translation_char_count_on_start_month'] = 'Скинути кількість символів для перекладів на початку кожного місяця';
 $_['entry_server_translation_char_count'] = 'Кількість символів перекладу';
-$_['entry_server_translation_char_count_info'] = "
-<div id='translation_char_count_info_container' title='Кількість перекладених символів: {charCount}. Безкоштовний місячний ліміт: {monthFreeLimit}. Приблизна вартість: {costOverFreeLimit}.'>
-<div id='translation_char_count_info' class='{color}'>Кількість перекладених символів:<br>{charCount} / {monthFreeLimit} ({costOverFreeLimit})</div>
-<div id='reset_translation_char_count' class='{color}' title='Скинути кількість перекладених символів' onclick='if (confirm(\"Ви впевнені, що хочете скинути кількість символів перекладу?\")) resetTranslationCharCount()'>Скинути</div>
-</div>
-";
 
 // виключені маршрути
 $_['entry_excluded_routes'] = 'Не завантажувати модуль на цих сторінках';
@@ -151,6 +140,7 @@ $_['button_localization_save'] = 'Зберегти';
 // Error
 $_['error_permission'] = 'У вас немає прав для управління цим модулем!';
 $_['error_bad_filter'] = 'Значення фільтрів недопустимі. Перезавантажте сторінку та виберіть фільтри знову.';
+$_['error_language_to_required'] = 'Виберіть мову, з якої потрібно видалити переклади.';
 $_['error_width']      = 'Необхідно вказати ширину!';
 $_['error_height']     = 'Необхідно вказати висоту!';
 $_['error_unlicensed'] = 'Ви використовуєте неліцензійну версію модуля!<br>Рекомендуємо купити модуль на сайті <a href="https://github.com/vhoshko/opencart-translate-expert" target="_blank">https://github.com/vhoshko/opencart-translate-expert</a> або звернутись в підтримку модуля через <a href="https://github.com/vhoshko/opencart-translate-expert/issues" target="_blank">GitHub Issues</a>';
@@ -180,6 +170,20 @@ $_['entry_table_product_manufacturer_filter'] = 'Фільтр по виробн�
 $_['te_alert_details'] = 'Докладніше';
 $_['te_alert_close'] = 'Закрити';
 $_['te_alert_not_json'] = 'Сервер не надіслав відповідь у форматі JSON.';
+$_['te_summary_month'] = 'У цьому місяці: {count} / {limit}';
+$_['te_summary_cost'] = 'Вартість понад безкоштовний ліміт: {cost}';
+$_['te_remove_completed'] = 'Видалення даних з бази даних завершено: {language}.';
+$_['te_remove_start'] = 'Видалення даних з бази даних розпочато.';
+$_['te_remove_table'] = 'Таблиця {table}: очищено значень: {rows}.';
+$_['te_remove_column'] = '- {column}: очищено значень: {rows}.';
+$_['te_remove_finish'] = 'Видалення даних з бази даних завершено.';
+$_['te_time_in_sec'] = 'Час: {sec} сек.';
+$_['te_summary_status'] = 'Статус';
+$_['te_summary_enabled'] = 'Увімкнено';
+$_['te_summary_disabled'] = 'Вимкнено';
+$_['te_summary_api_key'] = 'API-ключ';
+$_['te_summary_key_set'] = 'Вказано';
+$_['te_summary_key_not_set'] = 'Не вказано';
 
 // Front-end strings for all admin pages (document.te_i18n_global, written by the admin header)
 $_['te_global_char_count'] = 'Перекладено символів';

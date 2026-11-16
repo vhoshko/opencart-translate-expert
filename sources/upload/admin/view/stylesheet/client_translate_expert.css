@@ -56,48 +56,6 @@
     margin-left: 10px;
 }
 
-#translation_char_count_info_container {
-  height: 44px;
-}
-#translation_char_count_info_container > div {
-  float: left;
-}
-#translation_char_count_info {
-  color: white;
-  padding: 5px;
-  height: 44px;
-  align-items: center;
-  display: flex;
-}
-#translation_char_count_info.green {
-  background-color: #1e91cf;
-}
-#translation_char_count_info.red {
-  background-color: #f56b6b;
-}
-#reset_translation_char_count {
-  line-height: 39px;
-  padding-left: 5px;
-  padding-right: 5px;
-  cursor: pointer;
-  border-color: green;
-  border-bottom-width: 2px;
-  border-style: solid;
-}
-#reset_translation_char_count.green {
-  border-color: #1e91cf;
-}
-#reset_translation_char_count.red {
-  border-color: #f56b6b;
-}
-/*fix for opencart 3.0*/
-.container-fluid > .nav.navbar-right #translation_char_count_info {
-  height: 60px;
-}
-.container-fluid > .nav.navbar-right #reset_translation_char_count {
-  line-height: 55px;
-}
-/*end fix for opencart 3.0*/
 /* ==========================================================================
    te-* component layer of the new admin design (docs/pocs/2-admin-design/design-concept.md, section 3).
    The header loads this file on all admin pages, so every rule below is under .te-app
@@ -342,6 +300,13 @@
   width: 0;
   background: var(--te-ok);
 }
+.te-app .te-meter__cost {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
 .te-app .te-meter--warn .te-meter__fill {
   background: var(--te-warn);
 }
@@ -354,6 +319,15 @@
   gap: 8px;
   color: var(--te-muted);
   font-size: 12px;
+}
+
+/* te-log: result lines of a long action */
+.te-app .te-log {
+  margin: var(--te-gap) 0;
+  line-height: 1.6;
+}
+.te-app .te-log__time {
+  color: var(--te-muted);
 }
 
 /* te-badge: small status label */

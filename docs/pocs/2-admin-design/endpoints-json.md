@@ -155,8 +155,8 @@ Proposed:
   "target": { "language_id": 2, "code": "uk-ua", "name": "Українська", "image": "..." },
   "steps": [
     { "type": "start" },
-    { "type": "table", "table": "product_description", "deletedRows": 120 },
-    { "type": "column", "table": "product_description", "column": "description", "deletedRows": 120 },
+    { "type": "table", "table": "product_description", "clearedRows": 120 },
+    { "type": "column", "table": "product_description", "column": "description", "clearedRows": 120 },
     { "type": "finish" }
   ],
   "timeInSec": 0.8
@@ -166,7 +166,7 @@ Proposed:
 Notes:
 
 1. The front end shows each step as one log line, with a label from `te_i18n`.
-2. `deletedRows` is optional. The review found that `removeDataFromTable()` does not use the query result, and `$db->countAffected()` can give the count after the query with no extra query. This is not checked on OC 1.5 (unconfirmed). If OC 1.5 does not give the count, send the step without it.
+2. `clearedRows` is required on the `table` and `column` steps. `removeDataFromTable()` runs `UPDATE ... SET col = ''`. It does not delete rows. It reads the count with `$db->countAffected()` after the query, with no extra query. `countAffected()` exists on OC 1.5.6.4 (`system/library/db.php:27`) and later. The `clearedRows` of a `table` step is the sum of the `clearedRows` of its `column` steps.
 3. The error format stays `{ "success": 0, "message": "..." }`. The current error uses `success: false`. Use `0` in all endpoints.
 
 ### 3.4 `analizeLocalization`
