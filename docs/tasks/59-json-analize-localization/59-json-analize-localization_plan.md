@@ -238,7 +238,8 @@ Remove the old rules 33-57. Add under `.te-app`: `.te-loc-totals`, `.te-diff__he
   The passes find no correctness issue now, so the review loop stops.
 - [x] Improvements pass → `59-json-analize-localization-improvements.md`. Apply the improvements.
   Findings: 4 edits applied: the `general-purpose` planner in `dev-workflow` Phase 0, Phase 1 and the dispatch table, the parallel implementers in Phase 2, the round-trip probe in the Phase 4 brief, and the HTTP 429 row in **Known Environment Gotchas**.
-- [ ] Commit, push, PR.
+- [x] Commit, push, PR.
+  Findings: commits b519a24 (feature) and 74ffd5e (workflow). PR #65.
 
 ## Done
 
