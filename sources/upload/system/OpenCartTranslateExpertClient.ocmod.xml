@@ -26,13 +26,34 @@
 			$data['client_translate_expert_header_html'] = '';
 			if (!$teExcluded) {
 				$this->load->model('localisation/language');
-				$teLanguages = json_encode($this->model_localisation_language->getLanguages()) ?: '{}';
+				$teLanguageList = $this->model_localisation_language->getLanguages();
+				$teLanguages = json_encode($teLanguageList) ?: '{}';
+				// Strings of the header items (document.te_i18n_global). The library reads the module language file
+				// in a function scope, so the shared language object of the page does not change.
+				$teI18nJson = '{}';
+				$teI18nFile = DIR_SYSTEM . 'library/client_translate_expert_i18n.php';
+				if (is_file($teI18nFile)) {
+					require_once($teI18nFile);
+					// OC 2.2+ uses the language code as the folder name. OC 1.5–2.1 use the "directory" column.
+					$teAdminCode = (string)$this->config->get('config_admin_language');
+					$teFolders = array($teAdminCode);
+					if (isset($teLanguageList[$teAdminCode]['directory'])) {
+						$teFolders[] = (string)$teLanguageList[$teAdminCode]['directory'];
+					}
+					// OC 2.3–3.0 keep the module file in extension/module/, OC 1.5–2.2 in module/.
+					$teSubPaths = array('/extension/module/client_translate_expert.php', '/module/client_translate_expert.php');
+					$teI18nJson = ClientTranslateExpertI18n::toJson(ClientTranslateExpertI18n::loadGlobal(
+						ClientTranslateExpertI18n::candidateFiles(DIR_LANGUAGE, $teFolders, $teSubPaths),
+						ClientTranslateExpertI18n::candidateFiles(DIR_LANGUAGE, array('en-gb', 'english'), $teSubPaths)
+					));
+				}
 				$data['client_translate_expert_head_html'] = '<script type="text/javascript" src="view/javascript/client_translate_expert.js?v={client_version}"></script>'
 					. '<link type="text/css" rel="stylesheet" href="view/stylesheet/client_translate_expert.css?v={client_version}" />';
 				$data['client_translate_expert_header_html'] = '<script>'
 					. 'document.js_const_client_translate_expert_is_enabled = ' . (int)$this->config->get('client_translate_expert_status') . ';'
 					. 'document.js_const_client_translate_expert_show_char_count_is_enabled = ' . (int)$this->config->get('client_translate_expert_show_char_count_globally') . ';'
 					. 'document.js_const_client_translate_expert_languages = ' . $teLanguages . ';'
+					. 'document.te_i18n_global = ' . $teI18nJson . ';'
 					. '</script>';
 			}
 	  ]]></add>

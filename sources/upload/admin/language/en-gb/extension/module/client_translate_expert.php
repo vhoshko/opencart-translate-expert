@@ -174,3 +174,15 @@ $_['entry_table_product_quantity_filter'] = 'Product quantity filter, only produ
 $_['entry_table_product_category_id_filter'] = 'Product category filter';
 $_['entry_table_product_stock_status_filter'] = 'Product stock status filter';
 $_['entry_table_product_manufacturer_filter'] = 'Product manufacturer filter';
+
+// Front-end strings of the new admin design (document.te_i18n on the module page)
+$_['te_alert_details'] = 'Details';
+$_['te_alert_close'] = 'Close';
+$_['te_alert_not_json'] = 'The server did not send a JSON answer.';
+
+// Front-end strings for all admin pages (document.te_i18n_global, written by the admin header)
+$_['te_global_char_count'] = 'Translated characters';
+$_['te_global_reset'] = 'Reset';
+$_['te_global_reset_confirm'] = 'Are you sure you want to reset the translation char count?';
+$_['te_global_translate'] = 'Translate';
+$_['te_global_error_internal'] = 'Internal error, more info in console log!';

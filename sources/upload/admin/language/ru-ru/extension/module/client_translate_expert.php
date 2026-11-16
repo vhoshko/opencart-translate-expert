@@ -174,3 +174,15 @@ $_['entry_table_product_quantity_filter'] = 'Фильтр количества �
 $_['entry_table_product_category_id_filter'] = 'Фильтр по категории';
 $_['entry_table_product_stock_status_filter'] = 'Фильтр по состоянию товара на складе';
 $_['entry_table_product_manufacturer_filter'] = 'Фильтр по производителю товара';
+
+// Front-end strings of the new admin design (document.te_i18n on the module page)
+$_['te_alert_details'] = 'Подробнее';
+$_['te_alert_close'] = 'Закрыть';
+$_['te_alert_not_json'] = 'Сервер не прислал ответ в формате JSON.';
+
+// Front-end strings for all admin pages (document.te_i18n_global, written by the admin header)
+$_['te_global_char_count'] = 'Переведено символов';
+$_['te_global_reset'] = 'Сбросить';
+$_['te_global_reset_confirm'] = 'Вы уверены, что хотите сбросить количество символов перевода?';
+$_['te_global_translate'] = 'Перевести';
+$_['te_global_error_internal'] = 'Внутренняя ошибка, подробности в журнале консоли!';

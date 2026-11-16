@@ -76,9 +76,10 @@ php tests/test_client_translate_expert_route_filter.php
 php tests/test_client_translate_expert_cron_helper.php
 php tests/test_client_translate_expert_translate_loop.php
 php tests/test_oc4_twig_filters.php
+(cd tests/js && npm ci --silent && node test_client_translate_expert_js_helpers.js)
 ```
 
-Run every script in `tests/`, including scripts that are not in this list. Report the counts of each script. Each script always runs its whole suite. It has no filter. To prove that one new test fails, run the suite. Then confirm that the expected test is among the failures.
+Run every script in `tests/` and `tests/js/`, including scripts that are not in this list. Report the counts of each script. Each script always runs its whole suite. It has no filter. To prove that one new test fails, run the suite. Then confirm that the expected test is among the failures.
 
 Run integration tests (`php tests/test_vh_google_translator.php <API_KEY>`) only if the dispatch prompt supplies a key. Never invent a key. Never look for a key in the repo.
 

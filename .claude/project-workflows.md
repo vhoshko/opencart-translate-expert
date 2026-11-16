@@ -30,6 +30,7 @@ Base path: `docs/tasks/<slug>/`
 | `sources/upload/system/library/client_translate_expert_core.php` | Main translation logic, table analysis, batch processing |
 | `sources/upload/catalog/controller/extension/module/client_translate_expert_cron.php` | Store-front cron link. Thin controller that calls `LibraryClientTranslateExpert::runCron()`. The secret is the only protection |
 | `sources/upload/system/library/client_translate_expert_cron_helper.php` | Pure cron helpers (secret rules, request parameters, setting key). `tests/` tests it |
+| `sources/upload/system/library/client_translate_expert_i18n.php` | Pure header string helper (`document.te_i18n_global`). Reads the module language file in a function scope. `tests/` tests it |
 | `sources/upload/system/library/vh_google_translator.php` | Google Translate API wrapper (`tests/` tests it) |
 | `sources/upload/admin/view/template/extension/module/client_translate_expert.tpl` | Admin template (PHP syntax) for OC 1.5–3.0. OC 3.0 also ships the `.tpl` and renders it as PHP, because `build.sh` makes the controller set `template_engine = template` |
 | `sources/upload/admin/view/template/extension/module/client_translate_expert.oc4.twig` | Admin template for OC 4.0 only |
@@ -47,6 +48,8 @@ Edit `sources/` only. `sources_release*/` and `releases/` are build output.
 | Unit + integration tests | `php tests/test_vh_google_translator.php <GOOGLE_API_KEY>` | Use only a key that the user gives you |
 | Route filter unit tests | `php tests/test_client_translate_expert_route_filter.php` | No API key needed. Any PHP warning fails a test |
 | Cron helper unit tests | `php tests/test_client_translate_expert_cron_helper.php` | No API key needed. Any PHP warning fails a test |
+| Header strings tests | `php tests/test_client_translate_expert_i18n.php` | No DB and no API key needed. Any PHP warning fails a test |
+| JS helper tests | `cd tests/js && npm ci && node test_client_translate_expert_js_helpers.js` | Node and npm (allowed by the firewall). jsdom with jQuery 3.7.1 (npm) and 1.7.1 (`tests/js/vendor/`, the OC 1.5 file). `npm ci` is part of the command, so it runs each time |
 | Translate loop tests | `php tests/test_client_translate_expert_translate_loop.php` | No DB and no API key needed. Any PHP warning fails a test |
 | OC4 Twig name test | `php tests/test_oc4_twig_filters.php` | Static check. Fails on a filter, test, function or tag that Twig v3.4.2 (OC 4.0.2.x) or v3.18.0 (OC 4.1.0.x) does not define |
 | Bump version | `/bump-version` | Changes the patch part of `_version.txt` (`MM.mm.pppp`). **Do it before every build** |

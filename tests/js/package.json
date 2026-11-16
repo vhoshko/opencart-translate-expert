@@ -1,0 +1,12 @@
+{
+  "name": "opencart-translate-expert-js-tests",
+  "private": true,
+  "description": "Unit tests for the admin JS helpers (jsdom, no browser, no OpenCart)",
+  "scripts": {
+    "test": "node test_client_translate_expert_js_helpers.js"
+  },
+  "devDependencies": {
+    "jquery": "3.7.1",
+    "jsdom": "24.1.3"
+  }
+}

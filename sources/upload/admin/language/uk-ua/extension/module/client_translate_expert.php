@@ -175,3 +175,15 @@ $_['entry_table_product_quantity_filter'] = 'Фільтр кількості т�
 $_['entry_table_product_category_id_filter'] = 'Фільтр по категорії';
 $_['entry_table_product_stock_status_filter'] = 'Фільтр по стану товару на складі';
 $_['entry_table_product_manufacturer_filter'] = 'Фільтр по виробнику товару';
+
+// Front-end strings of the new admin design (document.te_i18n on the module page)
+$_['te_alert_details'] = 'Докладніше';
+$_['te_alert_close'] = 'Закрити';
+$_['te_alert_not_json'] = 'Сервер не надіслав відповідь у форматі JSON.';
+
+// Front-end strings for all admin pages (document.te_i18n_global, written by the admin header)
+$_['te_global_char_count'] = 'Перекладено символів';
+$_['te_global_reset'] = 'Скинути';
+$_['te_global_reset_confirm'] = 'Ви впевнені, що хочете скинути кількість символів перекладу?';
+$_['te_global_translate'] = 'Перекласти';
+$_['te_global_error_internal'] = 'Внутрішня помилка, подробиці в журналі консолі!';

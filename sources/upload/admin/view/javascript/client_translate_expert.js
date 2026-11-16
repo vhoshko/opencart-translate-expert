@@ -1376,3 +1376,274 @@ function updateTranslateExpertCronLink()
 	var maxLength = parseInt(panel.attr('data-te-max-length'), 10);
 	$('#te-cron-link-long').toggle(maxLength > 0 && link.length > maxLength);
 }
+
+// ==========================================================================
+// Render helpers of the new admin design (docs/pocs/2-admin-design).
+// The current functions above do not use them yet. Keep this block in ES5 (var, function).
+// This file loads on all admin pages: on OC 1.5 pages other than the module page there is
+// jQuery 1.7.1 and no Bootstrap, so each helper must work without Bootstrap.
+// ==========================================================================
+
+// Returns the label for key from document.te_i18n (module page), then from document.te_i18n_global
+// (all admin pages). If neither object has the key, returns the key. Replaces {name} with params.name.
+function teT(key, params) {
+	var text = null;
+	var sources = [document.te_i18n, document.te_i18n_global];
+	for (var i = 0; i < sources.length; i++) {
+		var source = sources[i];
+		if (source && typeof source === 'object' && Object.prototype.hasOwnProperty.call(source, key)
+			&& typeof source[key] === 'string') {
+			text = source[key];
+			break;
+		}
+	}
+	if (text === null) {
+		text = String(key);
+	}
+	if (!params || typeof params !== 'object') {
+		return text;
+	}
+	return text.replace(/\{([A-Za-z0-9_]+)\}/g, function(match, name) {
+		return Object.prototype.hasOwnProperty.call(params, name) && params[name] !== null && typeof params[name] !== 'undefined'
+			? String(params[name])
+			: match;
+	});
+}
+
+// True on Bootstrap 5 pages (OC 4.x). Bootstrap 3 has no global "bootstrap" object.
+function teIsBs5() {
+	return typeof bootstrap !== 'undefined' && !!bootstrap.Modal;
+}
+
+// FA 4 icon names that have a different main name in FA 6. FA 6 (OC 4.x) also knows most FA 4 names as aliases.
+var teIconFa6Names = {
+	'check-circle': 'circle-check',
+	'exclamation-circle': 'circle-exclamation',
+	'exclamation-triangle': 'triangle-exclamation',
+	'info-circle': 'circle-info',
+	'question-circle': 'circle-question',
+	'times': 'xmark',
+	'times-circle': 'circle-xmark',
+	'refresh': 'rotate',
+	'save': 'floppy-disk',
+	'trash': 'trash-can',
+	'exchange': 'right-left',
+	'cog': 'gear'
+};
+
+// Returns the icon classes for an FA 4 icon name: "fa fa-<name>" on FA 4 (OC 1.5-3.0), "fa-solid fa-<name>" on FA 6 (OC 4.x).
+function teIcon(name) {
+	name = String(name);
+	if (teIsBs5()) {
+		return 'fa-solid fa-' + (Object.prototype.hasOwnProperty.call(teIconFa6Names, name) ? teIconFa6Names[name] : name);
+	}
+	return 'fa fa-' + name;
+}
+
+// Returns an <i> icon element. The icon is decorative: put the text label next to it.
+function teIconEl(name) {
+	return teEl('i', { 'class': teIcon(name), 'aria-hidden': 'true' });
+}
+
+// Makes a DOM node as a jQuery object. attrs: attribute name => value ("class" adds classes).
+// text (optional) goes in with .text(), never as HTML.
+function teEl(tag, attrs, text) {
+	var el = $(document.createElement(tag));
+	if (attrs && typeof attrs === 'object') {
+		for (var name in attrs) {
+			if (!Object.prototype.hasOwnProperty.call(attrs, name) || attrs[name] === null || typeof attrs[name] === 'undefined') {
+				continue;
+			}
+			if (name === 'class') {
+				el.addClass(String(attrs[name]));
+			} else {
+				el.attr(name, String(attrs[name]));
+			}
+		}
+	}
+	if (text !== null && typeof text !== 'undefined') {
+		teText(el, text);
+	}
+	return el;
+}
+
+// Puts value into el as text. null and undefined give an empty text.
+function teText(el, value) {
+	return $(el).text(value === null || typeof value === 'undefined' ? '' : String(value));
+}
+
+// Bootstrap adapter: the same call on BS3 (jQuery plugins) and BS5 (bootstrap.* classes).
+var teBs = {
+	// Shows a tab. el: the tab link (a[data-toggle="tab"] or a[data-bs-toggle="tab"]).
+	tab: function(el) {
+		var node = $(el)[0];
+		if (!node) {
+			return;
+		}
+		if (teIsBs5() && bootstrap.Tab) {
+			bootstrap.Tab.getOrCreateInstance(node).show();
+		} else if ($.fn.tab) {
+			$(node).tab('show');
+		}
+	},
+	// action: 'show' or 'hide'. On BS5 a hide during the show animation waits for the animation end
+	// (see trackTranslateExpertModalTransition).
+	modal: function(el, action) {
+		var node = $(el)[0];
+		if (!node || (action !== 'show' && action !== 'hide')) {
+			return;
+		}
+		if (teIsBs5()) {
+			trackTranslateExpertModalTransition(node);
+			if (action === 'show') {
+				node.teHidePending = false;
+				bootstrap.Modal.getOrCreateInstance(node).show();
+			} else if (node.teShowing) {
+				node.teHidePending = true;
+			} else {
+				var instance = bootstrap.Modal.getInstance(node);
+				if (instance) instance.hide();
+			}
+		} else if ($.fn.modal) {
+			$(node).modal(action);
+		}
+	},
+	// action: 'show', 'hide' or 'toggle'. el: the collapsible element (not the button).
+	collapse: function(el, action) {
+		var node = $(el)[0];
+		if (!node || (action !== 'show' && action !== 'hide' && action !== 'toggle')) {
+			return;
+		}
+		if (teIsBs5() && bootstrap.Collapse) {
+			bootstrap.Collapse.getOrCreateInstance(node, { toggle: false })[action]();
+		} else if ($.fn.collapse) {
+			$(node).collapse(action);
+		} else if (action === 'toggle') {
+			$(node).toggle();
+		} else if (action === 'show') {
+			$(node).show();
+		} else {
+			$(node).hide();
+		}
+	}
+};
+
+// Alert area of a tab (.te-alerts). All text goes in with .text().
+// The container must be inside .te-app: the te-alert and te-hidden rules of the CSS exist only under .te-app.
+var teAlerts = {
+	detailsMaxLength: 2000,
+	handlersBound: false,
+
+	// type: 'error', 'info' or 'success'. details (optional): long text for the collapsed "Details" block.
+	// Returns the alert element, or null if container is not found.
+	show: function(container, type, message, details) {
+		var area = $(container);
+		if (!area.length) {
+			return null;
+		}
+		teAlerts.bindHandlers();
+		if (type !== 'info' && type !== 'success') {
+			type = 'error';
+		}
+		var icons = { error: 'exclamation-circle', info: 'info-circle', success: 'check-circle' };
+		var alertEl = teEl('div', { 'class': 'te-alert te-alert--' + type, 'role': type === 'error' ? 'alert' : 'status' });
+		alertEl.append(teEl('span', { 'class': 'te-alert__icon' }).append(teIconEl(icons[type])));
+		alertEl.append(teEl('div', { 'class': 'te-alert__message' }, message));
+
+		var actions = teEl('div', { 'class': 'te-alert__actions' });
+		var detailsText = details === null || typeof details === 'undefined' ? '' : String(details);
+		if (detailsText !== '') {
+			if (detailsText.length > teAlerts.detailsMaxLength) {
+				detailsText = detailsText.substring(0, teAlerts.detailsMaxLength);
+			}
+			actions.append(teEl('button', { 'type': 'button', 'class': 'te-alert__btn te-js-alert-details', 'aria-expanded': 'false' }, teT('te_alert_details')));
+		}
+		actions.append(teEl('button', { 'type': 'button', 'class': 'te-alert__btn te-js-alert-close', 'aria-label': teT('te_alert_close'), 'title': teT('te_alert_close') })
+			.append(teIconEl('times')));
+		alertEl.append(actions);
+
+		if (detailsText !== '') {
+			alertEl.append(teEl('pre', { 'class': 'te-alert__details te-hidden' }, detailsText));
+		}
+
+		area.append(alertEl);
+		return alertEl;
+	},
+
+	clear: function(container) {
+		$(container).empty();
+	},
+
+	// Shows the error of an AJAX response: a parsed JSON object, a JSON or other string, or a jqXHR (.fail()).
+	// A JSON object with success = 1 shows nothing. A non-JSON response shows te_alert_not_json and puts the
+	// response text in "Details". Returns the alert element, or null if nothing shows.
+	fromResponse: function(container, response) {
+		var parsed = teAlerts.parseResponse(response);
+		if (parsed.data) {
+			if (parsed.data.success === 1 || parsed.data.success === true) {
+				return null;
+			}
+			var message = typeof parsed.data.message === 'string' && parsed.data.message !== ''
+				? parsed.data.message
+				: teT('te_global_error_internal');
+			var details = typeof parsed.data.additional_message === 'string' ? parsed.data.additional_message : '';
+			return teAlerts.show(container, 'error', message, details);
+		}
+		return teAlerts.show(container, 'error', teT('te_alert_not_json'), parsed.text);
+	},
+
+	// Returns { data: object } for JSON, or { text: string } for any other response.
+	parseResponse: function(response) {
+		if (response && typeof response === 'object') {
+			var isXhr = typeof response.readyState !== 'undefined' && typeof response.getResponseHeader === 'function';
+			// An array is not a JSON object here, the same as in parseJsonObject().
+			if (!isXhr) {
+				return Array.isArray(response) ? { text: JSON.stringify(response) } : { data: response };
+			}
+			if (response.responseJSON && typeof response.responseJSON === 'object' && !Array.isArray(response.responseJSON)) {
+				return { data: response.responseJSON };
+			}
+			var xhrText = typeof response.responseText === 'string' ? response.responseText : '';
+			var xhrData = teAlerts.parseJsonObject(xhrText);
+			if (xhrData) {
+				return { data: xhrData };
+			}
+			if (xhrText === '') {
+				xhrText = $.trim((typeof response.status === 'number' ? String(response.status) : '') + ' ' + String(response.statusText || ''));
+			}
+			return { text: xhrText };
+		}
+		var text = response === null || typeof response === 'undefined' ? '' : String(response);
+		var data = teAlerts.parseJsonObject(text);
+		return data ? { data: data } : { text: text };
+	},
+
+	parseJsonObject: function(text) {
+		if (typeof text !== 'string' || text === '') {
+			return null;
+		}
+		try {
+			var data = JSON.parse(text);
+			return data && typeof data === 'object' && !Array.isArray(data) ? data : null;
+		} catch (e) {
+			return null;
+		}
+	},
+
+	// One delegated handler for all alerts (no inline onclick).
+	bindHandlers: function() {
+		if (teAlerts.handlersBound) {
+			return;
+		}
+		teAlerts.handlersBound = true;
+		$(document).on('click', '.te-js-alert-close', function() {
+			$(this).closest('.te-alert').remove();
+		});
+		$(document).on('click', '.te-js-alert-details', function() {
+			var details = $(this).closest('.te-alert').find('.te-alert__details');
+			var expanded = details.hasClass('te-hidden');
+			details.toggleClass('te-hidden', !expanded);
+			$(this).attr('aria-expanded', expanded ? 'true' : 'false');
+		});
+	}
+};
