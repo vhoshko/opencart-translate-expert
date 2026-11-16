@@ -168,25 +168,28 @@ class RemoveLibrary extends LibraryClientTranslateExpert
 	}
 }
 
-class ButtonLanguage
+class DetailLibrary extends RemoveLibrary
 {
-	public function get($key)
-	{
-		return $key === 'title_translate_table_confirmation' ? 'CONFIRM' : 'L_' . $key;
-	}
-}
+	public $rows = array();
+	public $pk = array('product_id');
+	public $textCalls = array();
+	public $info = array();
+	public $analizeInfo = null;
 
-class ButtonLibrary extends LibraryClientTranslateExpert
-{
-	public function __construct($model)
+	protected function getTableToTranslateAnalizationInfo($languageIdFrom, $table, $languages, $mode = null, $langIdToParam = null, $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null, $calcCounts = true, $continueAfterColumn = null, $offset = 0)
 	{
-		$this->_debug = false;
-		$this->_model = $model;
+		return (object)array('tableTranslationIsSuppported' => !in_array($table, $this->unsupported), 'textColumnNames' => $this->tableColumns[$table], 'table' => $table, 'pkColumnNames' => $this->pk);
 	}
 
-	public function button($cat, $stock, $manufacturer)
+	protected function getTextToTranslateRows($languageIdFrom, $tableName, $pkColumnNames, $textColumnName, $mode, $limit, $offset, $langIdToParam = null, $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null, $text_from_filter = null)
 	{
-		return $this->buildHtmlTranslateTableButton(1, 'oc_product_description', 'Title', 'both', 5, 'name', 2, false, false, $cat, $stock, $manufacturer, array('code' => 'uk'));
+		$this->textCalls[] = array($languageIdFrom, $tableName, $textColumnName, $mode, $limit, $offset, $langIdToParam, $product_status);
+		return $this->rows;
+	}
+
+	protected function getTablesToTranslateAnalizationInfo($languageIdFrom, $languageIdTo, $mode = null, $filterTable = '', $product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null, $continueAfterTable = null, $continueAfterColumn = null, $continueOffset = 0)
+	{
+		return $this->analizeInfo;
 	}
 }
 
@@ -438,7 +441,6 @@ class TranslateLoopTest
 		});
 
 		$this->testRowCap();
-		$this->testButtonOnclickArguments();
 		$this->testSmallCap();
 		$this->testBudgetSharedAcrossTables();
 		$this->testRepeatedRunsFinish();
@@ -473,6 +475,9 @@ class TranslateLoopTest
 		$this->testZeroLengthTextIsSent();
 		$this->testRealSqlText();
 		$this->testRemoveDataFromTableCount();
+		$this->testBuildLanguageObject();
+		$this->testAnalizeTableDetail();
+		$this->testAnalizeJson();
 		$this->testRemoveDataFromDb();
 
 		restore_error_handler();
@@ -1146,19 +1151,6 @@ class TranslateLoopTest
 		return strtolower(trim(preg_replace('/\s+/', ' ', $last)));
 	}
 
-	private function testButtonOnclickArguments()
-	{
-		echo "\nButton onclick arguments:\n";
-		if (!defined('HTTP_SERVER'))
-			define('HTTP_SERVER', 'http://localhost/admin/');
-		$model = new FakeModel();
-		$model->language = new ButtonLanguage();
-		$lib = new ButtonLibrary($model);
-		$html = $lib->button(array(11, 12), array(5), array(7, 8));
-		$this->check(strpos($html, '"11,12", "5", "7,8", "CONFIRM")') !== false, true, 'doTranslateTableExpert: category, stock status, manufacturer, confirmation');
-		$this->check(strpos($html, '"11,12", "5", "7,8"); return false;') !== false, true, 'analizeTableDetail: category, stock status, manufacturer');
-	}
-
 	private function testRealSqlText()
 	{
 		echo "\nReal SQL text of the product filters:\n";
@@ -1257,6 +1249,170 @@ class TranslateLoopTest
 		$this->check(isset($r->success) ? $r->success : null, 0, 'a language that is not in the store: success is 0');
 		$this->check(isset($r->message) ? $r->message : null, 'L_error_language_to_required', 'a language that is not in the store: message');
 		$this->check(count($lib->removeCalls), 0, 'a language that is not in the store: nothing is cleared');
+	}
+
+	private function detailRow($id, $from, $to, $count, $withImage)
+	{
+		$row = array('product_id' => (string)$id, 'language_id_from' => '1', 'language_code_from' => 'en', 'text_from' => $from, 'language_id_to' => '2', 'language_code_to' => 'uk');
+		if ($withImage)
+			$row['language_image_to'] = 'uk.png';
+		$row['text_to'] = $to;
+		$row['value_count'] = (string)$count;
+		return $row;
+	}
+
+	private function detailGet($r, $key)
+	{
+		return isset($r->$key) ? $r->$key : null;
+	}
+
+	private function testAnalizeTableDetail()
+	{
+		echo "\nanalizeTableDetail:\n";
+		$lib = new DetailLibrary();
+		$lib->rows = array(
+			$this->detailRow(42, '&lt;p&gt;Hi &quot;you&quot;&lt;/p&gt;', null, 3, true),
+			$this->detailRow(43, 'Blue', 'Blue', 1, true),
+		);
+		$r = $lib->analizeTableDetail(1, 'both', 'oc_a', 'name', 2, false, false, null, null, null);
+		$this->check($this->detailGet($r, 'success'), 1, 'detail: success is int 1');
+		$this->check($this->detailGet($r, 'table'), 'oc_a', 'detail: table');
+		$this->check($this->detailGet($r, 'column'), 'name', 'detail: column');
+		$this->check($this->detailGet($r, 'mode'), 'both', 'detail: mode');
+		$this->check($this->detailGet($r, 'idColumns'), array('product_id'), 'detail: idColumns has the pk columns only (OC 3.0 row, 8 fields after the pk)');
+		$this->check($this->detailGet($r, 'hasMore'), 0, 'detail: hasMore is 0');
+		$from = $this->detailGet($r, 'languageFrom');
+		$to = $this->detailGet($r, 'languageTo');
+		$this->check(isset($from['language_id']) ? $from['language_id'] : null, 1, 'detail: languageFrom id is int');
+		$this->check(isset($to['code']) ? $to['code'] : null, 'uk', 'detail: languageTo code');
+		$this->check(isset($to['name']) ? $to['name'] : null, 'Ukrainian & Co', 'detail: languageTo name is decoded');
+		$this->check(isset($to['image']) ? $to['image'] : null, 'language/uk/uk.png', 'detail: languageTo image');
+		$rows = $this->detailGet($r, 'rows');
+		$this->check(is_array($rows) ? count($rows) : null, 2, 'detail: 2 rows');
+		$this->check(isset($rows[0]['ids']) ? $rows[0]['ids'] : null, array('product_id' => 42), 'detail: ids value is int');
+		$this->check(isset($rows[0]['textFrom']) ? $rows[0]['textFrom'] : null, '<p>Hi "you"</p>', 'detail: textFrom is decoded');
+		$this->check(isset($rows[0]['textTo']) ? $rows[0]['textTo'] : null, '', 'detail: NULL text_to is an empty string');
+		$this->check(isset($rows[0]['count']) ? $rows[0]['count'] : null, 3, 'detail: count is int');
+		$this->check(isset($rows[1]['textTo']) ? $rows[1]['textTo'] : null, 'Blue', 'detail: textTo');
+		$this->check(array_keys((array)$r), array('success', 'table', 'column', 'mode', 'languageFrom', 'languageTo', 'idColumns', 'rows', 'hasMore'), 'detail: field set');
+		$this->check(isset($lib->textCalls[0]) ? array($lib->textCalls[0][4], $lib->textCalls[0][5], $lib->textCalls[0][6], $lib->textCalls[0][2]) : null, array(101, 0, 2, 'name'), 'detail: one query with limit 101, offset 0, target language, the column');
+
+		$lib = new DetailLibrary();
+		$lib->rows = array($this->detailRow(7, 'A', '', 1, false));
+		$r = $lib->analizeTableDetail(1, 'both', 'oc_a', 'name', 2, false, false, null, null, null);
+		$this->check($this->detailGet($r, 'idColumns'), array('product_id'), 'detail: idColumns is the same for an OC4 row without language_image_to');
+		$rows = $this->detailGet($r, 'rows');
+		$this->check(isset($rows[0]['ids']) ? $rows[0]['ids'] : null, array('product_id' => 7), 'detail: OC4 row ids');
+
+		$lib = new DetailLibrary();
+		$lib->pk = array('a_id', 'b_id');
+		$row = $this->detailRow(5, 'A', '', 1, true);
+		$row['a_id'] = '5';
+		$row['b_id'] = 'xx';
+		unset($row['product_id']);
+		$lib->rows = array($row);
+		$r = $lib->analizeTableDetail(1, 'both', 'oc_a', 'name', 2, false, false, null, null, null);
+		$rows = $this->detailGet($r, 'rows');
+		$this->check(isset($rows[0]['ids']) ? $rows[0]['ids'] : null, array('a_id' => 5, 'b_id' => 'xx'), 'detail: numeric string becomes int, other string stays');
+
+		$lib = new DetailLibrary();
+		for ($i = 1; $i <= 100; $i++)
+			$lib->rows[] = $this->detailRow($i, 'T' . $i, '', 1, true);
+		$r = $lib->analizeTableDetail(1, 'both', 'oc_a', 'name', 2, false, false, null, null, null);
+		$this->check($this->detailGet($r, 'hasMore'), 0, 'detail: 100 rows, hasMore is 0');
+		$lib->rows[] = $this->detailRow(101, 'T101', '', 1, true);
+		$r = $lib->analizeTableDetail(1, 'both', 'oc_a', 'name', 2, false, false, null, null, null);
+		$rows = $this->detailGet($r, 'rows');
+		$this->check($this->detailGet($r, 'hasMore'), 1, 'detail: 101 rows, hasMore is 1');
+		$this->check(is_array($rows) ? count($rows) : null, 100, 'detail: rows are cut to 100');
+
+		$lib = new DetailLibrary();
+		$r = $lib->analizeTableDetail(1, 'only_empty', 'oc_a', 'name', 2, false, false, null, null, null);
+		$this->check($this->detailGet($r, 'success'), 1, 'detail: zero rows, success');
+		$this->check($this->detailGet($r, 'rows'), array(), 'detail: zero rows, rows is an empty array');
+		$from = $this->detailGet($r, 'languageFrom');
+		$to = $this->detailGet($r, 'languageTo');
+		$this->check(array(isset($from['code']) ? $from['code'] : null, isset($to['code']) ? $to['code'] : null), array('en', 'uk'), 'detail: zero rows, languages come from the parameters');
+
+		$bad = array(
+			'bad table' => array(1, 'both', 'oc_zzz', 'name', 2),
+			'bad column' => array(1, 'both', 'oc_a', 'nope', 2),
+			'unsupported table' => array(1, 'both', 'oc_c', 'name', 2),
+			'missing language to' => array(1, 'both', 'oc_a', 'name', 0),
+			'missing language from' => array(0, 'both', 'oc_a', 'name', 2),
+			'unknown language' => array(1, 'both', 'oc_a', 'name', 99),
+		);
+		foreach ($bad as $label => $args)
+		{
+			$lib = new DetailLibrary();
+			$lib->tableColumns['oc_c'] = array('name');
+			$r = $lib->analizeTableDetail($args[0], $args[1], $args[2], $args[3], $args[4], false, false, null, null, null);
+			$this->check($this->detailGet($r, 'success'), 0, "detail {$label}: success is 0");
+			$this->check($this->detailGet($r, 'message'), 'L_te_site_error_bad_detail_request', "detail {$label}: message");
+			$this->check(count($lib->textCalls), 0, "detail {$label}: no row query");
+		}
+	}
+
+	private function analizeTable($table, $tableChars, $langCounts, $fieldChars, $fieldLangCounts, $supported = true)
+	{
+		return (object)array(
+			'table' => $table,
+			'textColumnNames' => array_keys($fieldChars),
+			'tableTranslationIsSuppported' => $supported,
+			'tableCharCount' => $tableChars,
+			'tableLanguageCharCounts' => $langCounts,
+			'tableFieldCharCounts' => $fieldChars,
+			'tableFieldLanguageCharCounts' => $fieldLangCounts,
+		);
+	}
+
+	private function testAnalizeJson()
+	{
+		echo "\nanalize JSON:\n";
+		$lib = new DetailLibrary();
+		$t1 = $this->analizeTable('oc_a', '620', array(1 => array('code' => 'en', 'char_count' => 0), 2 => array('code' => 'uk', 'char_count' => '620')),
+			array('name' => '20', 'description' => '600', 'meta' => 0),
+			array('name' => array(2 => array('char_count' => '20')), 'description' => array(2 => array('char_count' => '600')), 'meta' => array(2 => array('char_count' => 0))));
+		$t2 = $this->analizeTable('oc_b', 5, array(2 => array('code' => 'uk', 'char_count' => 5)),
+			array('title' => 5), array('title' => array(2 => array('char_count' => 5))), false);
+		$lib->analizeInfo = (object)array('success' => 1, 'done' => false, 'globalCharCount' => '625', 'globalLanguageCharCounts' => array(), 'tablesResult' => array($t1, $t2),
+			'tables' => array(), 'timeInSec' => '1.2500', 'lastProcessedTable' => 'oc_b', 'lastProcessedColumn' => null, 'lastProcessedOffset' => '0');
+		$r = $lib->analize(1, 2, 'both', '', false, false, null, null, null);
+		$this->check(array_keys((array)$r), array('success', 'done', 'target', 'globalCharCount', 'timeInSec', 'tables', 'lastProcessedTable', 'lastProcessedColumn', 'lastProcessedOffset'), 'analize: field set, no removed fields');
+		$this->check($this->detailGet($r, 'success'), 1, 'analize: success is int 1');
+		$this->check($this->detailGet($r, 'done'), 0, 'analize: done is int 0');
+		$this->check($this->detailGet($r, 'globalCharCount'), 625, 'analize: globalCharCount is int');
+		$this->check($this->detailGet($r, 'timeInSec'), 1.25, 'analize: timeInSec is float');
+		$this->check($this->detailGet($r, 'lastProcessedTable'), 'oc_b', 'analize: lastProcessedTable');
+		$this->check($this->detailGet($r, 'lastProcessedColumn'), null, 'analize: lastProcessedColumn');
+		$this->check($this->detailGet($r, 'lastProcessedOffset'), 0, 'analize: lastProcessedOffset is int');
+		$target = $this->detailGet($r, 'target');
+		$this->check(array(isset($target['language_id']) ? $target['language_id'] : null, isset($target['code']) ? $target['code'] : null), array(2, 'uk'), 'analize: target object');
+		$tables = $this->detailGet($r, 'tables');
+		$this->check(is_array($tables) ? array_keys($tables) : null, array(0, 1), 'analize: tables is a list');
+		$this->check(isset($tables[0]) ? $tables[0] : null, array('table' => 'oc_a', 'supported' => 1, 'charCount' => 620, 'columns' => array(array('column' => 'name', 'charCount' => 20), array('column' => 'description', 'charCount' => 600))), 'analize: first table, columns with 0 chars are left out');
+		$this->check(isset($tables[1]) ? $tables[1] : null, array('table' => 'oc_b', 'supported' => 0, 'charCount' => 5, 'columns' => array(array('column' => 'title', 'charCount' => 5))), 'analize: second table, supported is int 0');
+
+		$lib->analizeInfo->done = true;
+		$lib->analizeInfo->tablesResult = array();
+		$r = $lib->analize(1, 0, 'both', '', false, false, null, null, null);
+		$this->check($this->detailGet($r, 'done'), 1, 'analize: done is int 1');
+		$this->check($this->detailGet($r, 'target'), null, 'analize: no target language gives null');
+		$this->check($this->detailGet($r, 'tables'), array(), 'analize: no tables gives an empty list');
+
+		$lib->analizeInfo = (object)array('success' => 0, 'message' => 'boom');
+		$r = $lib->analize(1, 2, 'both', '', false, false, null, null, null);
+		$this->check(array($this->detailGet($r, 'success'), $this->detailGet($r, 'message')), array(0, 'boom'), 'analize: an error of the library is returned');
+	}
+
+	private function testBuildLanguageObject()
+	{
+		echo "\nbuildLanguageObject:\n";
+		$lib = new RemoveLibrary();
+		$this->check($lib->buildLanguageObject(2), array('language_id' => 2, 'code' => 'uk', 'name' => 'Ukrainian & Co', 'image' => 'language/uk/uk.png'), 'known language id');
+		$this->check($lib->buildLanguageObject('1'), array('language_id' => 1, 'code' => 'en', 'name' => 'English', 'image' => 'language/en/en.png'), 'known language id as a string');
+		$this->check($lib->buildLanguageObject(99), null, 'unknown language id gives null');
+		$this->check($lib->buildLanguageObject(0), null, 'language id 0 gives null');
 	}
 
 	private function check($actual, $expected, $label)

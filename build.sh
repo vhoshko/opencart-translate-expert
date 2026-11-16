@@ -401,8 +401,6 @@ file_replace "$OC4_JS" "\$('#translateExpertModal').modal('hide')" "var _m = boo
 # --- Update image paths for OC4 extension directory structure ---
 # rootUrl in JS points to admin dir, so we need ../ to reach OC root where extension/ lives
 file_replace "$OC4_JS" "rootUrl + 'view/image/translate_expert_client/" "rootUrl + '../extension/client_translate_expert/admin/view/image/translate_expert_client/"
-# HTTP_SERVER in PHP also points to admin, same fix
-file_replace "$OC4_LIB_CORE" '{$server}view/image/translate_expert_client/' '{$server}../extension/client_translate_expert/admin/view/image/translate_expert_client/'
 # heading_title in the language files has a relative <img src> (relative to the admin dir), same fix
 for lang in en-gb uk-ua ru-ru; do
     file_replace "$EXT_DIR/admin/language/${lang}/module/client_translate_expert.php" 'src="view/image/translate_expert_client/' 'src="../extension/client_translate_expert/admin/view/image/translate_expert_client/'

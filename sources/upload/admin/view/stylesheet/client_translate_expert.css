@@ -454,6 +454,113 @@
   }
 }
 
+/* te-langbar-wrap: the bar sits under the tab row */
+.te-app.te-langbar-wrap .te-langbar {
+  margin-top: var(--te-gap);
+}
+.te-app .te-langbar label {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* te-radio-group: radio buttons of one choice in a row */
+.te-app .te-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--te-gap);
+}
+.te-app .te-radio-group .radio-inline,
+.te-app .te-radio-group .form-check {
+  margin: 0;
+}
+
+/* te-collapse-toggle: button that opens and closes a block (.te-js-collapse) */
+.te-app .te-collapse-toggle {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.te-app .te-collapse-toggle::before {
+  content: "\25B8";
+  display: inline-block;
+  width: 1em;
+}
+.te-app .te-collapse-toggle[aria-expanded="true"]::before {
+  content: "\25BE";
+}
+.te-app .te-progress__log-toggle {
+  justify-self: start;
+  font-weight: 400;
+  color: var(--te-accent);
+}
+
+/* te-progress end states */
+.te-app .te-progress--done {
+  border-color: var(--te-ok);
+}
+.te-app .te-progress--done .te-progress__fill {
+  background: var(--te-ok);
+}
+.te-app .te-progress--stopped {
+  border-color: var(--te-warn);
+}
+.te-app .te-progress--stopped .te-progress__fill {
+  background: var(--te-warn);
+}
+.te-app .te-progress--error {
+  border-color: var(--te-error);
+}
+.te-app .te-progress--error .te-progress__fill {
+  background: var(--te-error);
+}
+
+/* te-table: rows of the result table of the tab "Website content" */
+.te-app .te-table__expand {
+  width: 1.4em;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+.te-app .te-table__expand::before {
+  content: "\25B8";
+}
+.te-app .te-table__expand[aria-expanded="true"]::before {
+  content: "\25BE";
+}
+.te-app .te-table__sub {
+  padding-left: 28px;
+}
+.te-app .te-table__text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.te-app .te-table__total td {
+  border-top: 2px solid var(--te-border);
+  background: var(--te-bg-soft);
+  font-weight: 700;
+}
+.te-app .te-table tfoot td {
+  position: sticky;
+  bottom: 0;
+}
+.te-app .te-site-actions {
+  white-space: nowrap;
+}
+.te-app .te-site-actions .btn {
+  margin-right: 4px;
+}
+.te-app .te-form + .te-toolbar {
+  margin-top: var(--te-gap);
+}
+.te-app .te-card__body > .te-toolbar:last-child {
+  margin-bottom: 0;
+}
+
 /* te-header-count: character count item in the admin header (all admin pages, outside .te-app).
    It must not depend on Bootstrap: OC 1.5 pages other than the module page have no Bootstrap.
    Two lines (label above value) and the reset button at the right. The item fills the header height

@@ -44,17 +44,10 @@ $_['entry_width']      = 'Ширина';
 $_['entry_height']     = 'Высота';
 $_['entry_status']     = 'Статус';
 $_['entry_login']     = 'Ваш логин';
-$_['entry_name']     = 'Название';
-$_['entity_table']    = 'Таблица';
-$_['entity_column']   = 'Колонка';
 $_['entry_table']     = 'Таблица';
-$_['entry_analization_language_from'] = 'Язык с которого переводить';
-$_['entry_analization_language_to'] = 'Язык на какой переводить';
 $_['entry_table_deep']     = 'Глубокий анализ';
 $_['entry_table_deep_description']     = 'Полный анализ таблицы (Выключите, если анализ происходит очень долго)';
 
-$_['entry_localization_language_from'] = 'Язык с которого переводить';
-$_['entry_localization_language_to'] = 'Язык на который переводить';
 $_['entry_localization_analization'] = 'Анализировать не переведенные значения';
 $_['entry_localization_analization_result'] = 'Результат анализа';
 $_['entry_localization_file_to_translate_info'] = '{path}: <b>не переведено {count} значений</b>';
@@ -66,12 +59,9 @@ $_['entry_info']          = 'Информация';
 $_['entry_char_quantity'] = 'Количество символов доступных для перевода';
 $_['entry_analization']     = 'Анализировать не переведенные строки';
 $_['entity_begin_analization']     = 'Анализировать';
-$_['entry_analization_result']     = 'Результат анализа';
 $_['entry_analization_mode']     = 'Режим анализа';
 $_['entry_stop_modal_process']          = 'Остановить';
 $_['entry_stop_modal_process_confirmation']          = 'Вы действительно хотите остановить операцию?';
-$_['entry_time_in_sec']          = 'Время: <strong id="timeInSec">{timeInSec}</strong> cекунд';
-$_['entry_summ']          = 'Все языки';
 $_['entry_close']     = 'Закрыть';
 $_['entry_try_translate']     = 'Форма проверки перевода<br>Тест API ключа';
 $_['entry_try_translate_text']     = 'Форма проверки перевода';
@@ -117,23 +107,11 @@ $_['value_analization_mode_only_empty'] = 'Искать только пусты�
 $_['value_analization_mode_same_value'] = 'Искать одинаковые значения';
 $_['value_analization_mode_both'] = 'Искать пустые и одинаковые значения';
 
-// Html Title attributes
-$_['title_translate_all_tables'] = 'Перевести все таблицы';
-$_['title_translate_table'] = 'Перевести таблицу {table}';
-$_['title_translate_table_column'] = 'Перевести колонку {textColumnName} таблицы {table}';
-$_['title_translate_table_confirmation'] = 'Вы действительно хотите {translateTableTitle}?';
-$_['title_translate_to_lang_suffix'] = ' (язык {langCode})';
-$_['title_not_translater_char_count']          = 'Количество не переведенных символов';
 
 // js constants
-$_['js_const_done_status'] = 'Завершено!';
-$_['js_const_in_progress_status'] = 'В процесе...';
-$_['js_const_statistic_html'] = "<div id='statusLog'>{historyLog}</div><div id='statusCurrent'>Таблица <strong>{table}</strong>, переведено: <strong class='statusTranslatedCharCount'>{translatedCharCount}</strong>, Статус: <strong class='translatedStatus'>{status}</strong></div>";
-$_['js_const_analization_process_is_started'] = "Выполняется процесс анализа...<br>Талица: <strong id='analization_current_table'></strong><br>Номер запроса: <strong id='analization_request_number'>1</strong>";
 $_['js_const_saved'] = 'Сохранено!';
 $_['js_const_localization_translate_progress'] = 'Перевод файла локализации {currIndex} из {count}: {path}.';
 $_['js_const_localization_translate_done'] = 'Перевод файла локализации {currIndex} из {count}: Готово!';
-$_['js_const_preparing_detail_info'] = 'Подготовка детальной информации ...';
 $_['button_localization_translate'] = 'Перевести';
 $_['button_localization_save'] = 'Сохранить';
 
@@ -141,6 +119,7 @@ $_['button_localization_save'] = 'Сохранить';
 $_['error_permission'] = 'У вас нет прав для управления этим модулем!';
 $_['error_bad_filter'] = 'Значения фильтров недопустимы. Перезагрузите страницу и выберите фильтры заново.';
 $_['error_language_to_required'] = 'Выберите язык, с которого нужно удалить переводы.';
+$_['te_site_error_bad_detail_request'] = 'Таблица, колонка или язык указаны неверно.';
 $_['error_width']      = 'Необходимо указать ширину!';
 $_['error_height']     = 'Необходимо указать высоту!';
 $_['error_unlicensed'] = 'Вы используете нелицензионную версию модуля! <br> Рекомендуем купить модуль на сайте <a href="https://github.com/vhoshko/opencart-translate-expert" target="_blank">https://github.com/vhoshko/opencart-translate-expert</a> или обратиться в поддержку модуля через <a href="https://github.com/vhoshko/opencart-translate-expert/issues" target="_blank">GitHub Issues</a>';
@@ -152,10 +131,6 @@ $_['error_localization_save_target_invalid']	   = 'Неверная целева
 $_['error_localization_save_failed']	   = 'Файл не сохранен. Проверьте, что веб-сервер может записывать в эту папку:';
 $_['error_localization_save_empty']	   = 'Файл пустой. Нечего сохранять.';
 
-// Messages
-$_['message_analize_global_info']     = '<b>Все таблицы</b>';
-$_['message_analize_table_head_info']     = '<strong class="et_table" id="et_{table}">{table}</strong>';
-$_['message_analize_field_head_info']     = 'Текстовое поле <strong class="et_field" id="et_{table}_{textColumnName}">{textColumnName}</strong>';
 
 
 $_['entry_table_product_filter'] = 'Фильтр товаров';
@@ -190,3 +165,44 @@ $_['te_global_reset'] = 'Сбросить';
 $_['te_global_reset_confirm'] = 'Вы уверены, что хотите сбросить количество символов перевода?';
 $_['te_global_translate'] = 'Перевести';
 $_['te_global_error_internal'] = 'Внутренняя ошибка, подробности в журнале консоли!';
+
+// Website content tab (document.te_i18n, te_site_* )
+$_['te_site_lang_from'] = 'Переводить с';
+$_['te_site_lang_to'] = 'на';
+$_['te_site_lang_swap'] = 'Поменять языки местами';
+$_['te_site_card_what'] = 'Что переводить';
+$_['te_site_more_filters'] = 'Дополнительные фильтры';
+$_['te_site_stop'] = 'Остановить';
+$_['te_site_log'] = 'Журнал';
+$_['te_site_analyzing'] = 'Выполняется анализ';
+$_['te_site_translating'] = 'Перевод: {table}';
+$_['te_site_col_table'] = 'Таблица / колонка';
+$_['te_site_col_chars'] = 'Символы';
+$_['te_site_col_chars_lang'] = 'Символы ({code})';
+$_['te_site_col_actions'] = 'Действия';
+$_['te_site_total'] = 'Итого';
+$_['te_site_translate'] = 'Перевести';
+$_['te_site_translate_all'] = 'Перевести всё';
+$_['te_site_details'] = 'Подробно';
+$_['te_site_not_supported'] = 'не поддерживается';
+$_['te_site_done'] = 'готово';
+$_['te_site_toggle'] = 'Показать или скрыть колонки таблицы {table}';
+$_['te_site_cnt_current'] = 'Сейчас: {current}';
+$_['te_site_cnt_table'] = 'Таблица {n} из {total}';
+$_['te_site_cnt_request'] = 'Запрос {request}';
+$_['te_site_cnt_chars'] = 'Найдено символов: {chars}';
+$_['te_site_cnt_time'] = 'Время: {sec} с';
+$_['te_site_cnt_translated'] = 'Переведено символов: {chars}';
+$_['te_site_translate_confirm'] = 'Вы действительно хотите перевести {table} ({lang})?';
+$_['te_site_translate_all_confirm'] = 'Вы действительно хотите перевести все таблицы из списка ({lang})?';
+$_['te_site_log_table_done'] = 'Готово: {table}, переведено символов: {chars}';
+$_['te_site_detail_loading'] = 'Подготовка детальной информации ...';
+$_['te_site_detail_source'] = 'Оригинал ({code})';
+$_['te_site_detail_target'] = 'Перевод ({code})';
+$_['te_site_empty'] = 'пусто';
+$_['te_site_identical'] = 'совпадает';
+$_['te_site_detail_none'] = 'Нет значений.';
+$_['te_site_detail_more'] = 'Показаны только первые 100 значений.';
+$_['te_site_state_done'] = 'Завершено';
+$_['te_site_state_stopped'] = 'Остановлено';
+$_['te_site_state_error'] = 'Ошибка';

@@ -42,6 +42,24 @@
             <li><a href="#tab-about" data-toggle="tab"><?php echo $tab_about; ?></a></li>
           </ul>
 
+          <div class="te-app te-langbar-wrap" id="te-langbar-app">
+            <div class="te-langbar te-hidden">
+              <label for="te-langbar-from"><?php echo $te_site_lang_from; ?></label>
+              <select id="te-langbar-from" class="form-control te-langbar__select">
+                <?php foreach ($languages as $language) { ?>
+                <option value="<?php echo $language['language_id']; ?>" <?php if ($te_langIdFrom == $language['language_id']) { echo 'selected="selected"'; } ?>><?php echo $language['name']; ?></option>
+                <?php } ?>
+              </select>
+              <button type="button" class="btn btn-default te-js-langbar-swap" title="<?php echo htmlspecialchars($te_site_lang_swap, ENT_QUOTES, 'UTF-8'); ?>" aria-label="<?php echo htmlspecialchars($te_site_lang_swap, ENT_QUOTES, 'UTF-8'); ?>"><i class="fa fa-exchange" aria-hidden="true"></i></button>
+              <label for="te-langbar-to"><?php echo $te_site_lang_to; ?></label>
+              <select id="te-langbar-to" class="form-control te-langbar__select">
+                <?php $te_langIndex = 0; foreach ($languages as $language) { ?>
+                <option value="<?php echo $language['language_id']; ?>" <?php if (empty($te_langIdTo) ? $te_langIndex == 1 : $te_langIdTo == $language['language_id']) { echo 'selected="selected"'; } ?>><?php echo $language['name']; ?></option>
+                <?php $te_langIndex++; } ?>
+              </select>
+            </div>
+          </div>
+
           <div class="tab-content">
             <div class="tab-pane <?php echo $tab_general_class; ?>" id="tab-general">
 				  <div class="form-group">
@@ -126,146 +144,120 @@
 				  </div>
 				</div>
 				<div class="tab-pane" id="tab-translate-site">
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-analization-mode"><?php echo $entry_analization_mode; ?></label>
-					<div class="col-sm-10">
-						<select id="te-analization-mode" >
-							<option value="both" <?php if ($te_mode == 'both') { echo 'selected="selected"'; } ?>><?php echo $value_analization_mode_both; ?></option>
-							<option value="only_empty" <?php if ($te_mode == 'only_empty') { echo 'selected="selected"'; } ?>><?php echo $value_analization_mode_only_empty; ?></option>
-							<option value="same_value" <?php if ($te_mode == 'same_value') { echo 'selected="selected"'; } ?>><?php echo $value_analization_mode_same_value; ?></option>
-						</select>
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-analization-table"><?php echo $entry_table; ?></label>
-					<div class="col-sm-10">
-						<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-table" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-table"><?php echo $button_clear_selection; ?></button></div>
-						<select id="te-analization-table" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
-							<?php foreach ($tables as $table) { ?>
-							<option value="<?php echo $table; ?>" <?php if (in_array((string)$table, $te_table)) { echo 'selected="selected"'; } ?>><?php echo $table; ?></option>
-							<?php } ?>
-						</select>
-						<span class="help-block"><?php echo $help_multi_select; ?></span><div class="text-muted te-multi-select-limit" style="display:none; margin: 5px 0 10px;"><?php echo $help_multi_select_limit; ?></div>
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-analization-language-from"><?php echo $entry_analization_language_from; ?></label>
-					<div class="col-sm-10">
-						<select id="te-analization-language-from">
-							<?php foreach ($languages as $language) { ?>
-							<option value="<?php echo $language['language_id']; ?>" <?php if ($te_langIdFrom == $language['language_id']) { echo 'selected="selected"'; } ?>><?php echo $language['name']; ?></option>
-							<?php } ?>
-						</select>
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-analization-language-to"><?php echo $entry_analization_language_to; ?></label>
-					<div class="col-sm-10">
-						<select id="te-analization-language-to" onchange="$('#te-begin-removing_data_from_db').val('<?php echo $entity_begin_removing_data_from_db; ?> - ' + this.options[this.selectedIndex].text)">
-							<?php $te_langIndex = 0; foreach ($languages as $language) { ?>
-							<option value="<?php echo $language['language_id']; ?>" <?php if (empty($te_langIdTo) ? $te_langIndex == 1 : $te_langIdTo == $language['language_id']) { echo 'selected="selected"'; } ?>><?php echo $language['name']; ?></option>
-							<?php $te_langIndex++; } ?>
-						</select>
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-analization-table-deep"><?php echo $entry_table_deep; ?></label>
-					<div class="col-sm-10">
-						<input type="checkbox" id="te-analization-table-deep" value="1" checked="checked"><?php echo $entry_table_deep_description; ?>
-					</div>
-				  </div>
-
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-analization-product-status-filter"><?php echo $entry_table_product_filter; ?></label>
-					<div class="col-sm-10">
-						<input type="checkbox" id="te-analization-product-status-filter" value="1" <?php if ($te_product_status) { echo 'checked="checked"'; } ?>> <?php echo $entry_table_product_status_filter; ?><br><br>
-						<input type="checkbox" id="te-analization-product-quantity-filter" value="1" <?php if ($te_product_quantity) { echo 'checked="checked"'; } ?>> <?php echo $entry_table_product_quantity_filter; ?><br><br>
-						<label for="te-analization-product-category-id-filter"><?php echo $entry_table_product_category_id_filter; ?></label>
-						<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-product-category-id-filter" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-product-category-id-filter"><?php echo $button_clear_selection; ?></button></div>
-						<select id="te-analization-product-category-id-filter" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
-							<?php foreach($categories as $category) { ?>
-							<?php if(in_array((string)$category['category_id'], $te_product_category_id)) { ?>
-							<option value="<?php echo $category['category_id']; ?>" selected="selected"><?php echo $category['name']; ?></option>
-							<?php } else { ?>
-							<option value="<?php echo $category['category_id']; ?>"><?php echo $category['name']; ?></option>
-							<?php } ?>
-							<?php } ?>
-						</select>
-						<span class="help-block"><?php echo $help_multi_select; ?></span><div class="text-muted te-multi-select-limit" style="display:none; margin: 5px 0 10px;"><?php echo $help_multi_select_limit; ?></div><br>
-						<label for="te-analization-product-stock-status-filter"><?php echo $entry_table_product_stock_status_filter; ?></label>
-						<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-product-stock-status-filter" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-product-stock-status-filter"><?php echo $button_clear_selection; ?></button></div>
-						<select id="te-analization-product-stock-status-filter" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
-							<?php foreach ($stock_statuses as $stock_status) { ?>
-							<option value="<?php echo $stock_status['stock_status_id']; ?>" <?php if (in_array((string)$stock_status['stock_status_id'], $te_stock_status)) { echo 'selected="selected"'; } ?>><?php echo $stock_status['name']; ?></option>
-							<?php } ?>
-						</select>
-						<span class="help-block"><?php echo $help_multi_select; ?></span><div class="text-muted te-multi-select-limit" style="display:none; margin: 5px 0 10px;"><?php echo $help_multi_select_limit; ?></div><br>
-						<label for="te-analization-product-manufacturer-filter"><?php echo $entry_table_product_manufacturer_filter; ?></label>
-						<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-product-manufacturer-filter" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-product-manufacturer-filter"><?php echo $button_clear_selection; ?></button></div>
-						<select id="te-analization-product-manufacturer-filter" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
-							<?php foreach ($manufacturers as $manufacturer) { ?>
-							<option value="<?php echo $manufacturer['manufacturer_id']; ?>" <?php if (in_array((string)$manufacturer['manufacturer_id'], $te_manufacturer_id)) { echo 'selected="selected"'; } ?>><?php echo $manufacturer['name']; ?></option>
-							<?php } ?>
-						</select>
-						<span class="help-block"><?php echo $help_multi_select; ?></span><div class="text-muted te-multi-select-limit" style="display:none; margin: 5px 0 10px;"><?php echo $help_multi_select_limit; ?></div><br>
-					</div>
-				  </div>
-
-				  <div class="form-group" id="te-cron-link-panel" data-cron-url="<?php echo htmlspecialchars($te_cron_url, ENT_QUOTES, 'UTF-8'); ?>" data-te-max-length="<?php echo (int)$te_cron_link_max_length; ?>">
-					<label class="col-sm-2 control-label" for="te-cron-link"><?php echo $entry_cron_link; ?></label>
-					<div class="col-sm-10">
-					  <input type="text" readonly="readonly" id="te-cron-link" class="form-control" value="" <?php if (!$te_cron_secret_valid) { echo 'style="display:none"'; } ?> />
-					  <span class="help-block" <?php if (!$te_cron_secret_valid) { echo 'style="display:none"'; } ?> id="te-cron-link-help"><?php echo $help_cron_link; ?></span>
-					  <div class="text-danger" id="te-cron-link-error" <?php if ($te_cron_secret_valid) { echo 'style="display:none"'; } ?>><?php echo $error_cron_secret; ?></div>
-					  <div class="text-warning" id="te-cron-link-long" style="display:none"><?php echo $warning_cron_link_long; ?></div>
-					</div>
-				  </div>
-
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-begin-analization"><?php echo $entry_analization; ?></label>
-					<div class="col-sm-10">
-						<input type="button" id="te-begin-analization" value="<?php echo $entity_begin_analization; ?>">
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-remove-translation" style="color:red"><?php echo $entry_remove_translation_records_from_db; ?></label>
-					<div class="col-sm-10">
-						<input type="button" id="te-begin-removing_data_from_db" value="<?php echo $entity_begin_removing_data_from_db; ?>">
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="input-client_translate_expert_status"><?php echo $entry_analization_result; ?></label>
-					<div class="col-sm-10">
-						<div id="te-analization-result">
+				  <?php $te_mode_value = in_array($te_mode, array('only_empty', 'same_value'), true) ? $te_mode : 'both'; ?>
+				  <div class="te-app" id="te-site-app">
+					<div class="te-alerts" id="te-site-alerts"></div>
+					<div class="te-card">
+					  <div class="te-card__head"><?php echo $te_site_card_what; ?></div>
+					  <div class="te-card__body">
+						<div class="te-form">
+						  <div class="te-field">
+							<span class="te-field__label"><?php echo $entry_analization_mode; ?></span>
+							<div class="te-field__control te-radio-group">
+							  <label class="radio-inline"><input type="radio" name="te-analization-mode" form="te-no-form" value="both" <?php if ($te_mode_value == 'both') { echo 'checked="checked"'; } ?>> <?php echo $value_analization_mode_both; ?></label>
+							  <label class="radio-inline"><input type="radio" name="te-analization-mode" form="te-no-form" value="only_empty" <?php if ($te_mode_value == 'only_empty') { echo 'checked="checked"'; } ?>> <?php echo $value_analization_mode_only_empty; ?></label>
+							  <label class="radio-inline"><input type="radio" name="te-analization-mode" form="te-no-form" value="same_value" <?php if ($te_mode_value == 'same_value') { echo 'checked="checked"'; } ?>> <?php echo $value_analization_mode_same_value; ?></label>
+							</div>
+						  </div>
+						  <div class="te-field">
+							<label class="te-field__label" for="te-analization-table"><?php echo $entry_table; ?></label>
+							<div class="te-field__control">
+							  <div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-table" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-table"><?php echo $button_clear_selection; ?></button></div>
+							  <select id="te-analization-table" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
+								<?php foreach ($tables as $table) { ?>
+								<option value="<?php echo $table; ?>" <?php if (in_array((string)$table, $te_table)) { echo 'selected="selected"'; } ?>><?php echo $table; ?></option>
+								<?php } ?>
+							  </select>
+							  <span class="help-block"><?php echo $help_multi_select; ?></span><div class="text-muted te-multi-select-limit" style="display:none; margin: 5px 0 10px;"><?php echo $help_multi_select_limit; ?></div>
+							</div>
+						  </div>
+						  <div class="te-field">
+							<label class="te-field__label" for="te-analization-table-deep"><?php echo $entry_table_deep; ?></label>
+							<div class="te-field__control">
+							  <div class="checkbox" style="margin-top: 0;"><label><input type="checkbox" id="te-analization-table-deep" value="1" checked="checked"> <?php echo $entry_table_deep_description; ?></label></div>
+							</div>
+						  </div>
+						  <div class="te-field">
+							<span class="te-field__label"></span>
+							<div class="te-field__control">
+							  <button type="button" class="te-collapse-toggle te-js-collapse" data-te-target="#te-site-more-filters" aria-expanded="false" aria-controls="te-site-more-filters"><?php echo $te_site_more_filters; ?></button>
+							</div>
+						  </div>
+						  <div class="te-form te-hidden" id="te-site-more-filters">
+							<div class="te-field">
+							  <span class="te-field__label"><?php echo $entry_table_product_filter; ?></span>
+							  <div class="te-field__control">
+								<div class="checkbox" style="margin-top: 0;"><label><input type="checkbox" id="te-analization-product-status-filter" value="1" <?php if ($te_product_status) { echo 'checked="checked"'; } ?>> <?php echo $entry_table_product_status_filter; ?></label></div>
+								<div class="checkbox"><label><input type="checkbox" id="te-analization-product-quantity-filter" value="1" <?php if ($te_product_quantity) { echo 'checked="checked"'; } ?>> <?php echo $entry_table_product_quantity_filter; ?></label></div>
+							  </div>
+							</div>
+							<div class="te-field">
+							  <label class="te-field__label" for="te-analization-product-category-id-filter"><?php echo $entry_table_product_category_id_filter; ?></label>
+							  <div class="te-field__control">
+								<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-product-category-id-filter" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-product-category-id-filter"><?php echo $button_clear_selection; ?></button></div>
+								<select id="te-analization-product-category-id-filter" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
+								  <?php foreach($categories as $category) { ?>
+								  <?php if(in_array((string)$category['category_id'], $te_product_category_id)) { ?>
+								  <option value="<?php echo $category['category_id']; ?>" selected="selected"><?php echo $category['name']; ?></option>
+								  <?php } else { ?>
+								  <option value="<?php echo $category['category_id']; ?>"><?php echo $category['name']; ?></option>
+								  <?php } ?>
+								  <?php } ?>
+								</select>
+								<span class="help-block"><?php echo $help_multi_select; ?></span><div class="text-muted te-multi-select-limit" style="display:none; margin: 5px 0 10px;"><?php echo $help_multi_select_limit; ?></div>
+							  </div>
+							</div>
+							<div class="te-field">
+							  <label class="te-field__label" for="te-analization-product-stock-status-filter"><?php echo $entry_table_product_stock_status_filter; ?></label>
+							  <div class="te-field__control">
+								<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-product-stock-status-filter" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-product-stock-status-filter"><?php echo $button_clear_selection; ?></button></div>
+								<select id="te-analization-product-stock-status-filter" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
+								  <?php foreach ($stock_statuses as $stock_status) { ?>
+								  <option value="<?php echo $stock_status['stock_status_id']; ?>" <?php if (in_array((string)$stock_status['stock_status_id'], $te_stock_status)) { echo 'selected="selected"'; } ?>><?php echo $stock_status['name']; ?></option>
+								  <?php } ?>
+								</select>
+								<span class="help-block"><?php echo $help_multi_select; ?></span><div class="text-muted te-multi-select-limit" style="display:none; margin: 5px 0 10px;"><?php echo $help_multi_select_limit; ?></div>
+							  </div>
+							</div>
+							<div class="te-field">
+							  <label class="te-field__label" for="te-analization-product-manufacturer-filter"><?php echo $entry_table_product_manufacturer_filter; ?></label>
+							  <div class="te-field__control">
+								<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-product-manufacturer-filter" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-product-manufacturer-filter"><?php echo $button_clear_selection; ?></button></div>
+								<select id="te-analization-product-manufacturer-filter" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
+								  <?php foreach ($manufacturers as $manufacturer) { ?>
+								  <option value="<?php echo $manufacturer['manufacturer_id']; ?>" <?php if (in_array((string)$manufacturer['manufacturer_id'], $te_manufacturer_id)) { echo 'selected="selected"'; } ?>><?php echo $manufacturer['name']; ?></option>
+								  <?php } ?>
+								</select>
+								<span class="help-block"><?php echo $help_multi_select; ?></span><div class="text-muted te-multi-select-limit" style="display:none; margin: 5px 0 10px;"><?php echo $help_multi_select_limit; ?></div>
+							  </div>
+							</div>
+						  </div>
 						</div>
+						<div class="te-toolbar">
+						  <button type="button" id="te-begin-analization" class="btn btn-primary" title="<?php echo htmlspecialchars($entry_analization, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $entity_begin_analization; ?></button>
+						  <span class="te-toolbar__spacer"></span>
+						  <button type="button" id="te-begin-removing_data_from_db" class="btn btn-danger" data-te-label="<?php echo htmlspecialchars($entity_begin_removing_data_from_db, ENT_QUOTES, 'UTF-8'); ?>" title="<?php echo htmlspecialchars($entry_remove_translation_records_from_db, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $entity_begin_removing_data_from_db; ?></button>
+						</div>
+					  </div>
 					</div>
+					<div class="te-card">
+					  <div class="te-card__head">
+						<button type="button" class="te-collapse-toggle te-js-collapse" data-te-target="#te-cron-link-panel" aria-expanded="false" aria-controls="te-cron-link-panel"><?php echo $entry_cron_link; ?></button>
+					  </div>
+					  <div class="te-card__body te-hidden" id="te-cron-link-panel" data-cron-url="<?php echo htmlspecialchars($te_cron_url, ENT_QUOTES, 'UTF-8'); ?>" data-te-max-length="<?php echo (int)$te_cron_link_max_length; ?>">
+						<input type="text" readonly="readonly" id="te-cron-link" class="form-control" value="" <?php if (!$te_cron_secret_valid) { echo 'style="display:none"'; } ?> />
+						<span class="help-block" <?php if (!$te_cron_secret_valid) { echo 'style="display:none"'; } ?> id="te-cron-link-help"><?php echo $help_cron_link; ?></span>
+						<div class="text-danger" id="te-cron-link-error" <?php if ($te_cron_secret_valid) { echo 'style="display:none"'; } ?>><?php echo $error_cron_secret; ?></div>
+						<div class="text-warning" id="te-cron-link-long" style="display:none"><?php echo $warning_cron_link_long; ?></div>
+					  </div>
+					</div>
+					<div class="te-progress te-hidden" id="te-site-progress" role="status" aria-live="polite"></div>
+					<div id="te-analization-result"></div>
 				  </div>
 				</div>
-				
-				
-				
-				
+
+
 				<div class="tab-pane" id="tab-localization">
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-localization-language-from"><?php echo $entry_localization_language_from; ?></label>
-					<div class="col-sm-10">
-						<select id="te-localization-language-from">
-							<?php foreach ($languages as $language) { ?>
-							<option value="<?php echo $language['language_id']; ?>" <?php if ($te_langIdFrom == $language['language_id']) { echo 'selected="selected"'; } ?>><?php echo $language['name']; ?></option>
-							<?php } ?>
-						</select>
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-localization-language-to"><?php echo $entry_localization_language_to; ?></label>
-					<div class="col-sm-10">
-						<select id="te-localization-language-to">
-							<?php $te_langIndex = 0; foreach ($languages as $language) { ?>
-							<option value="<?php echo $language['language_id']; ?>" <?php if (empty($te_langIdTo) ? $te_langIndex == 1 : $te_langIdTo == $language['language_id']) { echo 'selected="selected"'; } ?>><?php echo $language['name']; ?></option>
-							<?php $te_langIndex++; } ?>
-						</select>
-					</div>
-				  </div>
 				  <div class="form-group">
 					<label class="col-sm-2 control-label" for="te-begin-localization-analization"><?php echo $entry_localization_analization; ?></label>
 					<div class="col-sm-10">
@@ -283,26 +275,6 @@
 
 
 				<div class="tab-pane" id="tab-admin-localization">
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-admin-localization-language-from"><?php echo $entry_localization_language_from; ?></label>
-					<div class="col-sm-10">
-						<select id="te-admin-localization-language-from">
-							<?php foreach ($languages as $language) { ?>
-							<option value="<?php echo $language['language_id']; ?>" <?php if ($te_langIdFrom == $language['language_id']) { echo 'selected="selected"'; } ?>><?php echo $language['name']; ?></option>
-							<?php } ?>
-						</select>
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-admin-localization-language-to"><?php echo $entry_localization_language_to; ?></label>
-					<div class="col-sm-10">
-						<select id="te-admin-localization-language-to">
-							<?php $te_langIndex = 0; foreach ($languages as $language) { ?>
-							<option value="<?php echo $language['language_id']; ?>" <?php if (empty($te_langIdTo) ? $te_langIndex == 1 : $te_langIdTo == $language['language_id']) { echo 'selected="selected"'; } ?>><?php echo $language['name']; ?></option>
-							<?php $te_langIndex++; } ?>
-						</select>
-					</div>
-				  </div>
 				  <div class="form-group">
 					<label class="col-sm-2 control-label" for="te-begin-admin-localization-analization"><?php echo $entry_localization_analization; ?></label>
 					<div class="col-sm-10">
@@ -420,14 +392,9 @@
 </div>
 <!-- js constants -->
 <script>
-	document.js_const_done_status = "<?php echo $js_const_done_status; ?>";
-	document.js_const_in_progress_status = "<?php echo $js_const_in_progress_status; ?>";
-	document.js_const_statistic_html = "<?php echo str_replace(array('\n', '\r', PHP_EOL), '', $js_const_statistic_html); ?>";
-	document.js_const_analization_process_is_started = "<?php echo $js_const_analization_process_is_started; ?>";
 	document.js_const_saved = "<?php echo $js_const_saved; ?>";
 	document.js_const_localization_translate_progress = "<?php echo $js_const_localization_translate_progress; ?>";
 	document.js_const_localization_translate_done = "<?php echo $js_const_localization_translate_done; ?>";
-	document.js_const_preparing_detail_info = "<?php echo $js_const_preparing_detail_info; ?>";
 	// removing
 	document.js_const_entry_remove_translation_records_from_db_confirmation = "<?php echo $entry_remove_translation_records_from_db_confirmation; ?>";
 	document.js_const_entry_removing_data_from_db_process_is_started = "<?php echo $entry_removing_data_from_db_process_is_started; ?>";
@@ -453,6 +420,5 @@
 		});
 	})();
 
-	$('#te-analization-language-to').change();
 </script>
 <?php echo $footer; ?>

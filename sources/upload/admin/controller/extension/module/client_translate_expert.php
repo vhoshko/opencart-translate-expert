@@ -93,7 +93,6 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['entry_status'] = $this->language->get('entry_status');
 		$data['entry_analization'] = $this->language->get('entry_analization');
 		$data['entity_begin_analization'] = $this->language->get('entity_begin_analization');
-		$data['entry_analization_result'] = $this->language->get('entry_analization_result');
 
 		// remove translation
 		$data['entry_remove_translation_records_from_db'] = $this->language->get('entry_remove_translation_records_from_db');
@@ -128,13 +127,9 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['entry_opencart_version'] = $this->language->get('entry_opencart_version');
 		$data['entry_debug_status'] = $this->language->get('entry_debug_status');
 		$data['entry_table'] = $this->language->get('entry_table');
-		$data['entry_analization_language_from'] = $this->language->get('entry_analization_language_from');
-		$data['entry_analization_language_to'] = $this->language->get('entry_analization_language_to');
 		$data['entry_table_deep'] = $this->language->get('entry_table_deep');
 		$data['entry_table_deep_description'] = $this->language->get('entry_table_deep_description');
 
-		$data['entry_localization_language_from'] = $this->language->get('entry_localization_language_from');
-		$data['entry_localization_language_to'] = $this->language->get('entry_localization_language_to');
 		$data['entry_localization_analization'] = $this->language->get('entry_localization_analization');
 		$data['entry_localization_analization_result'] = $this->language->get('entry_localization_analization_result');
 
@@ -152,14 +147,9 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['text_debug_log'] = $this->language->get('text_debug_log');
 		$data['text_clear_confirm'] = $this->language->get('text_clear_confirm');
 
-		$data['js_const_done_status'] = $this->language->get('js_const_done_status');
-		$data['js_const_in_progress_status'] = $this->language->get('js_const_in_progress_status');
-		$data['js_const_statistic_html'] = $this->language->get('js_const_statistic_html');
-		$data['js_const_analization_process_is_started'] = $this->language->get('js_const_analization_process_is_started');
 		$data['js_const_saved'] = $this->language->get('js_const_saved');
 		$data['js_const_localization_translate_progress'] = $this->language->get('js_const_localization_translate_progress');
 		$data['js_const_localization_translate_done'] = $this->language->get('js_const_localization_translate_done');
-		$data['js_const_preparing_detail_info'] = $this->language->get('js_const_preparing_detail_info');
 
 		$data['value_analization_mode_only_empty'] = $this->language->get('value_analization_mode_only_empty');
 		$data['value_analization_mode_same_value'] = $this->language->get('value_analization_mode_same_value');
@@ -208,10 +198,11 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 		// Front-end strings of the new admin design: the template writes them as document.te_i18n (read with teT() in the JS).
 		$te_i18n = array();
-		foreach (array('te_alert_details', 'te_alert_close', 'te_alert_not_json', 'te_summary_month', 'te_summary_cost', 'te_remove_completed', 'te_remove_start', 'te_remove_table', 'te_remove_column', 'te_remove_finish', 'te_time_in_sec') as $te_i18n_key) {
+		foreach (array('te_alert_details', 'te_alert_close', 'te_alert_not_json', 'te_summary_month', 'te_summary_cost', 'te_remove_completed', 'te_remove_start', 'te_remove_table', 'te_remove_column', 'te_remove_finish', 'te_time_in_sec',
+			'te_site_stop', 'te_site_log', 'te_site_analyzing', 'te_site_translating', 'te_site_col_table', 'te_site_col_chars', 'te_site_col_chars_lang', 'te_site_col_actions', 'te_site_total', 'te_site_translate', 'te_site_translate_all', 'te_site_details', 'te_site_not_supported', 'te_site_done', 'te_site_toggle', 'te_site_cnt_current', 'te_site_cnt_table', 'te_site_cnt_request', 'te_site_cnt_chars', 'te_site_cnt_time', 'te_site_cnt_translated', 'te_site_translate_confirm', 'te_site_translate_all_confirm', 'te_site_log_table_done', 'te_site_detail_loading', 'te_site_detail_source', 'te_site_detail_target', 'te_site_empty', 'te_site_identical', 'te_site_detail_none', 'te_site_detail_more', 'te_site_state_done', 'te_site_state_stopped', 'te_site_state_error', 'value_analization_mode_both', 'value_analization_mode_only_empty', 'value_analization_mode_same_value') as $te_i18n_key) {
 			$te_i18n[$te_i18n_key] = $this->language->get($te_i18n_key);
 		}
-		foreach (array('te_summary_status', 'te_summary_enabled', 'te_summary_disabled', 'te_summary_api_key', 'te_summary_key_set', 'te_summary_key_not_set') as $te_text_key) {
+		foreach (array('te_site_lang_from', 'te_site_lang_to', 'te_site_lang_swap', 'te_site_card_what', 'te_site_more_filters', 'te_summary_status', 'te_summary_enabled', 'te_summary_disabled', 'te_summary_api_key', 'te_summary_key_set', 'te_summary_key_not_set') as $te_text_key) {
 			$data[$te_text_key] = $this->language->get($te_text_key);
 		}
 		$data['te_summary_status_on'] = $this->config->get('client_translate_expert_status') ? 1 : 0;
@@ -514,18 +505,18 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	}
 
 	public function translateTable() {
-		$langIdFrom = isset($this->request->post['langIdFrom']) ? html_entity_decode($this->request->post['langIdFrom']) : null;
-		$mode = isset($this->request->post['mode']) ? html_entity_decode($this->request->post['mode']) : null;
+		$langIdFrom = isset($this->request->post['langIdFrom']) ? (int)$this->request->post['langIdFrom'] : 0;
+		$mode = isset($this->request->post['mode']) && is_string($this->request->post['mode']) ? $this->request->post['mode'] : '';
 		$tableName = isset($this->request->post['tableName']) ? html_entity_decode($this->request->post['tableName']) : null;
 		$textColumnName = isset($this->request->post['textColumnName']) ? html_entity_decode($this->request->post['textColumnName']) : null;
-		$langIdTo = isset($this->request->post['langIdTo']) ? html_entity_decode($this->request->post['langIdTo']) : null;
+		$langIdTo = isset($this->request->post['langIdTo']) ? (int)$this->request->post['langIdTo'] : 0;
 		$product_status = isset($this->request->post['product_status']) ? boolval(html_entity_decode($this->request->post['product_status'])) : false;
 		$product_quantity = isset($this->request->post['product_quantity']) ? boolval(html_entity_decode($this->request->post['product_quantity'])) : false;
 		$product_category_id = $this->readStrictListParam($this->request->post, 'product_category_id', false);
 		$stock_status = $this->readStrictListParam($this->request->post, 'stock_status', false);
 		$manufacturer_id = $this->readStrictListParam($this->request->post, 'manufacturer_id', false);
 
-		if ($product_category_id === false || $stock_status === false || $manufacturer_id === false) {
+		if (!in_array($mode, array('both', 'only_empty', 'same_value'), true) || $product_category_id === false || $stock_status === false || $manufacturer_id === false) {
 			$this->badFilterResponse();
 			return;
 		}
@@ -543,18 +534,18 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	}
 
 	public function analizeTableDetail() {
-		$langIdFrom = isset($this->request->post['langIdFrom']) ? html_entity_decode($this->request->post['langIdFrom']) : null;
-		$mode = isset($this->request->post['mode']) ? html_entity_decode($this->request->post['mode']) : null;
+		$langIdFrom = isset($this->request->post['langIdFrom']) ? (int)$this->request->post['langIdFrom'] : 0;
+		$mode = isset($this->request->post['mode']) && is_string($this->request->post['mode']) ? $this->request->post['mode'] : '';
 		$tableName = isset($this->request->post['tableName']) ? html_entity_decode($this->request->post['tableName']) : null;
 		$textColumnName = isset($this->request->post['textColumnName']) ? html_entity_decode($this->request->post['textColumnName']) : null;
-		$langIdTo = isset($this->request->post['langIdTo']) ? html_entity_decode($this->request->post['langIdTo']) : null;
+		$langIdTo = isset($this->request->post['langIdTo']) ? (int)$this->request->post['langIdTo'] : 0;
 		$product_status = isset($this->request->post['product_status']) ? boolval(html_entity_decode($this->request->post['product_status'])) : false;
 		$product_quantity = isset($this->request->post['product_quantity']) ? boolval(html_entity_decode($this->request->post['product_quantity'])) : false;
 		$product_category_id = $this->readStrictListParam($this->request->post, 'product_category_id', false);
 		$stock_status = $this->readStrictListParam($this->request->post, 'stock_status', false);
 		$manufacturer_id = $this->readStrictListParam($this->request->post, 'manufacturer_id', false);
 
-		if ($product_category_id === false || $stock_status === false || $manufacturer_id === false) {
+		if (!in_array($mode, array('both', 'only_empty', 'same_value'), true) || $product_category_id === false || $stock_status === false || $manufacturer_id === false) {
 			$this->badFilterResponse();
 			return;
 		}
@@ -567,9 +558,9 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	}
 
 	public function analize() {
-		$langIdFrom = isset($this->request->get['langIdFrom']) ? html_entity_decode($this->request->get['langIdFrom']) : null;
-		$langIdTo = isset($this->request->get['langIdTo']) ? html_entity_decode($this->request->get['langIdTo']) : null;
-		$mode = isset($this->request->get['mode']) ? html_entity_decode($this->request->get['mode']) : null;
+		$langIdFrom = isset($this->request->get['langIdFrom']) ? (int)$this->request->get['langIdFrom'] : 0;
+		$langIdTo = isset($this->request->get['langIdTo']) ? (int)$this->request->get['langIdTo'] : 0;
+		$mode = isset($this->request->get['mode']) && is_string($this->request->get['mode']) ? $this->request->get['mode'] : '';
 		$table = $this->readStrictListParam($this->request->get, 'table', true);
 		$product_status = isset($this->request->get['product_status']) ? boolval(html_entity_decode($this->request->get['product_status'])) : false;
 		$product_quantity = isset($this->request->get['product_quantity']) ? boolval(html_entity_decode($this->request->get['product_quantity'])) : false;
@@ -577,7 +568,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$stock_status = $this->readStrictListParam($this->request->get, 'stock_status', false);
 		$manufacturer_id = $this->readStrictListParam($this->request->get, 'manufacturer_id', false);
 
-		if ($product_category_id === false || $stock_status === false || $manufacturer_id === false || $table === false) {
+		if (!in_array($mode, array('both', 'only_empty', 'same_value'), true) || $product_category_id === false || $stock_status === false || $manufacturer_id === false || $table === false) {
 			$this->badFilterResponse();
 			return;
 		}
