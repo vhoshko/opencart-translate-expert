@@ -44,19 +44,13 @@ $_['entry_width'] = 'Width';
 $_['entry_height'] = 'Height';
 $_['entry_status'] = 'Status';
 $_['entry_login'] = 'Your login';
-$_['entry_name'] = 'Title';
-$_['entity_table'] = 'Table';
-$_['entity_column'] = 'Column';
 $_['entry_info'] = 'Information';
 $_['entry_char_quantity'] = 'Number of characters available for translation';
 $_['entry_analization'] = 'Analize non-translated strings';
 $_['entity_begin_analization'] = 'Analyze';
-$_['entry_analization_result'] = 'Analysis Result';
 $_['entry_analization_mode'] = 'Analysis mode';
 $_['entry_stop_modal_process'] = 'Stop';
 $_['entry_stop_modal_process_confirmation'] = 'Are you sure you want to stop current process?';
-$_['entry_time_in_sec'] = 'Time: <strong id="timeInSec">{timeInSec} seconds</strong> ';
-$_['entry_summ'] = 'All languages';
 $_['entry_close'] = 'Close';
 $_['entry_try_translate']     = 'Translation verification form<br>API key test';
 $_['entry_try_translate_text']     = 'Translation verification form';
@@ -65,8 +59,6 @@ $_['entry_php_version']     = 'PHP version';
 $_['entry_opencart_version']= 'Opencart version';
 $_['entry_debug_status']     = 'Debug mode status';
 $_['entry_table']     = 'Table';
-$_['entry_analization_language_from'] = 'The language from which to translate';
-$_['entry_analization_language_to'] = 'What language to translate';
 $_['entry_table_deep']     = 'Deep analize';
 $_['entry_table_deep_description']     = 'Full analysis of the entire table (Turn off if the analysis takes a very long time)';
 
@@ -88,8 +80,6 @@ $_['help_excluded_routes'] = 'Enter one admin page route on each line. End a lin
 // reset cache
 $_['entry_reset_translation_cache'] = 'Reset translation cache';
 
-$_['entry_localization_language_from'] = 'Language to translate from';
-$_['entry_localization_language_to'] = 'Language to translate to';
 $_['entry_localization_analization'] = 'Analyze unlocalized values';
 $_['entry_localization_analization_result'] = 'Analysis result';
 $_['entry_localization_file_to_translate_info'] = '{path}: <b>{count} values not translated</b>';
@@ -116,23 +106,11 @@ $_['value_analization_mode_only_empty'] = 'Search for empty values only';
 $_['value_analization_mode_same_value'] = 'Search for duplicate values';
 $_['value_analization_mode_both'] = 'Search for empty and identical values';
 
-// Html Title attributes;
-$_['title_translate_all_tables'] = 'Translate all tables';
-$_['title_translate_table'] = 'Translate table {table}';
-$_['title_translate_table_column'] = 'Translate the {textColumnName} column of the {table}';
-$_['title_translate_table_confirmation'] = 'You really want to {translateTableTitle}?';
-$_['title_translate_to_lang_suffix'] = '(language {langCode})';
-$_['title_not_translater_char_count'] = 'Number of characters not translated';
 
 // js constants;
-$_['js_const_done_status'] = 'Completed!';
-$_['js_const_in_progress_status'] = "In Progress...";
-$_['js_const_statistic_html'] = "<div id='statusLog'> {historyLog}</div><div id='statusCurrent'> Table <strong>{table}</strong>, translated: <strong class='statusTranslatedCharCount'>{translatedCharCount}</strong>, Status: <strong class='translatedStatus'>{status}</strong></div>";
-$_['js_const_analization_process_is_started'] = "Analyzation process is in progress...<br>Table: <strong id='analization_current_table'></strong><br>Request number: <strong id='analization_request_number'>1</strong>";
 $_['js_const_saved'] = 'Saved!';
 $_['js_const_localization_translate_progress'] = 'Translation of localization file {currIndex} of {count}: {path}.';
 $_['js_const_localization_translate_done'] = 'Translation of localization file {currIndex} of {count}: Done!';
-$_['js_const_preparing_detail_info'] = 'Preparing detail info ...';
 $_['button_localization_translate'] = 'Translate';
 $_['button_localization_save'] = 'Save';
 
@@ -140,6 +118,7 @@ $_['button_localization_save'] = 'Save';
 $_['error_permission'] = 'You do not have permission to manage this module!';
 $_['error_bad_filter'] = 'The filter values are not valid. Reload the page and select the filters again.';
 $_['error_language_to_required'] = 'Select the language to remove the translations from.';
+$_['te_site_error_bad_detail_request'] = 'The table, the column or the language is not valid.';
 $_['error_width'] =' You must specify the width! ';
 $_['error_height'] =' You must specify the height! ';
 $_['error_unlicensed'] = 'You are using the unlicensed version of the module! <br> We recommend buying the module on the website <a href="https://github.com/vhoshko/opencart-translate-expert" target="_blank">https://github.com/vhoshko/opencart-translate-expert</a> or contact the module support via <a href="https://github.com/vhoshko/opencart-translate-expert/issues" target="_blank">GitHub Issues</a>';
@@ -151,10 +130,6 @@ $_['error_localization_save_target_invalid']	   = 'The target folder or the file
 $_['error_localization_save_failed']	   = 'The file is not saved. Make sure that the web server can write to this folder:';
 $_['error_localization_save_empty']	   = 'The file is empty. Nothing to save.';
 
-// Messages;
-$_['message_analize_global_info'] =' <b>All tables</b> ';
-$_['message_analize_table_head_info'] = ' <strong class="et_table" id="et_{table}">{table}</strong> ';
-$_['message_analize_field_head_info'] = 'Text field <strong class="et_field" id="et_{table}_{textColumnName}">{textColumnName}</strong> ';
 
 
 
@@ -190,3 +165,44 @@ $_['te_global_reset'] = 'Reset';
 $_['te_global_reset_confirm'] = 'Are you sure you want to reset the translation char count?';
 $_['te_global_translate'] = 'Translate';
 $_['te_global_error_internal'] = 'Internal error, more info in console log!';
+
+// Website content tab (document.te_i18n, te_site_* )
+$_['te_site_lang_from'] = 'Translate from';
+$_['te_site_lang_to'] = 'to';
+$_['te_site_lang_swap'] = 'Swap the languages';
+$_['te_site_card_what'] = 'What to translate';
+$_['te_site_more_filters'] = 'More filters';
+$_['te_site_stop'] = 'Stop';
+$_['te_site_log'] = 'Log';
+$_['te_site_analyzing'] = 'Analysis in progress';
+$_['te_site_translating'] = 'Translation: {table}';
+$_['te_site_col_table'] = 'Table / column';
+$_['te_site_col_chars'] = 'Characters';
+$_['te_site_col_chars_lang'] = 'Characters ({code})';
+$_['te_site_col_actions'] = 'Actions';
+$_['te_site_total'] = 'Total';
+$_['te_site_translate'] = 'Translate';
+$_['te_site_translate_all'] = 'Translate all';
+$_['te_site_details'] = 'Details';
+$_['te_site_not_supported'] = 'not supported';
+$_['te_site_done'] = 'done';
+$_['te_site_toggle'] = 'Show or hide the columns of {table}';
+$_['te_site_cnt_current'] = 'Now: {current}';
+$_['te_site_cnt_table'] = 'Table {n} of {total}';
+$_['te_site_cnt_request'] = 'Request {request}';
+$_['te_site_cnt_chars'] = 'Characters found: {chars}';
+$_['te_site_cnt_time'] = 'Time: {sec} s';
+$_['te_site_cnt_translated'] = 'Translated characters: {chars}';
+$_['te_site_translate_confirm'] = 'Are you sure you want to translate {table} ({lang})?';
+$_['te_site_translate_all_confirm'] = 'Are you sure you want to translate all tables in the list ({lang})?';
+$_['te_site_log_table_done'] = 'Done: {table}, translated characters: {chars}';
+$_['te_site_detail_loading'] = 'Preparing detail info ...';
+$_['te_site_detail_source'] = 'Source ({code})';
+$_['te_site_detail_target'] = 'Target ({code})';
+$_['te_site_empty'] = 'empty';
+$_['te_site_identical'] = 'identical';
+$_['te_site_detail_none'] = 'No values.';
+$_['te_site_detail_more'] = 'Only the first 100 values show.';
+$_['te_site_state_done'] = 'Done';
+$_['te_site_state_stopped'] = 'Stopped';
+$_['te_site_state_error'] = 'Error';

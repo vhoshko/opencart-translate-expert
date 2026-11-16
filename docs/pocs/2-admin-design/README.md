@@ -34,7 +34,7 @@ Status: PoC. This folder contains only Markdown. No file under `sources/upload/*
 
 1. Add the `te-*` CSS layer and the JS render helpers. Do not change the behavior.
 2. Change `translatedCharCountInfo` and `removeDataFromDb` to JSON data (small endpoints).
-3. Change `analizeTableDetail` and `analize` to JSON data, and make the "Translate site" tab with the new design.
+3. Change `analizeTableDetail` and `analize` to JSON data, and make the "Translate site" tab with the new design. (done in issue 58)
 4. Change `analizeLocalization` to JSON data, and make the two localization tabs with the new design.
 5. Make the "Settings", "Debug" and "About" tabs with the new design.
 6. Fix the out-of-scope items of `endpoints-json.md`, section 6, as one separate task after all other tasks:

@@ -87,7 +87,7 @@ php tests/test_client_translate_expert_route_filter.php
 # Cron helper unit tests (no API key needed)
 php tests/test_client_translate_expert_cron_helper.php
 
-# Translate loop tests (row cap, empty results, duplicate texts, time limits, admin batch; no DB, no API key)
+# Translate loop tests (row cap, empty results, duplicate texts, time limits, admin batch, analize and detail JSON; no DB, no API key)
 php tests/test_client_translate_expert_translate_loop.php
 
 # OC4 Twig name check: filters, tests, functions, tags (static, no Twig needed)

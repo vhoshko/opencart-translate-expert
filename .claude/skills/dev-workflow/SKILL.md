@@ -253,6 +253,8 @@ The non-negotiables for this repo:
 
 If the brief lists tests, name a test for each function that selects between code paths, for example page checks, flags and error routing. Do not list tests only for the render helpers (task 57: the review found no test for `showTranslatedCharCount()`).
 
+If the change adds a request loop, name one test for each branch that ends or continues the loop. A branch without a test can end the loop in a wrong state (task 58: a non-deep batch with no tables ended the analysis with a wrong progress counter).
+
 **Verify the report before you build on it.** An implementer report is a claim, not evidence. For each change that the report says is done, check it in the main context with one grep or file read. Do this before you dispatch `ote-build-test`.
 
 **Update the plan continuously.** When a step finishes, flip its checkbox to `[x]` at once. Add an inline `Findings:` note. Record gotchas, decisions and deferrals. The plan is a live audit trail.
@@ -355,6 +357,12 @@ Do not restate the rest. `ote-code-reviewer.md` holds these standing instruction
 If a re-review gives only Minor findings that the reviewer marks "no action necessary", do not ask a fix-or-skip question for each one. Record the findings in the plan. Then recommend a stop. The user can still ask for a fix.
 
 **A fix can introduce a regression.** This is the reason for the gate: a fix that closes one finding was never reviewed itself. Treat a fix pass exactly like the original change. Do not rubber-stamp it.
+
+**Store run feedback after the review.** The user can send changes from a store run after the review (tasks 57 and 58). Do these steps for each change:
+
+1. Record the change in the plan under `## Update <date> (store run feedback)`.
+2. Run the verify loop.
+3. If the change touches logic and not only CSS or text, ask the re-review question again before Phase 6.
 
 ## Phase 6 — Mark Done
 

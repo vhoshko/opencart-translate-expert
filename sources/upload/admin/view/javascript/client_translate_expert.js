@@ -7,6 +7,7 @@ if (document.readyState == 'loading') {
 function initTranslateExpert() {
 
 	initTranslateExpertMultiSelectButtons();
+	teInitPage();
 	initTranslateExpertCron();
 
 	if ((typeof document.js_const_client_translate_expert_is_enabled !== 'undefined')
@@ -56,14 +57,16 @@ function clickTranslateExpertLocalizationHeader(el)
 // Localization tabs: "catalog" (#tab-localization) and "admin" (#tab-admin-localization).
 var translateExpertLocalizationIds = {
 	catalog: {
-		from: '#te-localization-language-from',
-		to: '#te-localization-language-to',
+		from: '#te-langbar-from',
+		to: '#te-langbar-to',
+		anchor: '#te-begin-localization-analization',
 		button: '#te-begin-localization-analization',
 		result: '#te-localization-analization-result'
 	},
 	admin: {
-		from: '#te-admin-localization-language-from',
-		to: '#te-admin-localization-language-to',
+		from: '#te-langbar-from',
+		to: '#te-langbar-to',
+		anchor: '#te-begin-admin-localization-analization',
 		button: '#te-begin-admin-localization-analization',
 		result: '#te-admin-localization-analization-result'
 	}
@@ -440,7 +443,7 @@ function showTranslateExpertErrorMessage(data, el) {
 	console.log(el);
 
 	if (!el)
-		el = $('#te-analization-mode')[0];
+		el = $('#te-site-alerts')[0];
 
 	$('.alert.alert-danger').remove();
 	$(el).before('<div class="alert alert-danger" style="display: none;"><i class="fa fa-exclamation-circle"></i> ' + error + '</div>');
@@ -454,7 +457,7 @@ function showTranslateExpertErrorMessage(data, el) {
 
 function showTranslateExpertInfoMessage(message, el) {
 	if (!el)
-		el = $('#te-analization-mode')[0];
+		el = $('#te-site-alerts')[0];
 
 	$('.te-info').remove();
 	$(el).before('<div class="te-info" style="display: none;"><i class="fa fa-info-circle"></i> ' + message + '</div>');
@@ -611,6 +614,10 @@ function hideTranslateExpertModal() {
 }
 
 function showTranslateExpertModal(message) {
+	var titleEl = $('#translateExpertModalLabel');
+	if (titleEl.attr('data-te-original') !== undefined) {
+		titleEl.text(titleEl.attr('data-te-original'));
+	}
 	$('#translateExpertModal .modal-body').html(message);
 
 	var modalEl = document.getElementById('translateExpertModal');
@@ -727,117 +734,6 @@ function doTranslateExpert(event) {
 	});
 }
 
-function analizeTableDetail(langIdFrom, mode, tableName, textColumnName, langIdTo, product_status, product_quantity, product_category_id, stock_status, manufacturer_id) {
-
-	$('.alert.alert-danger').remove();
-	document.stopTranslationModelProcess = false;
-	$('#statusLog').html('');
-
-	$('.stop_modal_process').hide();
-	$('.close_modal').removeAttr('disabled');
-
-	showTranslateExpertModal(document.js_const_preparing_detail_info);
-
-	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/analizeTableDetail&token=' + getOcToken(),
-		{ langIdFrom: langIdFrom, mode: mode, tableName: tableName, textColumnName: textColumnName , langIdTo: langIdTo,
-			product_status: product_status, product_quantity: product_quantity, product_category_id: product_category_id, stock_status: stock_status, manufacturer_id: manufacturer_id }
-	).done(function(data) {
-		console.log(data);
-		if (!data.success)
-		{
-			showTranslateExpertErrorMessage(data, null);
-			return;
-		}
-
-		showTranslateExpertModal(data.result);
-	}).fail(function(data) {
-		console.log(data);
-		showTranslateExpertErrorMessage(data, null);
-	});
-}
-
-
-function doTranslateTableExpert(langIdFrom, mode, tableName, textColumnName, langIdTo, product_status, product_quantity, product_category_id, stock_status, manufacturer_id, confirmationMessage) {
-
-	if (!confirm(confirmationMessage))
-		return;
-
-	$('.alert.alert-danger').remove();
-	document.stopTranslationModelProcess = false;
-	$('#statusLog').html('');
-
-	$('.stop_modal_process').show();
-	$('.close_modal').attr('disabled', 1);
-
-	document.tablesToTranslate = (tableName == 'all')
-		? $.map( $('.et_table').toArray(), function( el, i ) { return el.innerHTML; })
-		: [ tableName ];
-
-	showTranslateExpertModal(getTranslateExpertStatisticHtml('', document.js_const_in_progress_status, 0));
-
-	doTranslateTableExpertRecursive(langIdFrom, mode, document.tablesToTranslate[0], textColumnName, langIdTo, product_status, product_quantity, product_category_id, stock_status, manufacturer_id);
-}
-
-function doTranslateTableExpertRecursive(langIdFrom, mode, tableName, textColumnName, langIdTo, product_status, product_quantity, product_category_id, stock_status, manufacturer_id) {
-
-	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/translateTable&token=' + getOcToken(),
-		{ langIdFrom: langIdFrom,  mode: mode, tableName: tableName, textColumnName: textColumnName, langIdTo: langIdTo, product_status: product_status, product_quantity: product_quantity, product_category_id, stock_status: stock_status, manufacturer_id: manufacturer_id }
-	).done(function(data) {
-		console.log(data);
-		if (!data.success)
-		{
-			// The server stores the characters of the batches that went to Google before the failure.
-			showTranslatedCharCount();
-			showTranslateExpertErrorMessage(data, null);
-			return;
-		}
-
-		if (document.stopTranslationModelProcess)
-			return;
-
-		showTranslatedCharCount();
-
-		var translatedCharCount = data.translatedCharCount
-			+ (parseInt($('#statusCurrent .statusTranslatedCharCount').html()) ? parseInt($('#statusCurrent .statusTranslatedCharCount').html()) : 0);
-
-		if (data.done)
-		{
-			showTranslateExpertModal(getTranslateExpertStatisticHtml('', document.js_const_done_status, translatedCharCount));
-			document.tablesToTranslate.shift();
-			if (document.tablesToTranslate.length > 0)
-			{
-				showTranslateExpertModal(getTranslateExpertStatisticHtml($('#statusCurrent').html(), document.js_const_in_progress_status, 0));
-				doTranslateTableExpertRecursive(langIdFrom, mode, document.tablesToTranslate[0], textColumnName, langIdTo, product_status, product_quantity, product_category_id, stock_status, manufacturer_id);
-			}
-			else
-			{
-				$('.stop_modal_process').hide();
-				$('.close_modal').removeAttr('disabled');
-				//$('#translateExpertModal').modal('hide');
-			}
-		}
-		else
-		{
-			showTranslateExpertModal(getTranslateExpertStatisticHtml('', document.js_const_in_progress_status, translatedCharCount));
-			doTranslateTableExpertRecursive(langIdFrom, mode, tableName, textColumnName, langIdTo, product_status, product_quantity, product_category_id, stock_status, manufacturer_id);
-		}
-	}).fail(function(data) {
-		console.log(data);
-		showTranslateExpertErrorMessage(data, null);
-	});
-
-}
-
-function getTranslateExpertStatisticHtml(additionalHistoryLog, statusStr, translatedCharCount) {
-	return document.js_const_statistic_html
-		.replaceAll('{historyLog}',
-			($('#statusLog').length > 0 ? $('#statusLog').html() + (additionalHistoryLog ? '<br>' : '') : '')
-			+ additionalHistoryLog)
-		.replaceAll('{table}', document.tablesToTranslate[0])
-		.replaceAll('{status}', statusStr)
-		.replaceAll('{translatedCharCount}', translatedCharCount);
-}
-
 function confirmStopTranslationModelProcess(confirmStr) {
 	var res = confirm(confirmStr);
 	if (res)
@@ -865,7 +761,7 @@ function makeLocalizationAnalizeRequest(scope = 'catalog', nextFileIndex = 0)
 	).done(function(data) {
 		if (!data.success)
 		{
-			showTranslateExpertErrorMessage(data, $(ids.from)[0]);
+			showTranslateExpertErrorMessage(data, $(ids.anchor)[0]);
 			$(ids.button).prop('disabled', false);
 			return;
 		}
@@ -894,195 +790,21 @@ function makeLocalizationAnalizeRequest(scope = 'catalog', nextFileIndex = 0)
 
 	}).fail(function(data) {
 		console.log(data);
-		showTranslateExpertErrorMessage(data, $(ids.from)[0]);
+		showTranslateExpertErrorMessage(data, $(ids.anchor)[0]);
 		$(ids.button).prop('disabled', false);
 	});
 
 }
 
-function getTranslateExpertMultiValue(selector) {
-	return $.grep($(selector).val() || [], function(v) { return v !== '' && v !== null; }).join(',');
-}
-
-function makeAnalizeRequest(lastProcessedTable = null, lastProcessedColumn = null, lastProcessedOffset = null) {
-
-	if (document.stopTranslationModelProcess) {
-		$('#te-begin-analization').prop('disabled', false);
-		return;
-	}
-
-	var urlParams = new URLSearchParams(window.location.search);
-	var token = urlParams.get('token');
-	var langIdFrom = $('#te-analization-language-from').val();
-	var langIdTo = $('#te-analization-language-to').val();
-	var mode = $('#te-analization-mode').val();
-	var table = getTranslateExpertMultiValue('#te-analization-table');
-	var product_status = $('#te-analization-product-status-filter').is(':checked');
-	var product_quantity = $('#te-analization-product-quantity-filter').is(':checked');
-	var product_category_id = getTranslateExpertMultiValue('#te-analization-product-category-id-filter');
-	var stock_status = getTranslateExpertMultiValue('#te-analization-product-stock-status-filter');
-	var manufacturer_id = getTranslateExpertMultiValue('#te-analization-product-manufacturer-filter');
-	var isDeep = $('#te-analization-table-deep').is(':checked');
-
-	$.get(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/analize'
-		+ '&token=' + token
-		+ '&langIdFrom=' + langIdFrom
-		+ '&langIdTo=' + langIdTo
-		+ '&mode=' + mode
-		+ '&table=' + encodeURIComponent(table)
-		+ (product_status ? '&product_status=1' : '')
-		+ (product_quantity ? '&product_quantity=1' : '')
-		+ (product_category_id ? '&product_category_id=' + encodeURIComponent(product_category_id) : '')
-		+ (stock_status ? '&stock_status=' + encodeURIComponent(stock_status) : '')
-		+ (manufacturer_id ? '&manufacturer_id=' + encodeURIComponent(manufacturer_id) : '')
-		+ (lastProcessedTable ? '&continue_after_table=' + lastProcessedTable : '')
-		+ (lastProcessedColumn ? '&continue_after_column=' + lastProcessedColumn : '')
-		+ (lastProcessedOffset ? '&continue_offset=' + lastProcessedOffset : '')
-	).done(function(data) {
-		if (!data.success)
-		{
-			showTranslateExpertErrorMessage(data, null);
-			return;
-		}
-
-		console.log(data);
-		/*
-		$.each( data.result, function( tableKey, tableResult ) {
-			console.log(tableKey);
-			console.log(tableResult);
-			console.log('');
-			$.each( tableResult.columns, function( columnKey, columnResult ) {
-				console.log(columnKey);
-				console.log(columnResult);
-				console.log('');
-			});
-		});
-		*/
-
-		if ($('#analizeBody').length == 0)
-		{
-			var bodyHtml = '';
-			$.each( data.result, function( tableKey, tableResult ) {
-				bodyHtml = bodyHtml + tableResult.headerHTML;
-				$.each( tableResult.columns, function( columnKey, columnResult ) {
-					bodyHtml = bodyHtml + columnResult.html;
-				});
-			});
-
-			$('#te-analization-result').html(
-				'<div id="analizeHeadInfo" class="container">' + data.analizeHeadInfo + '</div>' +
-				'<div id="analizeBody" class="container">' + bodyHtml + '</div><br><br>' +
-				'<div id="timeInSecInfo" class="container">' + data.timeInSecInfo + '</div>'
-			);
-		}
-		else
-		{
-			var bodyHtml = '';
-			$.each( data.result, function( tableKey, tableResult ) {
-
-				var tableResultId = '#et_' + tableResult.table;
-				var needToAddBr = ($(tableResultId).length == 0);
-				if ($(tableResultId).length == 0)
-					bodyHtml = bodyHtml + tableResult.headerHTML;
-				else
-				{
-					var tableGlobalCharCountId = '#' + tableResult.table + '_globalCharCount';
-					$(tableGlobalCharCountId).html(parseInt($(tableGlobalCharCountId).html()) + parseInt(tableResult.tableCharCount));
-
-					$.each( tableResult.languageCharCounts, function( tableLangId, tableLangValue ) {
-						var tableLangCharCountId = '#' + tableResult.table + '_CharCount_' + tableLangValue['code'];
-						$(tableLangCharCountId).html(parseInt($(tableLangCharCountId).html()) + parseInt(tableLangValue['char_count']));
-					});
-				}
-
-				$.each( tableResult.columns, function( columnKey, columnResult ) {
-
-					var columnResultId = '#et_' + tableResult.table + '_' + columnResult.column;
-					if ($(columnResultId).length == 0)
-						bodyHtml = bodyHtml + columnResult.html;
-					else
-					{
-						var columnGlobalCharCountId = '#' + columnResult.table + '_' + columnResult.column + '_globalCharCount';
-						$(columnGlobalCharCountId).html(parseInt($(columnGlobalCharCountId).html()) + parseInt(columnResult.columnCharCount));
-
-						$.each( columnResult.languageCharCounts, function( columnLangId, columnLangValue ) {
-							var columnLangCharCountId = '#' + tableResult.table + '_' + columnResult.column + '_CharCount_' + columnLangValue['code'];
-							$(columnLangCharCountId).html(parseInt($(columnLangCharCountId).html()) + parseInt(columnLangValue['char_count']));
-						});
-					}
-				});
-			});
-			$('#analizeBody').html($('#analizeBody').html() + bodyHtml);
-
-
-			$('#globalCharCount').html(parseInt($('#globalCharCount').html()) + parseInt(data.globalCharCount));
-			$('#timeInSec').html((parseFloat($('#timeInSec').html()) + parseFloat(data.timeInSec)).toFixed(4));
-			for (var id in data.globalLanguageCharCounts)
-			{
-				if (data.globalLanguageCharCounts.hasOwnProperty(id))
-				{
-					var langCountObj = data.globalLanguageCharCounts[id];
-					var langElementId = 'globalLangCharCount' + langCountObj.code;
-					$('#' + langElementId).html(parseInt($('#' + langElementId).html()) + parseInt(langCountObj.char_count));
-				}
-			}
-
-			if (data.result.length > 0)
-			{
-				$('#analization_current_table').html(data.result[data.result.length - 1].table);
-				$('#analization_request_number').html(parseInt($('#analization_request_number').html()) + 1);
-			}
-		}
-
-		showTranslatedCharCount();
-
-		if (data.done)
-		{
-			$('#te-begin-analization').prop('disabled', false);
-
-			$('.close_modal').removeAttr('disabled');
-			hideTranslateExpertModal();
-		}
-		else
-		{
-			if (isDeep)
-			{
-				makeAnalizeRequest(data.lastProcessedTable, data.lastProcessedColumn, data.lastProcessedOffset);
-			}
-			else
-			{
-				var lastProcessedTable = data.result[data.result.length - 1].table;
-				makeAnalizeRequest(lastProcessedTable);
-			}
-		}
-	}).fail(function(data) {
-		console.log(data);
-		showTranslateExpertErrorMessage(data, null);
-		$('#te-analization-result').html(data);
-	});
-}
-
 function makeRemovingDataFromDbRequest() {
 
-	var urlParams = new URLSearchParams(window.location.search);
-	var token = urlParams.get('token');
-	var langIdTo = $('#te-analization-language-to').val();
-	var table = getTranslateExpertMultiValue('#te-analization-table');
-	var product_status = $('#te-analization-product-status-filter').is(':checked');
-	var product_quantity = $('#te-analization-product-quantity-filter').is(':checked');
-	var product_category_id = getTranslateExpertMultiValue('#te-analization-product-category-id-filter');
-	var stock_status = getTranslateExpertMultiValue('#te-analization-product-stock-status-filter');
-	var manufacturer_id = getTranslateExpertMultiValue('#te-analization-product-manufacturer-filter');
+	var params = teSiteFilterParams(teSiteFilters());
+	delete params.langIdFrom;
+	delete params.mode;
 
 	$.get(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/removeDataFromDb'
-		+ '&token=' + token
-		+ '&langIdTo=' + langIdTo
-		+ '&table=' + encodeURIComponent(table)
-		+ (product_status ? '&product_status=1' : '')
-		+ (product_quantity ? '&product_quantity=1' : '')
-		+ (product_category_id ? '&product_category_id=' + encodeURIComponent(product_category_id) : '')
-		+ (stock_status ? '&stock_status=' + encodeURIComponent(stock_status) : '')
-		+ (manufacturer_id ? '&manufacturer_id=' + encodeURIComponent(manufacturer_id) : '')
+		+ '&token=' + getOcToken(),
+		params
 	).done(function(data) {
 		if (!data.success)
 		{
@@ -1208,22 +930,17 @@ function initModule()
 {
 	document.js_const_module_prefix = 'extension/module';
 
-	$('#te-begin-analization').click(function() {
-		$('#te-begin-analization').prop('disabled', true);
-		$('#te-analization-result').html('');
-		document.stopTranslationModelProcess = false;
-		$('.close_modal').attr('disabled', 1);
-		showTranslateExpertModal(document.js_const_analization_process_is_started);
-
-		makeAnalizeRequest();
-	});
+	teSiteInit();
 
 	$('#te-begin-removing_data_from_db').click(function()
 	{
+		if (teSiteIsRunning())
+			return;
 		var confirmationString = document.js_const_entry_remove_translation_records_from_db_confirmation
-			.replace('{langCode}', $('#te-analization-language-to').find("option:selected").text());
+			.replace('{langCode}', $('#te-langbar-to').find("option:selected").text());
 		if (confirm(confirmationString))
 		{
+			teAlerts.clear('#te-site-alerts');
 			$('#te-analization-result').html('');
 			showTranslateExpertModal(document.js_const_entry_removing_data_from_db_process_is_started);
 
@@ -1322,7 +1039,7 @@ function initTranslateExpertCron()
 		this.select();
 	});
 
-	$('#te-analization-language-from, #te-analization-language-to, #te-analization-mode, #te-analization-table, #te-analization-product-status-filter, #te-analization-product-quantity-filter, #te-analization-product-category-id-filter, #te-analization-product-stock-status-filter, #te-analization-product-manufacturer-filter')
+	$('#te-langbar-from, #te-langbar-to, input[name="te-analization-mode"], #te-analization-table, #te-analization-product-status-filter, #te-analization-product-quantity-filter, #te-analization-product-category-id-filter, #te-analization-product-stock-status-filter, #te-analization-product-manufacturer-filter')
 		.on('change', updateTranslateExpertCronLink);
 	$('#te-cron-bulk-amount, #te-cron-secret').on('change input', updateTranslateExpertCronLink);
 	updateTranslateExpertCronLink();
@@ -1352,33 +1069,13 @@ function updateTranslateExpertCronLink()
 	var listParam = function(name, value) {
 		return name + '=' + encodeURIComponent(value).replace(/%2C/g, ',');
 	};
-	var params = [
-		'secret=' + encodeURIComponent(secret),
-		'langIdFrom=' + encodeURIComponent($('#te-analization-language-from').val()),
-		'langIdTo=' + encodeURIComponent($('#te-analization-language-to').val()),
-		'mode=' + encodeURIComponent($('#te-analization-mode').val())
-	];
-	var table = getTranslateExpertMultiValue('#te-analization-table');
-	if (table) {
-		params.push(listParam('table', table));
-	}
-	if ($('#te-analization-product-status-filter').is(':checked')) {
-		params.push('product_status=1');
-	}
-	if ($('#te-analization-product-quantity-filter').is(':checked')) {
-		params.push('product_quantity=1');
-	}
-	var categoryId = getTranslateExpertMultiValue('#te-analization-product-category-id-filter');
-	if (categoryId) {
-		params.push(listParam('product_category_id', categoryId));
-	}
-	var stockStatus = getTranslateExpertMultiValue('#te-analization-product-stock-status-filter');
-	if (stockStatus) {
-		params.push(listParam('stock_status', stockStatus));
-	}
-	var manufacturerId = getTranslateExpertMultiValue('#te-analization-product-manufacturer-filter');
-	if (manufacturerId) {
-		params.push(listParam('manufacturer_id', manufacturerId));
+	var params = ['secret=' + encodeURIComponent(secret)];
+	var filterParams = teSiteFilterParams(teSiteFilters());
+	for (var name in filterParams) {
+		if (!Object.prototype.hasOwnProperty.call(filterParams, name)) {
+			continue;
+		}
+		params.push(teSiteIsListParam(name) ? listParam(name, filterParams[name]) : name + '=' + encodeURIComponent(filterParams[name]));
 	}
 	var bulkAmount = $.trim($('#te-cron-bulk-amount').val() || '');
 	if (/^[0-9]{1,9}$/.test(bulkAmount) && parseInt(bulkAmount, 10) > 0) {
@@ -1774,4 +1471,743 @@ function teRenderRemoveLog(data) {
 	root.append(log);
 	root.append(teEl('div', { 'class': 'te-log__time' }, teT('te_time_in_sec', { sec: Number(data.timeInSec) || 0 })));
 	return root;
+}
+
+// ==========================================================================
+// Page frame: language bar and collapsible blocks.
+// ==========================================================================
+
+// The language bar shows on these tabs only.
+function teLangbarTabs() {
+	return ['#tab-translate-site', '#tab-localization', '#tab-admin-localization'];
+}
+
+function teUpdateLangbar(href) {
+	var show = $.inArray(href, teLangbarTabs()) !== -1;
+	$('#te-langbar-app .te-langbar').toggleClass('te-hidden', !show);
+}
+
+// The tab link of the active tab: li.active on BS3, a.active on BS5.
+function teActiveTabHref() {
+	var link = $('.nav-tabs li.active > a[href^="#tab-"], .nav-tabs a.active[href^="#tab-"]').first();
+	return link.length ? link.attr('href') : '';
+}
+
+// Shows the target language in the label of the data removal button.
+function teUpdateRemoveLabel() {
+	var btn = $('#te-begin-removing_data_from_db');
+	var base = btn.attr('data-te-label');
+	if (!btn.length || typeof base === 'undefined') {
+		return;
+	}
+	btn.text(base + ' - ' + $('#te-langbar-to option:selected').text());
+}
+
+function teInitLangbar() {
+	var bar = $('#te-langbar-app');
+	if (!bar.length || bar.data('teBound')) {
+		return;
+	}
+	bar.data('teBound', true);
+
+	teUpdateLangbar(teActiveTabHref());
+	var onShown = function(e) {
+		teUpdateLangbar($(e.target).closest('a').attr('href'));
+	};
+	// BS3 triggers a jQuery event. BS5 triggers a native event (and a jQuery event if it finds jQuery).
+	$(document).on('shown.bs.tab', 'a[data-toggle="tab"], a[data-bs-toggle="tab"]', onShown);
+	document.addEventListener('shown.bs.tab', onShown);
+
+	bar.on('click', '.te-js-langbar-swap', function() {
+		var from = $('#te-langbar-from');
+		var to = $('#te-langbar-to');
+		var fromValue = from.val();
+		from.val(to.val());
+		to.val(fromValue);
+		from.trigger('change');
+		to.trigger('change');
+	});
+
+	$('#te-langbar-to').on('change', teUpdateRemoveLabel);
+	teUpdateRemoveLabel();
+}
+
+// Toggle button of a collapsed block: .te-js-collapse with data-te-target (a selector) and aria-expanded.
+function teInitCollapse() {
+	$(document).on('click', '.te-app .te-js-collapse', function() {
+		var btn = $(this);
+		var target = $(btn.attr('data-te-target'));
+		var open = target.hasClass('te-hidden');
+		target.toggleClass('te-hidden', !open);
+		btn.attr('aria-expanded', open ? 'true' : 'false');
+	});
+}
+
+function teInitPage() {
+	teInitLangbar();
+	teInitCollapse();
+}
+
+// ==========================================================================
+// Progress panel (te-progress).
+// ==========================================================================
+
+var teProgress = {
+	seq: 0,
+
+	// Builds the panel in el (a .te-progress element inside .te-app) and shows it.
+	start: function(el, title) {
+		var root = $(el);
+		teProgress.seq++;
+		var logId = 'te-progress-log-' + teProgress.seq;
+		root.empty().removeClass('te-hidden te-progress--done te-progress--stopped te-progress--error');
+
+		var head = teEl('div', { 'class': 'te-progress__head' });
+		head.append(teEl('span', { 'class': 'te-progress__title' }, title));
+		head.append(teEl('button', { 'type': 'button', 'class': 'te-js-stop ' + (teIsBs5() ? 'btn btn-secondary btn-sm' : 'btn btn-default btn-sm') }, teT('te_site_stop')));
+		root.append(head);
+
+		var bar = teEl('div', { 'class': 'te-progress__bar', 'role': 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100' });
+		bar.append(teEl('div', { 'class': 'te-progress__fill' }));
+		root.append(bar);
+		root.append(teEl('div', { 'class': 'te-progress__counters' }));
+		root.append(teEl('button', { 'type': 'button', 'class': 'te-collapse-toggle te-js-collapse te-progress__log-toggle te-hidden', 'data-te-target': '#' + logId, 'aria-expanded': 'false', 'aria-controls': logId }, teT('te_site_log')));
+		root.append(teEl('pre', { 'class': 'te-progress__log te-hidden', 'id': logId }));
+		return root;
+	},
+
+	// info.percent: a number from 0 to 100, or null (no bar). info.counters: a text or an array of texts.
+	update: function(el, info) {
+		var root = $(el);
+		info = info || {};
+		var bar = root.find('.te-progress__bar');
+		var percent = info.percent === null || typeof info.percent === 'undefined' ? NaN : Number(info.percent);
+		if (!isFinite(percent)) {
+			bar.addClass('te-hidden').removeAttr('aria-valuenow');
+		} else {
+			percent = Math.max(0, Math.min(100, percent));
+			bar.removeClass('te-hidden').attr('aria-valuenow', String(Math.round(percent)));
+			root.find('.te-progress__fill').css('width', percent + '%');
+		}
+		if (typeof info.counters !== 'undefined') {
+			var box = root.find('.te-progress__counters').empty();
+			var items = $.isArray(info.counters) ? info.counters : [info.counters];
+			for (var i = 0; i < items.length; i++) {
+				box.append(teEl('span', {}, items[i]));
+			}
+		}
+	},
+
+	setTitle: function(el, title) {
+		teText($(el).find('.te-progress__title'), title);
+	},
+
+	log: function(el, text) {
+		var root = $(el);
+		var log = root.find('.te-progress__log');
+		log.append(teEl('div', { 'class': 'te-progress__line' }, text));
+		root.find('.te-progress__log-toggle').removeClass('te-hidden');
+		if (log[0]) {
+			log[0].scrollTop = log[0].scrollHeight;
+		}
+	},
+
+	// state: 'done', 'stopped' or 'error'.
+	finish: function(el, state) {
+		var root = $(el);
+		if (state !== 'stopped' && state !== 'error') {
+			state = 'done';
+		}
+		root.addClass('te-progress--' + state);
+		root.find('.te-js-stop').addClass('te-hidden');
+		if (state === 'done') {
+			root.find('.te-progress__bar').removeClass('te-hidden').attr('aria-valuenow', '100');
+			root.find('.te-progress__fill').css('width', '100%');
+		}
+		var badgeClass = state === 'done' ? 'te-badge--ok' : (state === 'stopped' ? 'te-badge--warn' : 'te-badge--error');
+		root.find('.te-progress__head .te-badge').remove();
+		root.find('.te-progress__head').append(teEl('span', { 'class': 'te-badge ' + badgeClass }, teT('te_site_state_' + state)));
+	}
+};
+
+// ==========================================================================
+// Tab "Website content": filters, analysis, detail view and table translation.
+// ==========================================================================
+
+function teSiteIsListParam(name) {
+	return name === 'table' || name === 'product_category_id' || name === 'stock_status' || name === 'manufacturer_id';
+}
+
+function teSiteMulti(selector) {
+	var values = $(selector).val();
+	return $.isArray(values) ? $.grep(values, function(v) { return v !== '' && v !== null; }) : [];
+}
+
+// Reads the filters from the page.
+function teSiteFilters() {
+	return {
+		langIdFrom: $('#te-langbar-from').val(),
+		langIdTo: $('#te-langbar-to').val(),
+		mode: $('input[name="te-analization-mode"]:checked').val() || 'both',
+		tables: teSiteMulti('#te-analization-table'),
+		deep: $('#te-analization-table-deep').is(':checked'),
+		productStatus: $('#te-analization-product-status-filter').is(':checked'),
+		productQuantity: $('#te-analization-product-quantity-filter').is(':checked'),
+		categoryIds: teSiteMulti('#te-analization-product-category-id-filter'),
+		stockStatus: teSiteMulti('#te-analization-product-stock-status-filter'),
+		manufacturerIds: teSiteMulti('#te-analization-product-manufacturer-filter')
+	};
+}
+
+// Returns the request parameters of the filters. The order is the order of the cron link.
+// A box that is not checked and a list that is empty are left out. The server reads a present box as true.
+function teSiteFilterParams(filters) {
+	var params = { langIdFrom: filters.langIdFrom, langIdTo: filters.langIdTo, mode: filters.mode };
+	if (filters.tables.length) {
+		params.table = filters.tables.join(',');
+	}
+	if (filters.productStatus) {
+		params.product_status = 1;
+	}
+	if (filters.productQuantity) {
+		params.product_quantity = 1;
+	}
+	if (filters.categoryIds.length) {
+		params.product_category_id = filters.categoryIds.join(',');
+	}
+	if (filters.stockStatus.length) {
+		params.stock_status = filters.stockStatus.join(',');
+	}
+	if (filters.manufacturerIds.length) {
+		params.manufacturer_id = filters.manufacturerIds.join(',');
+	}
+	return params;
+}
+
+// Parameters of the POST requests analizeTableDetail and translateTable. columnName '' means all columns.
+function teSitePostParams(filters, tableName, columnName) {
+	var params = teSiteFilterParams(filters);
+	delete params.table;
+	params.tableName = tableName;
+	params.textColumnName = columnName;
+	return params;
+}
+
+function teSiteIsRunning() {
+	return !!(teSiteState && teSiteState.running);
+}
+
+function teSiteNewState(filters) {
+	return {
+		filters: filters,
+		target: null,
+		tables: {},
+		order: [],
+		globalCharCount: 0,
+		timeInSec: 0,
+		requestNumber: 0,
+		tableTotal: 0,
+		tableList: [],
+		tablePos: 0,
+		running: false,
+		stopRequested: false,
+		mode: null
+	};
+}
+
+var teSiteState = teSiteNewState(null);
+
+var teSiteTranslate = { queue: [], current: null, translatedCharCount: 0, requestNumber: 0, running: false, stopRequested: false };
+
+function teSiteBtnClass() {
+	return teIsBs5() ? 'btn btn-outline-secondary btn-sm' : 'btn btn-default btn-xs';
+}
+
+function teSiteButton(cls, label, attrs) {
+	var all = { 'type': 'button', 'class': cls + ' ' + teSiteBtnClass() };
+	for (var name in attrs) {
+		if (Object.prototype.hasOwnProperty.call(attrs, name)) {
+			all[name] = attrs[name];
+		}
+	}
+	return teEl('button', all, label);
+}
+
+function teSiteSetBusy(busy) {
+	$('#te-begin-analization, #te-begin-removing_data_from_db, #te-site-app .te-js-site-translate, #te-site-app .te-js-site-translate-all').prop('disabled', busy);
+}
+
+function teSiteBuildTableSkeleton() {
+	var wrap = teEl('div', { 'class': 'te-table-wrap' });
+	var table = teEl('table', { 'class': 'te-table' });
+	var headRow = teEl('tr');
+	headRow.append(teEl('th', {}, teT('te_site_col_table')));
+	headRow.append(teEl('th', { 'class': 'te-num te-site-chars-head' }, teT('te_site_col_chars')));
+	headRow.append(teEl('th', {}, teT('te_site_col_actions')));
+	table.append(teEl('thead').append(headRow));
+	table.append(teEl('tbody', { 'class': 'te-site-tbody' }));
+	var totalRow = teEl('tr', { 'class': 'te-table__total' });
+	totalRow.append(teEl('td', {}, teT('te_site_total')));
+	totalRow.append(teEl('td', { 'class': 'te-num te-site-total' }, '0'));
+	totalRow.append(teEl('td', { 'class': 'te-site-actions' }).append(teSiteButton('te-js-site-translate-all te-hidden', teT('te_site_translate_all'), {})));
+	table.append(teEl('tfoot').append(totalRow));
+	return wrap.append(table);
+}
+
+function teSiteBuildGroupRow(entry) {
+	var tr = teEl('tr', { 'class': 'te-table__group', 'data-table': entry.table });
+	var label = teT('te_site_toggle', { table: entry.table });
+	var nameCell = teEl('td');
+	nameCell.append(teEl('button', { 'type': 'button', 'class': 'te-table__expand te-js-site-toggle', 'aria-expanded': 'true', 'aria-label': label, 'title': label }));
+	nameCell.append(teEl('span', { 'class': 'te-table__name' }, entry.table));
+	tr.append(nameCell);
+	tr.append(teEl('td', { 'class': 'te-num' }, '0'));
+	var actions = teEl('td', { 'class': 'te-site-actions' });
+	var slot = teEl('span', { 'class': 'te-site-badge' });
+	if (!entry.supported) {
+		slot.append(teEl('span', { 'class': 'te-badge te-badge--muted' }, teT('te_site_not_supported')));
+	}
+	actions.append(slot);
+	tr.append(actions);
+	return tr;
+}
+
+function teSiteBuildColumnRow(entry, column) {
+	var tr = teEl('tr', { 'data-table': entry.table, 'data-column': column });
+	tr.append(teEl('td', { 'class': 'te-table__sub' }, column));
+	tr.append(teEl('td', { 'class': 'te-num' }, '0'));
+	tr.append(teEl('td', { 'class': 'te-site-actions' }).append(teEl('span', { 'class': 'te-site-badge' })));
+	return tr;
+}
+
+// Sets the count cell of a row and adds the action buttons that the row needs (an existing button stays).
+function teSiteRefreshRow(row, entry, column, charCount) {
+	row.children('td.te-num').text(teFormatInt(charCount));
+	var actions = row.children('td.te-site-actions');
+	var attrs = { 'data-table': entry.table, 'data-column': column };
+	// "Translate" is always the first button, so that it is in one line in the table rows and the column rows.
+	if (entry.supported && charCount > 0 && !actions.children('.te-js-site-translate').length) {
+		var btn = teSiteButton('te-js-site-translate', teT('te_site_translate'), attrs);
+		btn.prop('disabled', teSiteIsRunning());
+		actions.prepend(btn);
+	}
+	if (column !== '' && charCount > 0 && !actions.children('.te-js-site-detail').length) {
+		var detail = teSiteButton('te-js-site-detail', teT('te_site_details'), attrs);
+		var translate = actions.children('.te-js-site-translate');
+		var slot = actions.children('.te-site-badge');
+		if (translate.length) {
+			translate.after(detail);
+		} else if (slot.length) {
+			slot.before(detail);
+		} else {
+			actions.append(detail);
+		}
+	}
+}
+
+// Adds the counts of a table of one batch to the state and to the result table.
+function teSiteMergeTable(state, t) {
+	if (!t || typeof t.table !== 'string') {
+		return;
+	}
+	var tbody = $('#te-analization-result .te-site-tbody');
+	var entry = Object.prototype.hasOwnProperty.call(state.tables, t.table) ? state.tables[t.table] : null;
+	if (!entry) {
+		entry = { table: t.table, supported: Number(t.supported) === 1 ? 1 : 0, charCount: 0, columns: {}, columnOrder: [], row: null, lastRow: null, columnRows: {} };
+		entry.row = teSiteBuildGroupRow(entry);
+		entry.lastRow = entry.row;
+		state.tables[t.table] = entry;
+		state.order.push(t.table);
+		// An empty row between 2 tables, so that the column rows of one table do not run into the next table.
+		if (tbody.children('tr').length) {
+			tbody.append(teEl('tr', { 'class': 'te-table__spacer', 'aria-hidden': 'true' }).append(teEl('td', { 'colspan': '3' })));
+		}
+		tbody.append(entry.row);
+	}
+	entry.charCount += Number(t.charCount) || 0;
+
+	var columns = $.isArray(t.columns) ? t.columns : [];
+	var collapsed = entry.row.find('.te-js-site-toggle').attr('aria-expanded') === 'false';
+	for (var i = 0; i < columns.length; i++) {
+		var name = columns[i] && typeof columns[i].column === 'string' ? columns[i].column : null;
+		if (name === null) {
+			continue;
+		}
+		if (!Object.prototype.hasOwnProperty.call(entry.columns, name)) {
+			entry.columns[name] = 0;
+			entry.columnOrder.push(name);
+			var row = teSiteBuildColumnRow(entry, name);
+			row.toggleClass('te-hidden', collapsed);
+			entry.lastRow.after(row);
+			entry.lastRow = row;
+			entry.columnRows[name] = row;
+		}
+		entry.columns[name] += Number(columns[i].charCount) || 0;
+		teSiteRefreshRow(entry.columnRows[name], entry, name, entry.columns[name]);
+	}
+	teSiteRefreshRow(entry.row, entry, '', entry.charCount);
+}
+
+// Returns the jobs of "Translate all": the tables of the result that the module supports and that have characters.
+function teSiteQueueAll() {
+	var queue = [];
+	for (var i = 0; i < teSiteState.order.length; i++) {
+		var entry = teSiteState.tables[teSiteState.order[i]];
+		if (entry.supported && entry.charCount > 0) {
+			queue.push({ table: entry.table, column: '' });
+		}
+	}
+	return queue;
+}
+
+function teSiteUpdateTotals(state) {
+	$('#te-analization-result .te-site-total').text(teFormatInt(state.globalCharCount));
+	$('#te-analization-result .te-js-site-translate-all').toggleClass('te-hidden', teSiteQueueAll().length === 0);
+	if (state.target) {
+		$('#te-analization-result .te-site-chars-head').text(teT('te_site_col_chars_lang', { code: state.target.code }));
+	}
+}
+
+function teSiteJobLabel(job) {
+	return job.column ? job.table + '.' + job.column : job.table;
+}
+
+// An operation ends: the panel gets its final state and the buttons work again.
+function teSiteEndRun(result) {
+	teProgress.finish('#te-site-progress', result);
+	teSiteState.running = false;
+	teSiteState.mode = null;
+	teSiteTranslate.running = false;
+	teSiteSetBusy(false);
+}
+
+function teSiteFail(response) {
+	teAlerts.fromResponse('#te-site-alerts', response);
+	teSiteEndRun('error');
+}
+
+function teSiteStartAnalysis() {
+	if (teSiteIsRunning()) {
+		return;
+	}
+	teAlerts.clear('#te-site-alerts');
+	var filters = teSiteFilters();
+	teSiteState = teSiteNewState(filters);
+	// The server goes through the tables in the order of the select options (getTables()), so the position of a table in this list is its number.
+	teSiteState.tableList = filters.tables.length ? filters.tables.slice(0) : $('#te-analization-table option').map(function() { return $(this).val(); }).get();
+	teSiteState.tableTotal = teSiteState.tableList.length;
+	teSiteState.running = true;
+	teSiteState.mode = 'analyze';
+	$('#te-analization-result').empty().append(teSiteBuildTableSkeleton());
+	teSiteSetBusy(true);
+	teProgress.start('#te-site-progress', teT('te_site_analyzing'));
+	teSiteRequestAnalysis(null);
+}
+
+// next: { table, column, offset } of the batch before, or null for the first batch. A value goes in only if it is true.
+function teSiteRequestAnalysis(next) {
+	var state = teSiteState;
+	var params = teSiteFilterParams(state.filters);
+	if (next && next.table) {
+		params.continue_after_table = next.table;
+	}
+	if (next && next.column) {
+		params.continue_after_column = next.column;
+	}
+	if (next && next.offset) {
+		params.continue_offset = next.offset;
+	}
+	state.requestNumber++;
+	$.get(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/analize'
+		+ '&token=' + getOcToken(),
+		params
+	).done(function(data) {
+		teSiteOnAnalysisBatch(state, data);
+	}).fail(function(xhr) {
+		console.log(xhr);
+		teSiteFail(xhr);
+	});
+}
+
+function teSiteOnAnalysisBatch(state, data) {
+	if (!data || !data.success) {
+		console.log(data);
+		teSiteFail(data);
+		return;
+	}
+	if (data.target && !state.target) {
+		state.target = data.target;
+	}
+	state.globalCharCount += Number(data.globalCharCount) || 0;
+	state.timeInSec += Number(data.timeInSec) || 0;
+	var tables = $.isArray(data.tables) ? data.tables : [];
+	for (var i = 0; i < tables.length; i++) {
+		teSiteMergeTable(state, tables[i]);
+	}
+	teSiteUpdateTotals(state);
+
+	var lastTable = tables.length && tables[tables.length - 1] ? tables[tables.length - 1].table : '';
+	// Non-deep mode: a batch with no tables is the end, also when the server sends done = 0.
+	var finished = !!data.done || (!state.stopRequested && !state.filters.deep && !lastTable);
+	// lastProcessed* names the position before the cut, so show the last table of this batch.
+	var current = lastTable || data.lastProcessedTable || '';
+	var total = state.tableTotal;
+	// Tables with 0 characters are not in the response, so count by the position in the table list, not by the rows.
+	var pos = current ? $.inArray(current, state.tableList) + 1 : 0;
+	state.tablePos = Math.max(state.tablePos, pos, Math.min(state.order.length, total));
+	var n = finished ? total : state.tablePos;
+	var counters = [];
+	if (!finished && current) {
+		counters.push(teT('te_site_cnt_current', { current: current }));
+	}
+	counters.push(teT('te_site_cnt_table', { n: n, total: total }));
+	counters.push(teT('te_site_cnt_request', { request: state.requestNumber }));
+	counters.push(teT('te_site_cnt_chars', { chars: teFormatInt(state.globalCharCount) }));
+	counters.push(teT('te_site_cnt_time', { sec: state.timeInSec.toFixed(1) }));
+	teProgress.update('#te-site-progress', {
+		percent: total > 0 ? n / total * 100 : null,
+		counters: counters
+	});
+
+	if (finished) {
+		teSiteEndRun('done');
+	} else if (state.stopRequested) {
+		teSiteEndRun('stopped');
+	} else if (state.filters.deep) {
+		teSiteRequestAnalysis({ table: data.lastProcessedTable, column: data.lastProcessedColumn, offset: data.lastProcessedOffset });
+	} else {
+		teSiteRequestAnalysis({ table: lastTable });
+	}
+}
+
+// ---- Detail view of a column (in the module modal) ----
+
+function teSiteSetModalTitle(text) {
+	var titleEl = $('#translateExpertModalLabel');
+	if (titleEl.attr('data-te-original') === undefined) {
+		titleEl.attr('data-te-original', titleEl.text());
+	}
+	titleEl.text(text);
+}
+
+// Returns the content of the detail modal as a DOM node. All values go in as text.
+function teRenderSiteDetail(data) {
+	var root = teEl('div', { 'class': 'te-app' });
+	root.append(teEl('p', { 'class': 'te-muted' }, teT('value_analization_mode_' + data.mode)));
+	var rows = $.isArray(data.rows) ? data.rows : [];
+	if (!rows.length) {
+		root.append(teEl('p', {}, teT('te_site_detail_none')));
+	} else {
+		var idColumns = $.isArray(data.idColumns) ? data.idColumns : [];
+		var table = teEl('table', { 'class': 'te-table' });
+		var headRow = teEl('tr');
+		for (var c = 0; c < idColumns.length; c++) {
+			headRow.append(teEl('th', {}, idColumns[c]));
+		}
+		headRow.append(teEl('th', {}, teT('te_site_detail_source', { code: data.languageFrom ? data.languageFrom.code : '' })));
+		headRow.append(teEl('th', {}, teT('te_site_detail_target', { code: data.languageTo ? data.languageTo.code : '' })));
+		table.append(teEl('thead').append(headRow));
+		var body = teEl('tbody');
+		for (var r = 0; r < rows.length; r++) {
+			var row = rows[r] || {};
+			var tr = teEl('tr');
+			for (var k = 0; k < idColumns.length; k++) {
+				tr.append(teEl('td', {}, row.ids && typeof row.ids[idColumns[k]] !== 'undefined' ? row.ids[idColumns[k]] : ''));
+			}
+			var textFrom = row.textFrom === null || typeof row.textFrom === 'undefined' ? '' : String(row.textFrom);
+			var textTo = row.textTo === null || typeof row.textTo === 'undefined' ? '' : String(row.textTo);
+			var fromCell = teEl('td').append(teEl('span', { 'class': 'te-table__text' }, textFrom));
+			if (Number(row.count) > 1) {
+				fromCell.append(teEl('span', { 'class': 'te-muted' }, ' \u00d7' + Number(row.count)));
+			}
+			var toCell = teEl('td');
+			if (textTo === '') {
+				toCell.append(teEl('span', { 'class': 'te-badge te-badge--muted' }, teT('te_site_empty')));
+			} else {
+				toCell.append(teEl('span', { 'class': 'te-table__text' }, textTo));
+				if (textTo === textFrom) {
+					toCell.append(document.createTextNode(' '));
+					toCell.append(teEl('span', { 'class': 'te-badge te-badge--warn' }, teT('te_site_identical')));
+				}
+			}
+			tr.append(fromCell);
+			tr.append(toCell);
+			body.append(tr);
+		}
+		table.append(body);
+		root.append(teEl('div', { 'class': 'te-table-wrap' }).append(table));
+	}
+	if (data.hasMore) {
+		root.append(teEl('p', { 'class': 'te-muted' }, teT('te_site_detail_more')));
+	}
+	return root;
+}
+
+function teSiteShowDetail(table, column) {
+	teAlerts.clear('#te-site-alerts');
+	var filters = teSiteState.filters || teSiteFilters();
+
+	$('.stop_modal_process').hide();
+	$('.close_modal').removeAttr('disabled');
+	showTranslateExpertModal(teEl('div', {}, teT('te_site_detail_loading')));
+	teSiteSetModalTitle(table + '.' + column);
+
+	var fail = function(response) {
+		console.log(response);
+		teAlerts.fromResponse('#te-site-alerts', response);
+		hideTranslateExpertModal();
+	};
+	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/analizeTableDetail'
+		+ '&token=' + getOcToken(),
+		teSitePostParams(filters, table, column)
+	).done(function(data) {
+		if (!data || !data.success) {
+			fail(data);
+			return;
+		}
+		$('#translateExpertModal .modal-body').empty().append(teRenderSiteDetail(data));
+	}).fail(fail);
+}
+
+// ---- Table translation ----
+
+function teSiteTranslateStart(queue, all) {
+	if (teSiteIsRunning() || !queue.length) {
+		return;
+	}
+	var lang = teSiteState.target ? teSiteState.target.name : $.trim($('#te-langbar-to option:selected').text());
+	var question = all
+		? teT('te_site_translate_all_confirm', { lang: lang })
+		: teT('te_site_translate_confirm', { table: teSiteJobLabel(queue[0]), lang: lang });
+	if (!confirm(question)) {
+		return;
+	}
+	teAlerts.clear('#te-site-alerts');
+	teSiteTranslate = {
+		queue: queue.slice(0),
+		current: null,
+		translatedCharCount: 0,
+		requestNumber: 0,
+		running: true,
+		stopRequested: false,
+		filters: teSiteState.filters || teSiteFilters(),
+		jobChars: 0
+	};
+	teSiteState.running = true;
+	teSiteState.mode = 'translate';
+	teSiteState.stopRequested = false;
+	teSiteSetBusy(true);
+	teProgress.start('#te-site-progress', teT('te_site_translating', { table: teSiteJobLabel(queue[0]) }));
+	teSiteTranslateNext();
+}
+
+function teSiteTranslateEnd(result) {
+	teSiteEndRun(result);
+	showTranslatedCharCount();
+}
+
+function teSiteTranslateNext() {
+	var t = teSiteTranslate;
+	if (!t.queue.length) {
+		teSiteTranslateEnd('done');
+		return;
+	}
+	if (t.stopRequested) {
+		teSiteTranslateEnd('stopped');
+		return;
+	}
+	t.current = t.queue[0];
+	t.jobChars = 0;
+	teProgress.setTitle('#te-site-progress', teT('te_site_translating', { table: teSiteJobLabel(t.current) }));
+	teSiteTranslateRequest();
+}
+
+function teSiteTranslateRequest() {
+	var t = teSiteTranslate;
+	var job = t.current;
+	t.requestNumber++;
+	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/translateTable'
+		+ '&token=' + getOcToken(),
+		teSitePostParams(t.filters, job.table, job.column)
+	).done(function(data) {
+		if (!data || !data.success) {
+			console.log(data);
+			teAlerts.fromResponse('#te-site-alerts', data);
+			teSiteTranslateEnd('error');
+			return;
+		}
+		var chars = Number(data.translatedCharCount) || 0;
+		t.translatedCharCount += chars;
+		t.jobChars += chars;
+		teProgress.update('#te-site-progress', {
+			percent: null,
+			counters: [
+				teT('te_site_cnt_current', { current: teSiteJobLabel(job) }),
+				teT('te_site_cnt_translated', { chars: teFormatInt(t.translatedCharCount) }),
+				teT('te_site_cnt_request', { request: t.requestNumber })
+			]
+		});
+		if (data.done) {
+			teProgress.log('#te-site-progress', teT('te_site_log_table_done', { table: teSiteJobLabel(job), chars: teFormatInt(t.jobChars) }));
+			teSiteMarkDone(job);
+			t.queue.shift();
+			teSiteTranslateNext();
+		} else if (t.stopRequested) {
+			teSiteTranslateEnd('stopped');
+		} else {
+			teSiteTranslateRequest();
+		}
+	}).fail(function(xhr) {
+		console.log(xhr);
+		teAlerts.fromResponse('#te-site-alerts', xhr);
+		teSiteTranslateEnd('error');
+	});
+}
+
+function teSiteMarkDone(job) {
+	var entry = Object.prototype.hasOwnProperty.call(teSiteState.tables, job.table) ? teSiteState.tables[job.table] : null;
+	var row = !entry ? null : (job.column ? entry.columnRows[job.column] : entry.row);
+	if (row) {
+		row.find('.te-site-badge').first().empty().append(teEl('span', { 'class': 'te-badge te-badge--ok' }, teT('te_site_done')));
+	}
+}
+
+// ---- Handlers of the tab ----
+
+function teSiteInit() {
+	var app = $('#te-site-app');
+	app.off('.teSite');
+	app.on('click.teSite', '#te-begin-analization', teSiteStartAnalysis);
+	app.on('click.teSite', '.te-js-stop', function() {
+		if (!teSiteIsRunning()) {
+			return;
+		}
+		if (teSiteState.mode === 'translate') {
+			teSiteTranslate.stopRequested = true;
+		} else {
+			teSiteState.stopRequested = true;
+		}
+		$(this).prop('disabled', true);
+	});
+	app.on('click.teSite', '.te-js-site-toggle', function() {
+		var btn = $(this);
+		var expanded = btn.attr('aria-expanded') === 'true';
+		btn.attr('aria-expanded', expanded ? 'false' : 'true');
+		var table = btn.closest('tr').attr('data-table');
+		var entry = Object.prototype.hasOwnProperty.call(teSiteState.tables, table) ? teSiteState.tables[table] : null;
+		if (entry) {
+			for (var i = 0; i < entry.columnOrder.length; i++) {
+				entry.columnRows[entry.columnOrder[i]].toggleClass('te-hidden', expanded);
+			}
+		}
+	});
+	app.on('click.teSite', '.te-js-site-detail', function() {
+		teSiteShowDetail($(this).attr('data-table'), $(this).attr('data-column'));
+	});
+	app.on('click.teSite', '.te-js-site-translate', function() {
+		teSiteTranslateStart([{ table: $(this).attr('data-table'), column: $(this).attr('data-column') || '' }], false);
+	});
+	app.on('click.teSite', '.te-js-site-translate-all', function() {
+		teSiteTranslateStart(teSiteQueueAll(), true);
+	});
 }

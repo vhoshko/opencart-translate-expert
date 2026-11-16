@@ -78,6 +78,8 @@ All endpoints set `Content-Type: application/json; Charset=UTF-8` (12 `addHeader
 
 ### 3.1 `analizeTableDetail`
 
+Status: done in issue 58. The "Now" line below is the state before issue 58.
+
 Now: `{ "success": 1, "result": "<HTML>" }`. The HTML is a BS3 grid with a head row, the ID columns, `text_from` and `text_to` (CORE:98-135).
 
 Proposed:
@@ -106,7 +108,17 @@ Notes:
 4. **Zero rows.** The current code takes the source language from row 0 (CORE:114-115). If there are no rows, the server must still send `languageFrom` and `languageTo`. Make them from the request parameters `langIdFrom` and `langIdTo` and the store language list. Then `rows` is an empty array.
 5. `textFrom` and `textTo` are decoded text (see rule 5 in section 3.0).
 
+Changes in issue 58:
+
+1. `idColumns` comes from the primary key columns of the table. The rule `count($row) - 7` was wrong on OC 1.5–3.0.
+2. Each row has a new field `count`. The rows are distinct source texts, so `count` is the number of records with this text.
+3. The response has a new field `hasMore`. The server sends at most 100 rows. `hasMore` is 1 if more rows exist.
+4. The table name includes `DB_PREFIX`, as in the response of `analize`.
+5. The server checks `mode`. It must be `both`, `only_empty` or `same_value`. Other values give `{ "success": 0, "message": "..." }`.
+
 ### 3.2 `analize`
+
+Status: done in issue 58. The "Now" line below is the state before issue 58.
 
 Now: a mix of data and HTML (CORE:269-282). The JS uses the data fields for the counters and the HTML fields for the layout. The `tables` field is not used by the JS.
 
@@ -142,6 +154,14 @@ Notes:
 3. **Actions come from the front end.** The front end makes the "Details" and "Translate" buttons for each row. It uses the request filters from its own state and `table` and `column` from the response. The server does not send `onclick` strings.
 4. **Removed fields:** `analizeHeadInfo`, `headerHTML`, `html`, `timeInSecInfo`, the unused `tables` field with the raw `tablesResult` objects, and `globalLanguageCharCounts` (replaced by `target` and `globalCharCount`).
 5. **Name conflict.** The current response has a field `tables` that is not used. The proposed format uses `tables` for the result list. Remove the old field in the same change.
+
+Changes in issue 58:
+
+1. Each item of `tables` has a new field `supported` (1 or 0). The front end shows no "Translate" button for a table with `supported` 0.
+2. The table names include `DB_PREFIX`.
+3. The server checks `mode`. It must be `both`, `only_empty` or `same_value`. Other values and a missing `mode` give `{ "success": 0, "message": "..." }`.
+4. In deep mode the next request sends `continue_after_table`, `continue_after_column` and `continue_offset` from `lastProcessed*`. It sends each one only if it is true.
+5. In non-deep mode the next request sends `continue_after_table` with the last table of the batch.
 
 ### 3.3 `removeDataFromDb`
 

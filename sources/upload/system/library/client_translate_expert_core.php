@@ -52,93 +52,63 @@ class LibraryClientTranslateExpertCore
 
 		$this->loadLanguage($this->_modulePrefix . '/client_translate_expert');
 
-		$languages = $this->getLanguages();
+		$languageFrom = $this->buildLanguageObject((int)$languageIdFrom);
+		$languageTo = $this->buildLanguageObject((int)$langIdToParam);
 
-		$tableResult = $this->getTableToTranslateAnalizationInfo($languageIdFrom, $tableName, $languages, $mode, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, false);
+		$tableResult = null;
+		if (!is_null($languageFrom) && !is_null($languageTo) && in_array($tableName, $this->getTables(), true))
+			$tableResult = $this->getTableToTranslateAnalizationInfo($languageIdFrom, $tableName, $this->getLanguages(), $mode, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, false);
 
-		$translatedCharCount = 0;
-		$done = true;
-		$textToTranslateRows = array();
-		$currLanguage = null;
-
-		$start = microtime(true);
-		if ($tableResult->tableTranslationIsSuppported)
+		if (is_null($tableResult)
+			|| !$tableResult->tableTranslationIsSuppported
+			|| !in_array($textColumnNameParam, $tableResult->textColumnNames, true))
 		{
-			foreach($tableResult->textColumnNames as $textColumnName)
-			{
-				if ($textColumnNameParam && ($textColumnNameParam != $textColumnName))
-					continue;
-
-				foreach($languages as $code => $language)
-				{
-					if ($langIdToParam && ($langIdToParam != $language['language_id']))
-						continue;
-
-					$currLanguage = $language;
-					$textsToTranslateLenght = 0;
-					$textRowsToTranslate = array();
-
-					$limit = self::TRANSLATION_ANALITIC_SQL_LIMIT;
-					$offset = 0;
-					while (true)
-					{
-						$textToTranslateRows = $this->getTextToTranslateRows($languageIdFrom, $tableResult->table, $tableResult->pkColumnNames, $textColumnName,
-							$mode, $limit, $offset, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
-						if (count($textToTranslateRows) == 0)
-							break;
-						$offset += count($textToTranslateRows);
-
-						break; // offset should be external
-					}
-				}
-			}
+			return (object)array(
+				'success' => 0,
+				'message' => $this->_model->language->get('te_site_error_bad_detail_request'),
+			);
 		}
 
-		$result = array();
-		$nameColClass = "col-xs-4 col-sm-4 col-md-4 col-lg-4";
+		$limit = self::TRANSLATION_ANALITIC_SQL_LIMIT;
+		$textToTranslateRows = $this->getTextToTranslateRows($languageIdFrom, $tableResult->table, $tableResult->pkColumnNames, $textColumnNameParam,
+			$mode, $limit + 1, 0, $langIdToParam, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
 
-		$result[] = "<div class='row'>";
-		$result[] = "	<div class='col-xs-3 col-sm-3 col-md-3 col-lg-3'>{$this->_model->language->get('entity_table')}</div>";
-		$result[] = "	<div class='col-xs-3 col-sm-3 col-md-3 col-lg-3'>{$this->_model->language->get('entity_column')}</div>";
-		$result[] = "	<div class='col-xs-3 col-sm-3 col-md-3 col-lg-3'>{$this->_model->language->get('entry_analization_mode')}</div>";
-		$result[] = "</div>";
-		$result[] = "<div class='row'>";
-		$result[] = "	<div class='col-xs-3 col-sm-3 col-md-3 col-lg-3'>{$tableName}</div>";
-		$result[] = "	<div class='col-xs-3 col-sm-3 col-md-3 col-lg-3'>{$textColumnNameParam}</div>";
-        $result[] = "   <div class='col-xs-3 col-sm-3 col-md-3 col-lg-3'>{$this->_model->language->get('value_analization_mode_'.$mode)}</div>";
-		$result[] = "</div>";
-		$result[] = "<br><br>";
-		if (count($textToTranslateRows) > 0)
+		$hasMore = 0;
+		if (count($textToTranslateRows) > $limit)
 		{
-			$imageHtmlTo = $this->buildHtmlToLanguageImage($langIdToParam, $currLanguage['code']);
-			$imageHtmlFrom = $this->buildHtmlToLanguageImage($textToTranslateRows[0]['language_id_from'],
-				$textToTranslateRows[0]['language_code_from']);
-			$idColumnsCount = count($textToTranslateRows[0]) - 7;
-			$idColumns = array_slice($textToTranslateRows[0], 0, $idColumnsCount);
-			$countTmp = floor(12 / ($idColumnsCount + 2));
-			$colClass = "col-xs-{$countTmp} col-sm-{$countTmp} col-md-{$countTmp} col-lg-{$countTmp}";
-			$result[] = "<div class='row'>";
-			foreach($idColumns as $key => $value)
-				$result[] = "	<div class='{$colClass}'>{$key}</div>";
-			$result[] = "	<div class='{$colClass}'>{$imageHtmlFrom}</div>";
-			$result[] = "	<div class='{$colClass}'>{$imageHtmlTo}</div>";
-			$result[] = "</div>";
-			foreach($textToTranslateRows as $textToTranslateRow)
+			$hasMore = 1;
+			$textToTranslateRows = array_slice($textToTranslateRows, 0, $limit);
+		}
+
+		$idColumns = array_values($tableResult->pkColumnNames);
+		$rows = array();
+		foreach($textToTranslateRows as $textToTranslateRow)
+		{
+			$ids = array();
+			foreach($idColumns as $idColumn)
 			{
-				$idColumns = array_slice($textToTranslateRow, 0, $idColumnsCount);
-				$result[] = "<div class='row'>";
-				foreach($idColumns as $key => $value)
-					$result[] = "	<div class='{$colClass}'>{$value}</div>";
-				$result[] = "	<div class='{$colClass}'>{$textToTranslateRow['text_from']}</div>";
-				$result[] = "	<div class='{$colClass}'>{$textToTranslateRow['text_to']}</div>";
-				$result[] = "</div>";
+				$value = isset($textToTranslateRow[$idColumn]) ? $textToTranslateRow[$idColumn] : '';
+				$ids[$idColumn] = (is_string($value) && preg_match('/^[0-9]+$/', $value)) ? (int)$value : $value;
 			}
+			$rows[] = array(
+				'ids' => $ids,
+				'textFrom' => html_entity_decode((string)$textToTranslateRow['text_from'], ENT_QUOTES, 'UTF-8'),
+				'textTo' => html_entity_decode((string)(isset($textToTranslateRow['text_to']) ? $textToTranslateRow['text_to'] : ''), ENT_QUOTES, 'UTF-8'),
+				'count' => (int)$textToTranslateRow['value_count'],
+			);
 		}
 
 		$this->gebugLog('analizeTableDetail: ============FINISH============', $startTime);
 		return (object)array(
 			'success' => 1,
-			'result' => implode('', $result),
+			'table' => $tableName,
+			'column' => $textColumnNameParam,
+			'mode' => $mode,
+			'languageFrom' => $languageFrom,
+			'languageTo' => $languageTo,
+			'idColumns' => $idColumns,
+			'rows' => $rows,
+			'hasMore' => $hasMore,
 		);
 	}
 
@@ -149,136 +119,60 @@ class LibraryClientTranslateExpertCore
 
 		$analizeInfo = $this->getTablesToTranslateAnalizationInfo($languageIdFrom, $languageIdTo, $mode, $filterTable, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $continueAfterTable, $continueAfterColumn, $continueOffset);
 
-		$start = microtime(true);
+		if (empty($analizeInfo->success))
+		{
+			return (object)array(
+				'success' => 0,
+				'message' => isset($analizeInfo->message) ? $analizeInfo->message : '',
+			);
+		}
 
-		if (is_null($mode))
-			$mode = 'both';
-
-		$this->loadLanguage($this->_modulePrefix . '/client_translate_expert');
-
-		$languages = $this->getLanguages();
-		$nameColClass = "col-xs-4 col-sm-4 col-md-4 col-lg-4";
-		$langColumnSize = intval((12 - 4) / (count($languages) + 1));
-		$langColClass = "col-xs-{$langColumnSize} col-sm-{$langColumnSize} col-md-{$langColumnSize} col-lg-{$langColumnSize}";
-
-		$result = array();
+		$tables = array();
 		foreach($analizeInfo->tablesResult as $tableResult)
 		{
-			$tableResultHeaderHTML = array('<br><br>');
-			$tableResultColumns = array();
-
-		    //$tableResultHeaderHTML[] = '<div>Primari key Columns: ' . implode(', ', $tableResult->pkRealColumnNames) . '</div>';
-		    //$tableResultHeaderHTML[] = '<div>tableTranslationIsSuppported: ' . ($tableResult->tableTranslationIsSuppported ? 'Yes' : 'No') . '</div>';
-			$tableResultHeaderHTML[] = "<div class='row'><div class='{$nameColClass}'>{$this->_model->language->get('entity_table')}</div></div>";
-
-			$titleTable = str_replace(array('{table}'), array($tableResult->table), $this->_model->language->get('title_translate_table'));
-			$tableButtonId = $tableResult->table . '_globalCharCount';
-			$tableButton = $this->buildHtmlTranslateTableButton($languageIdFrom, $tableResult->table, $titleTable, $mode, $tableResult->tableCharCount, null, null,
-				$product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, null, $tableButtonId);
-			$tableResultHeaderHTML[] = str_replace(array('{table}'), array($tableResult->table), $this->_model->language->get('message_analize_table_head_info'));
-			$tableResultHeaderHTML[count($tableResultHeaderHTML) - 1] = "
-				<div class='{$nameColClass}'>{$tableResultHeaderHTML[count($tableResultHeaderHTML) - 1]}</div>
-				<!--div class='{$langColClass}'>{$tableButton}</div-->";
-			// $tableResultHeaderHTML[] = 'Columns: ' . implode(', ', $columnInfos);
-
+			$tableCharCount = (int)$tableResult->tableCharCount;
 			foreach($tableResult->tableLanguageCharCounts as $langIdTo => $value)
 			{
-				if ($languageIdTo != $langIdTo)
-					continue;
-				$tableLangButtonId = $tableResult->table . '_CharCount_' . $value['code'];
-				$countStr = $this->buildHtmlTranslateTableButton($languageIdFrom, $tableResult->table, $titleTable, $mode, $value['char_count'], null, $langIdTo,
-					$product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $value, $tableLangButtonId);
-				$tableResultHeaderHTML[count($tableResultHeaderHTML) - 1] .= "<div class='{$langColClass}'>{$countStr}</div>";
+				if ($languageIdTo == $langIdTo)
+					$tableCharCount = (int)$value['char_count'];
 			}
-			$tableResultHeaderHTML[count($tableResultHeaderHTML) - 1] = "<div class='row'>{$tableResultHeaderHTML[count($tableResultHeaderHTML) - 1]}</div>";
-			$tableResultHeaderHTML = implode('', $tableResultHeaderHTML);
 
+			$columns = array();
 			foreach($tableResult->textColumnNames as $textColumnName)
 			{
 				if (isset($tableResult->tableFieldCharCounts[$textColumnName])
 					&& $tableResult->tableFieldCharCounts[$textColumnName] > 0)
 				{
-					$tableResultColumnHTML = array();
-
-					$titleTableColumn = str_replace(array('{table}', '{textColumnName}'), array($tableResult->table, $textColumnName), $this->_model->language->get('title_translate_table_column'));
-					$columnButtonId = $tableResult->table . '_' . $textColumnName . '_globalCharCount';
-					$columnCountStr = $this->buildHtmlTranslateTableButton($languageIdFrom, $tableResult->table, $titleTableColumn, $mode, $tableResult->tableFieldCharCounts[$textColumnName], $textColumnName, null,
-						$product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, null, $columnButtonId);
-					$tableResultColumnHTML[] = str_replace(array('{table}', '{textColumnName}'), array($tableResult->table, $textColumnName), $this->_model->language->get('message_analize_field_head_info'));
-					$tableResultColumnHTML[count($tableResultColumnHTML) - 1] = "
-						<div class='{$nameColClass}'>{$tableResultColumnHTML[count($tableResultColumnHTML) - 1]}</div>
-						<!--div class='{$langColClass}'>{$columnCountStr}</div-->";
+					$columnCharCount = (int)$tableResult->tableFieldCharCounts[$textColumnName];
 					foreach($tableResult->tableFieldLanguageCharCounts[$textColumnName] as $langIdTo => $value)
 					{
-						if ($languageIdTo != $langIdTo)
-							continue;
-						$columnLangButtonId = $tableResult->table . '_' . $textColumnName . '_CharCount_' . $value['code'];
-						$countStr = $this->buildHtmlTranslateTableButton($languageIdFrom, $tableResult->table, $titleTableColumn, $mode, $value['char_count'], $textColumnName, $langIdTo,
-							$product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $value, $columnLangButtonId);
-						$tableResultColumnHTML[count($tableResultColumnHTML) - 1] .= "<div class='{$langColClass}'>{$countStr}</div>";
+						if ($languageIdTo == $langIdTo)
+							$columnCharCount = (int)$value['char_count'];
 					}
-					$tableResultColumnHTML[count($tableResultColumnHTML) - 1] = "<div class='row'>{$tableResultColumnHTML[count($tableResultColumnHTML) - 1]}</div>";
-					$tableResultColumnHTML = implode('', $tableResultColumnHTML);
-					$tableResultColumns[] = (object)array(
-						'column' => $textColumnName,
-						'html' => $tableResultColumnHTML,
-						'columnCharCount' => $tableResult->tableFieldCharCounts[$textColumnName],
-						'languageCharCounts' => $tableResult->tableFieldLanguageCharCounts[$textColumnName]
-					);
+					$columns[] = array('column' => $textColumnName, 'charCount' => $columnCharCount);
 				}
 			}
 
-			$result[] = (object)array(
+			$tables[] = array(
 				'table' => $tableResult->table,
-				'headerHTML' => $tableResultHeaderHTML,
-				'languageCharCounts' => $tableResult->tableLanguageCharCounts,
-				'tableCharCount' => $tableResult->tableCharCount,
-				'columns' => $tableResultColumns,
+				'supported' => $tableResult->tableTranslationIsSuppported ? 1 : 0,
+				'charCount' => $tableCharCount,
+				'columns' => $columns,
 			);
 		}
-
-		$timeInSecInfo = str_replace('{timeInSec}', $analizeInfo->timeInSec, $this->_model->language->get('entry_time_in_sec'));
-
-		$titleAllTables = $this->_model->language->get('title_translate_all_tables');
-		$analizeHeadInfo = $this->_model->language->get('message_analize_global_info');
-		$analizeHeadInfo = "
-			<div class='{$nameColClass}'>{$analizeHeadInfo}</div>
-			<!--div class='{$langColClass}'>{$this->buildHtmlTranslateTableButton($languageIdFrom, 'all', $titleAllTables, $mode, $analizeInfo->globalCharCount, null, null, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, null, 'globalCharCount')}</div-->";
-		$languageHeaderColumns = '';
-		foreach($analizeInfo->globalLanguageCharCounts as $langIdTo => $value)
-		{
-			if ($languageIdTo != $langIdTo)
-				continue;
-			$languageHeaderColumns .= "<div class='{$langColClass}'>" . $this->buildHtmlToLanguageImage($langIdTo, $value['code']) . "</div>";
-			$analizeHeadInfo .= "<div class='{$langColClass}'>"
-				. $this->buildHtmlTranslateTableButton($languageIdFrom, 'all', $titleAllTables, $mode, $value['char_count'], null, $langIdTo, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id, $value, "globalLangCharCount{$value['code']}")
-				. "</div>";
-		}
-
-		$analizeHeadInfo = "
-			<div class='row'>
-				<div class='{$nameColClass}'>{$this->_model->language->get('entry_name')}</div>
-				<!--div class='{$langColClass}'>{$this->_model->language->get('entry_summ')}</div-->
-				{$languageHeaderColumns}
-			</div>
-			<br>
-			<div class='row'>{$analizeHeadInfo}</div>";
 
 		$this->gebugLog('analize: ============FINISH============', $startTime);
 
 		return (object)array(
-			'success' => $analizeInfo->success,
-			'done' => $analizeInfo->done,
-			'globalCharCount' => $analizeInfo->globalCharCount,
-			'globalLanguageCharCounts' => $analizeInfo->globalLanguageCharCounts,
-			'analizeHeadInfo' => $analizeHeadInfo,
-			'result' => $result,
-			'tables' => $analizeInfo->tablesResult,
-			'timeInSec' => $analizeInfo->timeInSec,
-			'timeInSecInfo' => $timeInSecInfo,
+			'success' => 1,
+			'done' => $analizeInfo->done ? 1 : 0,
+			'target' => $this->buildLanguageObject((int)$languageIdTo),
+			'globalCharCount' => (int)$analizeInfo->globalCharCount,
+			'timeInSec' => (float)$analizeInfo->timeInSec,
+			'tables' => $tables,
 			'lastProcessedTable' => $analizeInfo->lastProcessedTable,
 			'lastProcessedColumn' => $analizeInfo->lastProcessedColumn,
-			'lastProcessedOffset' => $analizeInfo->lastProcessedOffset
+			'lastProcessedOffset' => (int)$analizeInfo->lastProcessedOffset,
 		);
 	}
 
@@ -345,12 +239,7 @@ class LibraryClientTranslateExpertCore
 
 		return (object)array(
 			'success' => 1,
-			'target' => array(
-				'language_id' => (int)$targetLanguage['language_id'],
-				'code' => $targetLanguage['code'],
-				'name' => html_entity_decode($targetLanguage['name'], ENT_QUOTES, 'UTF-8'),
-				'image' => $this->getLangImgUrl($targetLanguage['code']),
-			),
+			'target' => $this->buildLanguageObject($languageIdTo),
 			'steps' => $steps,
 			'timeInSec' => $timeInSec,
 		);
@@ -460,12 +349,6 @@ INNER JOIN (
 		$this->gebugLog('insertTranslatedTableTextValue: ============FINISH============', $startTime);
 	}
 
-	protected function buildHtmlToLanguageImage($langIdTo, $langCodeTo) {
-		$title = "{$this->_model->language->get('title_not_translater_char_count')} {$langCodeTo} (id:{$langIdTo})";
-		$langImgUrl = $this->getLangImgUrl($langCodeTo);
-		return "<img src='{$langImgUrl}' alt='{$title}' title='{$title}'>";
-	}
-
 	protected function normalizeList($value)
 	{
 		if (is_array($value))
@@ -491,43 +374,6 @@ INNER JOIN (
 		if (count($filterTables) == 0)
 			return $this->getTables();
 		return array_values(array_intersect($this->getTables(), $filterTables));
-	}
-
-	protected function buildHtmlTranslateTableButton($langIdFrom, $tableName, $title, $mode, $charCount, $textColumnName = null, $langIdTo = null,
-		$product_status = false, $product_quantity = false, $product_category_id = null, $stock_status = null, $manufacturer_id = null, $value = null, $countId = null)
-	{
-		$server = HTTP_SERVER;
-		$customStyleAttr = "style='background-image: url({$server}view/image/translate_expert_client/translate-icon-32.png);'";
-
-		if (!is_null($langIdTo))
-		{
-			$titleLangSuffix = str_replace(
-				array('{langCode}'),
-				array($value['code']),
-				$this->_model->language->get('title_translate_to_lang_suffix')
-			);
-			$title = $title . $titleLangSuffix;
-		}
-
-		$categoryIdsParam = implode(',', $this->normalizeIdList($product_category_id));
-		$stockStatusParam = implode(',', $this->normalizeIdList($stock_status));
-		$manufacturerIdsParam = implode(',', $this->normalizeIdList($manufacturer_id));
-
-		$confirmation = str_replace(array('{translateTableTitle}'), array($title), $this->_model->language->get('title_translate_table_confirmation'));
-		$translateOnclick = 'doTranslateTableExpert("' . $langIdFrom . '", "' . $mode . '", "' . $tableName . '", "' . $textColumnName . '", "' . $langIdTo . '", "' . $product_status . '", "' . $product_quantity . '", "' . $categoryIdsParam . '", "' . $stockStatusParam . '", "' . $manufacturerIdsParam . '", "' . $confirmation . '")';
-
-		$aTabBegin = $aTabEnd = "";
-		if (!is_null($textColumnName) && !is_null($langIdTo))
-		{
-			$detailOnclick = 'analizeTableDetail("' . $langIdFrom . '", "' . $mode . '", "' . $tableName . '", "' . $textColumnName . '", "' . $langIdTo . '", "' . $product_status . '", "' . $product_quantity . '", "' . $categoryIdsParam . '", "' . $stockStatusParam . '", "' . $manufacturerIdsParam . '"); return false;';
-			$aTabBegin = "<a onclick='{$detailOnclick}' href='#'>";
-			$aTabEnd = "</a>";
-		}
-
-		$idAttr = is_null($countId) ? '' : "id={$countId}";
-
-		return "{$aTabBegin}<strong {$idAttr} title='{$this->_model->language->get('title_not_translater_char_count')}'>{$charCount}</strong>{$aTabEnd} " .
-			"<input type='button' class='translate_button' {$customStyleAttr} title='{$title}' onclick='{$translateOnclick}'>";
 	}
 
 	protected function initLanguageCharCountsArray($languages) {
@@ -836,6 +682,23 @@ INNER JOIN (
 			return 'view/image/flags/' . $this->getLangImageName($langCode);
 		else
 			return "language/{$langCode}/{$langCode}.png";
+	}
+
+	public function buildLanguageObject($languageId)
+	{
+		foreach($this->getLanguages() as $language)
+		{
+			if ((int)$language['language_id'] === (int)$languageId)
+			{
+				return array(
+					'language_id' => (int)$language['language_id'],
+					'code' => $language['code'],
+					'name' => html_entity_decode($language['name'], ENT_QUOTES, 'UTF-8'),
+					'image' => $this->getLangImgUrl($language['code']),
+				);
+			}
+		}
+		return null;
 	}
 
 	protected function getLangImageName($langCode)

@@ -42,6 +42,24 @@
             <li class="nav-item"><a href="#tab-about" class="nav-link" data-bs-toggle="tab">{{ tab_about }}</a></li>
           </ul>
 
+          <div class="te-app te-langbar-wrap" id="te-langbar-app">
+            <div class="te-langbar te-hidden">
+              <label for="te-langbar-from">{{ te_site_lang_from }}</label>
+              <select id="te-langbar-from" class="form-select te-langbar__select">
+                {% for language in languages %}
+                <option value="{{ language.language_id }}" {% if te_langIdFrom == language.language_id %}selected="selected"{% endif %}>{{ language.name }}</option>
+                {% endfor %}
+              </select>
+              <button type="button" class="btn btn-outline-secondary te-js-langbar-swap" title="{{ te_site_lang_swap|e('html_attr') }}" aria-label="{{ te_site_lang_swap|e('html_attr') }}"><i class="fa-solid fa-right-left" aria-hidden="true"></i></button>
+              <label for="te-langbar-to">{{ te_site_lang_to }}</label>
+              <select id="te-langbar-to" class="form-select te-langbar__select">
+                {% for language in languages %}
+                <option value="{{ language.language_id }}" {% if (te_langIdTo is empty and loop.index0 == 1) or (te_langIdTo is not empty and te_langIdTo == language.language_id) %}selected="selected"{% endif %}>{{ language.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
           <div class="tab-content">
             <div class="tab-pane {{ tab_general_class }}" id="tab-general">
               <div class="mb-3 row">
@@ -126,115 +144,111 @@
               </div>
             </div>
             <div class="tab-pane" id="tab-translate-site">
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-analization-mode">{{ entry_analization_mode }}</label>
-                <div class="col-sm-10">
-                  <select id="te-analization-mode" class="form-select">
-                    <option value="both" {% if te_mode == 'both' %}selected="selected"{% endif %}>{{ value_analization_mode_both }}</option>
-                    <option value="only_empty" {% if te_mode == 'only_empty' %}selected="selected"{% endif %}>{{ value_analization_mode_only_empty }}</option>
-                    <option value="same_value" {% if te_mode == 'same_value' %}selected="selected"{% endif %}>{{ value_analization_mode_same_value }}</option>
-                  </select>
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-analization-table">{{ entry_table }}</label>
-                <div class="col-sm-10">
-                  <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-table" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-table">{{ button_clear_selection }}</button></div>
-                  <select id="te-analization-table" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="6" class="form-select">
-                    {% for table in tables %}
-                    <option value="{{ table }}" {% if table in te_table %}selected="selected"{% endif %}>{{ table }}</option>
-                    {% endfor %}
-                  </select>
-                  <div class="form-text">{{ help_multi_select }}</div><div class="form-text te-multi-select-limit" style="display:none">{{ help_multi_select_limit }}</div>
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-analization-language-from">{{ entry_analization_language_from }}</label>
-                <div class="col-sm-10">
-                  <select id="te-analization-language-from" class="form-select">
-                    {% for language in languages %}
-                    <option value="{{ language.language_id }}" {% if te_langIdFrom == language.language_id %}selected="selected"{% endif %}>{{ language.name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-analization-language-to">{{ entry_analization_language_to }}</label>
-                <div class="col-sm-10">
-                  <select id="te-analization-language-to" class="form-select" onchange="$('#te-begin-removing_data_from_db').val('{{ entity_begin_removing_data_from_db }} - ' + this.options[this.selectedIndex].text)">
-                    {% for language in languages %}
-                    <option value="{{ language.language_id }}" {% if (te_langIdTo is empty and loop.index0 == 1) or (te_langIdTo is not empty and te_langIdTo == language.language_id) %}selected="selected"{% endif %}>{{ language.name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-analization-table-deep">{{ entry_table_deep }}</label>
-                <div class="col-sm-10">
-                  <input type="checkbox" id="te-analization-table-deep" value="1" checked="checked" class="form-check-input"> {{ entry_table_deep_description }}
-                </div>
-              </div>
-
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-analization-product-status-filter">{{ entry_table_product_filter }}</label>
-                <div class="col-sm-10">
-                  <input type="checkbox" id="te-analization-product-status-filter" value="1" class="form-check-input" {% if te_product_status %}checked="checked"{% endif %}> {{ entry_table_product_status_filter }}<br><br>
-                  <input type="checkbox" id="te-analization-product-quantity-filter" value="1" class="form-check-input" {% if te_product_quantity %}checked="checked"{% endif %}> {{ entry_table_product_quantity_filter }}<br><br>
-                  <label class="form-label" for="te-analization-product-category-id-filter">{{ entry_table_product_category_id_filter }}</label>
-                  <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-category-id-filter" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-category-id-filter">{{ button_clear_selection }}</button></div>
-                  <select id="te-analization-product-category-id-filter" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="6" class="form-select mb-2">
-                    {% for category in categories %}
-                    <option value="{{ category.category_id }}" {% if category.category_id in te_product_category_id %}selected="selected"{% endif %}>{{ category.name }}</option>
-                    {% endfor %}
-                  </select>
-                  <div class="form-text">{{ help_multi_select }}</div><div class="form-text te-multi-select-limit" style="display:none">{{ help_multi_select_limit }}</div><br>
-                  <label class="form-label" for="te-analization-product-stock-status-filter">{{ entry_table_product_stock_status_filter }}</label>
-                  <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-stock-status-filter" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-stock-status-filter">{{ button_clear_selection }}</button></div>
-                  <select id="te-analization-product-stock-status-filter" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="6" class="form-select mb-2">
-                    {% for stock_status in stock_statuses %}
-                    <option value="{{ stock_status.stock_status_id }}" {% if stock_status.stock_status_id in te_stock_status %}selected="selected"{% endif %}>{{ stock_status.name }}</option>
-                    {% endfor %}
-                  </select>
-                  <div class="form-text">{{ help_multi_select }}</div><div class="form-text te-multi-select-limit" style="display:none">{{ help_multi_select_limit }}</div><br>
-                  <label class="form-label" for="te-analization-product-manufacturer-filter">{{ entry_table_product_manufacturer_filter }}</label>
-                  <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-manufacturer-filter" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-manufacturer-filter">{{ button_clear_selection }}</button></div>
-                  <select id="te-analization-product-manufacturer-filter" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="6" class="form-select mb-2">
-                    {% for manufacturer in manufacturers %}
-                    <option value="{{ manufacturer.manufacturer_id }}" {% if manufacturer.manufacturer_id in te_manufacturer_id %}selected="selected"{% endif %}>{{ manufacturer.name }}</option>
-                    {% endfor %}
-                  </select>
-                  <div class="form-text">{{ help_multi_select }}</div><div class="form-text te-multi-select-limit" style="display:none">{{ help_multi_select_limit }}</div><br>
-                </div>
-              </div>
-
-              <div class="mb-3 row" id="te-cron-link-panel" data-cron-url="{{ te_cron_url|e('html_attr') }}" data-te-max-length="{{ te_cron_link_max_length }}">
-                <label class="col-sm-2 form-label" for="te-cron-link">{{ entry_cron_link }}</label>
-                <div class="col-sm-10">
-                  <input type="text" readonly="readonly" id="te-cron-link" class="form-control" value=""{% if not te_cron_secret_valid %} style="display:none"{% endif %} />
-                  <div class="form-text" id="te-cron-link-help"{% if not te_cron_secret_valid %} style="display:none"{% endif %}>{{ help_cron_link }}</div>
-                  <div class="text-danger" id="te-cron-link-error"{% if te_cron_secret_valid %} style="display:none"{% endif %}>{{ error_cron_secret }}</div>
-                  <div class="text-warning" id="te-cron-link-long" style="display:none">{{ warning_cron_link_long }}</div>
-                </div>
-              </div>
-
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-begin-analization">{{ entry_analization }}</label>
-                <div class="col-sm-10">
-                  <input type="button" id="te-begin-analization" value="{{ entity_begin_analization }}" class="btn btn-primary">
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-remove-translation" style="color:red">{{ entry_remove_translation_records_from_db }}</label>
-                <div class="col-sm-10">
-                  <input type="button" id="te-begin-removing_data_from_db" value="{{ entity_begin_removing_data_from_db }}" class="btn btn-danger">
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="input-client_translate_expert_status">{{ entry_analization_result }}</label>
-                <div class="col-sm-10">
-                  <div id="te-analization-result">
+              {% set te_mode_value = te_mode in ['only_empty', 'same_value'] ? te_mode : 'both' %}
+              <div class="te-app" id="te-site-app">
+                <div class="te-alerts" id="te-site-alerts"></div>
+                <div class="te-card">
+                  <div class="te-card__head">{{ te_site_card_what }}</div>
+                  <div class="te-card__body">
+                    <div class="te-form">
+                      <div class="te-field">
+                        <span class="te-field__label">{{ entry_analization_mode }}</span>
+                        <div class="te-field__control te-radio-group">
+                          <div class="form-check form-check-inline"><input type="radio" class="form-check-input" name="te-analization-mode" form="te-no-form" id="te-analization-mode-both" value="both" {% if te_mode_value == 'both' %}checked="checked"{% endif %}> <label class="form-check-label" for="te-analization-mode-both">{{ value_analization_mode_both }}</label></div>
+                          <div class="form-check form-check-inline"><input type="radio" class="form-check-input" name="te-analization-mode" form="te-no-form" id="te-analization-mode-only-empty" value="only_empty" {% if te_mode_value == 'only_empty' %}checked="checked"{% endif %}> <label class="form-check-label" for="te-analization-mode-only-empty">{{ value_analization_mode_only_empty }}</label></div>
+                          <div class="form-check form-check-inline"><input type="radio" class="form-check-input" name="te-analization-mode" form="te-no-form" id="te-analization-mode-same-value" value="same_value" {% if te_mode_value == 'same_value' %}checked="checked"{% endif %}> <label class="form-check-label" for="te-analization-mode-same-value">{{ value_analization_mode_same_value }}</label></div>
+                        </div>
+                      </div>
+                      <div class="te-field">
+                        <label class="te-field__label" for="te-analization-table">{{ entry_table }}</label>
+                        <div class="te-field__control">
+                          <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-table" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-table">{{ button_clear_selection }}</button></div>
+                          <select id="te-analization-table" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="6" class="form-select">
+                            {% for table in tables %}
+                            <option value="{{ table }}" {% if table in te_table %}selected="selected"{% endif %}>{{ table }}</option>
+                            {% endfor %}
+                          </select>
+                          <div class="form-text">{{ help_multi_select }}</div><div class="form-text te-multi-select-limit" style="display:none">{{ help_multi_select_limit }}</div>
+                        </div>
+                      </div>
+                      <div class="te-field">
+                        <label class="te-field__label" for="te-analization-table-deep">{{ entry_table_deep }}</label>
+                        <div class="te-field__control">
+                          <div class="form-check"><input type="checkbox" id="te-analization-table-deep" value="1" checked="checked" class="form-check-input"> <label class="form-check-label" for="te-analization-table-deep">{{ entry_table_deep_description }}</label></div>
+                        </div>
+                      </div>
+                      <div class="te-field">
+                        <span class="te-field__label"></span>
+                        <div class="te-field__control">
+                          <button type="button" class="te-collapse-toggle te-js-collapse" data-te-target="#te-site-more-filters" aria-expanded="false" aria-controls="te-site-more-filters">{{ te_site_more_filters }}</button>
+                        </div>
+                      </div>
+                      <div class="te-form te-hidden" id="te-site-more-filters">
+                        <div class="te-field">
+                          <span class="te-field__label">{{ entry_table_product_filter }}</span>
+                          <div class="te-field__control">
+                            <div class="form-check"><input type="checkbox" id="te-analization-product-status-filter" value="1" class="form-check-input" {% if te_product_status %}checked="checked"{% endif %}> <label class="form-check-label" for="te-analization-product-status-filter">{{ entry_table_product_status_filter }}</label></div>
+                            <div class="form-check"><input type="checkbox" id="te-analization-product-quantity-filter" value="1" class="form-check-input" {% if te_product_quantity %}checked="checked"{% endif %}> <label class="form-check-label" for="te-analization-product-quantity-filter">{{ entry_table_product_quantity_filter }}</label></div>
+                          </div>
+                        </div>
+                        <div class="te-field">
+                          <label class="te-field__label" for="te-analization-product-category-id-filter">{{ entry_table_product_category_id_filter }}</label>
+                          <div class="te-field__control">
+                            <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-category-id-filter" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-category-id-filter">{{ button_clear_selection }}</button></div>
+                            <select id="te-analization-product-category-id-filter" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="6" class="form-select mb-2">
+                              {% for category in categories %}
+                              <option value="{{ category.category_id }}" {% if category.category_id in te_product_category_id %}selected="selected"{% endif %}>{{ category.name }}</option>
+                              {% endfor %}
+                            </select>
+                            <div class="form-text">{{ help_multi_select }}</div><div class="form-text te-multi-select-limit" style="display:none">{{ help_multi_select_limit }}</div>
+                          </div>
+                        </div>
+                        <div class="te-field">
+                          <label class="te-field__label" for="te-analization-product-stock-status-filter">{{ entry_table_product_stock_status_filter }}</label>
+                          <div class="te-field__control">
+                            <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-stock-status-filter" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-stock-status-filter">{{ button_clear_selection }}</button></div>
+                            <select id="te-analization-product-stock-status-filter" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="6" class="form-select mb-2">
+                              {% for stock_status in stock_statuses %}
+                              <option value="{{ stock_status.stock_status_id }}" {% if stock_status.stock_status_id in te_stock_status %}selected="selected"{% endif %}>{{ stock_status.name }}</option>
+                              {% endfor %}
+                            </select>
+                            <div class="form-text">{{ help_multi_select }}</div><div class="form-text te-multi-select-limit" style="display:none">{{ help_multi_select_limit }}</div>
+                          </div>
+                        </div>
+                        <div class="te-field">
+                          <label class="te-field__label" for="te-analization-product-manufacturer-filter">{{ entry_table_product_manufacturer_filter }}</label>
+                          <div class="te-field__control">
+                            <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-manufacturer-filter" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-manufacturer-filter">{{ button_clear_selection }}</button></div>
+                            <select id="te-analization-product-manufacturer-filter" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="6" class="form-select mb-2">
+                              {% for manufacturer in manufacturers %}
+                              <option value="{{ manufacturer.manufacturer_id }}" {% if manufacturer.manufacturer_id in te_manufacturer_id %}selected="selected"{% endif %}>{{ manufacturer.name }}</option>
+                              {% endfor %}
+                            </select>
+                            <div class="form-text">{{ help_multi_select }}</div><div class="form-text te-multi-select-limit" style="display:none">{{ help_multi_select_limit }}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="te-toolbar">
+                      <button type="button" id="te-begin-analization" class="btn btn-primary" title="{{ entry_analization|e('html_attr') }}">{{ entity_begin_analization }}</button>
+                      <span class="te-toolbar__spacer"></span>
+                      <button type="button" id="te-begin-removing_data_from_db" class="btn btn-danger" data-te-label="{{ entity_begin_removing_data_from_db|e('html_attr') }}" title="{{ entry_remove_translation_records_from_db|e('html_attr') }}">{{ entity_begin_removing_data_from_db }}</button>
+                    </div>
                   </div>
                 </div>
+                <div class="te-card">
+                  <div class="te-card__head">
+                    <button type="button" class="te-collapse-toggle te-js-collapse" data-te-target="#te-cron-link-panel" aria-expanded="false" aria-controls="te-cron-link-panel">{{ entry_cron_link }}</button>
+                  </div>
+                  <div class="te-card__body te-hidden" id="te-cron-link-panel" data-cron-url="{{ te_cron_url|e('html_attr') }}" data-te-max-length="{{ te_cron_link_max_length }}">
+                    <input type="text" readonly="readonly" id="te-cron-link" class="form-control" value=""{% if not te_cron_secret_valid %} style="display:none"{% endif %} />
+                    <div class="form-text" id="te-cron-link-help"{% if not te_cron_secret_valid %} style="display:none"{% endif %}>{{ help_cron_link }}</div>
+                    <div class="text-danger" id="te-cron-link-error"{% if te_cron_secret_valid %} style="display:none"{% endif %}>{{ error_cron_secret }}</div>
+                    <div class="text-warning" id="te-cron-link-long" style="display:none">{{ warning_cron_link_long }}</div>
+                  </div>
+                </div>
+                <div class="te-progress te-hidden" id="te-site-progress" role="status" aria-live="polite"></div>
+                <div id="te-analization-result"></div>
               </div>
             </div>
 
@@ -242,26 +256,6 @@
 
 
             <div class="tab-pane" id="tab-localization">
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-localization-language-from">{{ entry_localization_language_from }}</label>
-                <div class="col-sm-10">
-                  <select id="te-localization-language-from" class="form-select">
-                    {% for language in languages %}
-                    <option value="{{ language.language_id }}" {% if te_langIdFrom == language.language_id %}selected="selected"{% endif %}>{{ language.name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-localization-language-to">{{ entry_localization_language_to }}</label>
-                <div class="col-sm-10">
-                  <select id="te-localization-language-to" class="form-select">
-                    {% for language in languages %}
-                    <option value="{{ language.language_id }}" {% if (te_langIdTo is empty and loop.index0 == 1) or (te_langIdTo is not empty and te_langIdTo == language.language_id) %}selected="selected"{% endif %}>{{ language.name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
               <div class="mb-3 row">
                 <label class="col-sm-2 form-label" for="te-begin-localization-analization">{{ entry_localization_analization }}</label>
                 <div class="col-sm-10">
@@ -279,26 +273,6 @@
 
 
             <div class="tab-pane" id="tab-admin-localization">
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-admin-localization-language-from">{{ entry_localization_language_from }}</label>
-                <div class="col-sm-10">
-                  <select id="te-admin-localization-language-from" class="form-select">
-                    {% for language in languages %}
-                    <option value="{{ language.language_id }}" {% if te_langIdFrom == language.language_id %}selected="selected"{% endif %}>{{ language.name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-admin-localization-language-to">{{ entry_localization_language_to }}</label>
-                <div class="col-sm-10">
-                  <select id="te-admin-localization-language-to" class="form-select">
-                    {% for language in languages %}
-                    <option value="{{ language.language_id }}" {% if (te_langIdTo is empty and loop.index0 == 1) or (te_langIdTo is not empty and te_langIdTo == language.language_id) %}selected="selected"{% endif %}>{{ language.name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
               <div class="mb-3 row">
                 <label class="col-sm-2 form-label" for="te-begin-admin-localization-analization">{{ entry_localization_analization }}</label>
                 <div class="col-sm-10">
@@ -411,14 +385,9 @@
 </div>
 <!-- js constants -->
 <script>
-	document.js_const_done_status = "{{ js_const_done_status|raw }}";
-	document.js_const_in_progress_status = "{{ js_const_in_progress_status|raw }}";
-	document.js_const_statistic_html = "{{ js_const_statistic_html|replace({"\n": "", "\r": ""})|raw }}";
-	document.js_const_analization_process_is_started = "{{ js_const_analization_process_is_started|raw }}";
 	document.js_const_saved = "{{ js_const_saved|raw }}";
 	document.js_const_localization_translate_progress = "{{ js_const_localization_translate_progress|raw }}";
 	document.js_const_localization_translate_done = "{{ js_const_localization_translate_done|raw }}";
-	document.js_const_preparing_detail_info = "{{ js_const_preparing_detail_info|raw }}";
 	// removing
 	document.js_const_entry_remove_translation_records_from_db_confirmation = "{{ entry_remove_translation_records_from_db_confirmation }}";
 	document.js_const_entry_removing_data_from_db_process_is_started = "{{ entry_removing_data_from_db_process_is_started }}";
@@ -444,6 +413,5 @@
 		});
 	})();
 
-	$('#te-analization-language-to').change();
 </script>
 {{ footer }}
