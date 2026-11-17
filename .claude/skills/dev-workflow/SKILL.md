@@ -74,7 +74,7 @@ Ask the user for two models:
 Keep both choices through Phase 0. Write them into the `## Settings` block of the plan when Phase 1 creates the file. The choices apply for the rest of the task, across sessions, unless the user changes them.
 
 **To apply the choice:**
-- **Planning:** If the planning model is the current session model, write the plan inline as usual. If the user chose a different model, dispatch it with `Agent` (`subagent_type: general-purpose`, `model: <chosen>`). Tell it to write the plan file `docs/tasks/<slug>/<slug>_plan.md` itself and to edit no other file. Do not use `subagent_type: Plan`, because it has no Write tool. The main context must then write the whole plan again, and this costs much context (task 59). Read the plan file for the Phase 1 checkpoint. Planning subagents do not talk to the user directly.
+- **Planning:** If the planning model is the current session model, write the plan inline as usual. If the user chose a different model, dispatch it with `Agent` (`subagent_type: general-purpose`, `model: <chosen>`). Tell it to write the plan file `docs/tasks/<slug>/<slug>_plan.md` itself and to edit no other file. Do not use `subagent_type: Plan`, because it has no Write tool. The main context must then write the whole plan again, and this costs much context (task 59). Read the plan file for the Phase 1 checkpoint. Planning subagents do not talk to the user directly. If a design decision is open, ask the user before you dispatch the planning subagent. Put each answer in the brief as a settled decision (task 77).
 - **Independent review:** `ote-code-reviewer` pins Opus. Pass `model: <chosen>` on Phase 4 and Phase 5 re-review dispatches only when the chosen model differs from that pin.
 
 ### Input parsing
@@ -278,7 +278,7 @@ The agent owns the sequence. Its definition in `.claude/agents/ote-build-test.md
 
 If the task changes `build.sh` or moves a version rule into the code, prove that the packages behave the same (task 68). Do these steps:
 
-1. Build the packages from `origin/main` in a temporary worktree. Remove the worktree after the build.
+1. Build the packages from `origin/main` in a temporary worktree. Remove the worktree after the build. `build.sh` leaves its zips in the root of the worktree, not in `releases/` (task 77).
 2. Build the packages of the branch.
 3. Run a probe for each package with the matching `VERSION`. Compare each value with the literal in the baseline package.
 4. Run `diff -r` for each package. Explain each changed file.
@@ -314,6 +314,7 @@ Dispatch `ote-code-reviewer` (`subagent_type: ote-code-reviewer`). The agent pin
 - If the diff changes CSS for one OpenCart version, an instruction to check the colors against the real admin CSS of that version. Tests cannot find a contrast problem (task 71: the OC 1.5 header is dark blue)
 - Which guards in the diff are safety nets for cases nobody has observed. The reviewer gives them proportionate attention, not worst-case scenario after scenario
 - If the diff changes SQL, an instruction to run the real query on a throwaway MariaDB instance (see Phase 0)
+- If the diff changes a path or a file name that code loads, an instruction to run a mutation probe on the path test. The probe breaks one path in a temporary copy and checks that the test fails. A silent skip, such as an `is_file` check in the OCMOD XML, hides a wrong path (task 77: the first path test passed with a wrong prefix)
 - If the front end builds content that the server parses or writes (for example a PHP language file), an instruction to run a round-trip probe. The probe runs the real JS helpers in jsdom and sends the result through the real server code. Task 59: such a probe found 2 Important findings that the unit tests did not find
 
 The reviewer must NOT see your reasoning.
