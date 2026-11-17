@@ -50,6 +50,7 @@ Edit `sources/` only. `sources_release*/` and `releases/` are build output.
 | Unit + integration tests | `php tests/test_vh_google_translator.php <GOOGLE_API_KEY>` | Use only a key that the user gives you |
 | Route filter unit tests | `php tests/test_client_translate_expert_route_filter.php` | No API key needed. Any PHP warning fails a test |
 | Cron helper unit tests | `php tests/test_client_translate_expert_cron_helper.php` | No API key needed. Any PHP warning fails a test |
+| Controller JSON guard tests | `php tests/test_client_translate_expert_ajax_guard.php` | No DB and no API key needed. Any PHP warning fails a test. It checks the error JSON of `runJsonAction` and the POST check |
 | Header strings tests | `php tests/test_client_translate_expert_i18n.php` | No DB and no API key needed. Any PHP warning fails a test |
 | JS helper tests | `cd tests/js && npm ci && node test_client_translate_expert_js_helpers.js` | Node and npm (allowed by the firewall). jsdom with jQuery 3.7.1 (npm) and 1.7.1 (`tests/js/vendor/`, the OC 1.5 file). `npm ci` is part of the command, so it runs each time |
 | Translate loop tests | `php tests/test_client_translate_expert_translate_loop.php` | No DB and no API key needed. Any PHP warning fails a test |

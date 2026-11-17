@@ -97,6 +97,8 @@ $_['te_settings_card_routes'] = 'Excluded routes';
 $_['te_settings_card_try'] = 'Try a translation';
 $_['te_debug_card_versions'] = 'Versions';
 $_['te_debug_card_cache'] = 'Cache';
+$_['te_cache_reset_done'] = 'Translation cache was reset.';
+$_['te_cache_reset_confirm'] = 'Are you sure you want to reset the translation cache? The module removes the saved translation data.';
 $_['te_about_card'] = 'About the module';
 
 // Value;
@@ -110,6 +112,8 @@ $_['value_analization_mode_both'] = 'Search for empty and identical values';
 // Error;
 $_['error_permission'] = 'You do not have permission to manage this module!';
 $_['error_bad_filter'] = 'The filter values are not valid. Reload the page and select the filters again.';
+$_['error_internal'] = 'Internal error.';
+$_['error_wrong_method'] = 'Wrong request method.';
 $_['error_language_to_required'] = 'Select the language to remove the translations from.';
 $_['te_site_error_bad_detail_request'] = 'The table, the column or the language is not valid.';
 $_['error_width'] =' You must specify the width! ';

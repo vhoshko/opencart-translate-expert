@@ -75,6 +75,7 @@ php tests/test_vh_google_translator.php
 php tests/test_client_translate_expert_route_filter.php
 php tests/test_client_translate_expert_cron_helper.php
 php tests/test_client_translate_expert_translate_loop.php
+php tests/test_client_translate_expert_ajax_guard.php
 php tests/test_oc4_twig_filters.php
 (cd tests/js && npm ci --silent && node test_client_translate_expert_js_helpers.js)
 ```

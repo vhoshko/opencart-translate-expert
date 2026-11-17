@@ -90,6 +90,9 @@ php tests/test_client_translate_expert_cron_helper.php
 # Translate loop tests (row cap, empty results, duplicate texts, time limits, admin batch, analize and detail JSON; no DB, no API key)
 php tests/test_client_translate_expert_translate_loop.php
 
+# Controller JSON guard tests: runJsonAction error JSON for Exception and Error, bad filter result, POST-only removeDataFromDb and resetCache (stubs, no DB, no API key)
+php tests/test_client_translate_expert_ajax_guard.php
+
 # OC4 Twig name check: filters, tests, functions, tags (static, no Twig needed)
 php tests/test_oc4_twig_filters.php
 

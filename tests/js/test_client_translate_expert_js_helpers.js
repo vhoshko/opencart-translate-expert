@@ -290,7 +290,7 @@ function testRemoveLog(w) {
 	check('timeInSec missing shows 0', () => w.teRenderRemoveLog({ steps: [] }).find('.te-log__time').text() === 'Time 0');
 
 	console.log('\nmakeRemovingDataFromDbRequest:');
-	const origGet = w.$.get;
+	const origPost = w.$.post;
 	const origErr = w.showTranslateExpertErrorMessage;
 	const origHide = w.hideTranslateExpertModal;
 	let errCalls = 0;
@@ -299,19 +299,47 @@ function testRemoveLog(w) {
 	w.document.js_const_module_prefix = 'extension/module';
 	const origLog = w.console.log;
 	w.console.log = function() {};
-	w.$.get = function() { return w.$.Deferred().reject({ status: 500 }).promise(); };
+	w.$.post = function() { return w.$.Deferred().reject({ status: 500 }).promise(); };
 	w.makeRemovingDataFromDbRequest();
 	check('a failed request keeps the result area and shows the error', () => w.$('#keep').length === 1 && errCalls === 1);
-	w.$.get = function() { return w.$.Deferred().resolve(data).promise(); };
+	w.$.post = function() { return w.$.Deferred().resolve(data).promise(); };
 	w.makeRemovingDataFromDbRequest();
 	check('a successful request renders the log in the result area', () => w.$('#keep').length === 0 && w.$('#te-analization-result .te-log__line').length === 4);
-	w.$.get = function() { return w.$.Deferred().resolve({ success: 0, message: 'No' }).promise(); };
+	w.$.post = function() { return w.$.Deferred().resolve({ success: 0, message: 'No' }).promise(); };
 	w.makeRemovingDataFromDbRequest();
 	check('success 0 shows the error and keeps the log', () => errCalls === 2 && w.$('#te-analization-result .te-log__line').length === 4);
 	w.console.log = origLog;
-	w.$.get = origGet;
+	w.$.post = origPost;
 	w.showTranslateExpertErrorMessage = origErr;
 	w.hideTranslateExpertModal = origHide;
+
+	console.log('\nresetTranslationCache:');
+	const origPost2 = w.$.post;
+	let postUrl = '';
+	w.document.te_i18n = { te_cache_reset_done: 'Cache reset text', te_cache_reset_confirm: 'Reset the cache?' };
+	let cacheConfirmText = null;
+	const origConfirm2 = w.confirm;
+	w.confirm = function(text) { cacheConfirmText = text; return true; };
+	w.$('body').append('<div class="te-app"><div class="te-alerts" id="te-debug-alerts"></div></div>');
+	w.$.post = function(url) { postUrl = url; return w.$.Deferred().resolve({ success: 1 }).promise(); };
+	w.resetTranslationCache();
+	check('success shows the success alert with the key text', () => w.$('#te-debug-alerts .te-alert--success').length === 1
+		&& w.$('#te-debug-alerts').text().indexOf('Cache reset text') !== -1 && /route=extension\/module\/client_translate_expert\/resetCache&token=/.test(postUrl));
+	w.$.post = function() { return w.$.Deferred().resolve({ success: 0, message: 'No' }).promise(); };
+	w.resetTranslationCache();
+	check('success 0 shows only an error alert', () => w.$('#te-debug-alerts .te-alert').length === 1 && w.$('#te-debug-alerts .te-alert--success').length === 0 && w.$('#te-debug-alerts .te-alert--error').length === 1);
+	w.$.post = function() { return w.$.Deferred().reject({ status: 500 }).promise(); };
+	w.resetTranslationCache();
+	check('a failed request shows only an error alert', () => w.$('#te-debug-alerts .te-alert').length === 1 && w.$('#te-debug-alerts .te-alert--error').length === 1);
+	check('the confirm text is the te_cache_reset_confirm key', () => cacheConfirmText === 'Reset the cache?');
+	let cachePosts = 0;
+	w.$.post = function() { cachePosts++; return w.$.Deferred().resolve({ success: 1 }).promise(); };
+	w.confirm = function() { return false; };
+	w.resetTranslationCache();
+	check('confirm false: no request', () => cachePosts === 0);
+	w.confirm = origConfirm2;
+	w.$('#te-debug-alerts').parent().remove();
+	w.$.post = origPost2;
 }
 
 function testShowCharCount(w) {
@@ -938,6 +966,8 @@ function testSiteLangbar(w) {
 
 	w.hideTranslateExpertModal = function() {};
 	w.showTranslateExpertErrorMessage({ message: 'Boom' }, null);
+	w.showTranslateExpertErrorMessage({ message: 'Boom', additional_message: '<img src=x id="te-xss"> & more' }, null);
+	check('additional_message of showTranslateExpertErrorMessage is escaped', () => w.$('#te-xss').length === 0 && w.$('.alert-danger').text().indexOf('<img src=x') !== -1);
 	check('the fallback anchor of showTranslateExpertErrorMessage is #te-site-alerts', () => w.$('#te-site-alerts').prev('.alert-danger').length === 1);
 }
 

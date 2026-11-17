@@ -23,12 +23,12 @@ All endpoints set `Content-Type: application/json; Charset=UTF-8` (12 `addHeader
 | 2 | `translateTable` (507) | POST | JSON | none | `doTranslateTableExpertRecursive` |
 | 3 | `analizeTableDetail` (536) | POST | JSON with HTML | `result` | `analizeTableDetail` |
 | 4 | `analize` (560) | GET | JSON with HTML | `analizeHeadInfo`, `result[].headerHTML`, `result[].columns[].html`, `timeInSecInfo` | `makeAnalizeRequest` |
-| 5 | `removeDataFromDb` (599) | GET | JSON with HTML | `body`, `timeInSecInfo` (data only since issue 57) | `makeRemovingDataFromDbRequest` |
+| 5 | `removeDataFromDb` (599) | GET (GET → POST, done in issue 61) | JSON with HTML | `body`, `timeInSecInfo` (data only since issue 57) | `makeRemovingDataFromDbRequest` |
 | 6 | `analizeLocalization` (630) | GET | JSON with HTML | `html`, `detailsHtml` | `makeLocalizationAnalizeRequest` |
 | 7 | `saveLocalizationFile` (768) | POST | JSON | none | `doSaveLocalizationExpert` |
 | 8 | `translatedCharCountInfo` (648) | GET | JSON with HTML | `info` (data only since issue 57) | `showTranslatedCharCount` |
 | 9 | `resetCharCount` (685) | GET | JSON | none | `resetTranslationCharCount` |
-| 10 | `resetCache` (698) | GET | JSON | none | `resetTranslationCache` |
+| 10 | `resetCache` (698) | GET (GET → POST, done in issue 61) | JSON | none | `resetTranslationCache` |
 
 `downloadDebugLog` (791) and `clearDebugLog` (812) are not AJAX. They are plain links (a file download and a redirect).
 
@@ -327,6 +327,8 @@ For each step:
 ## 6. Out of scope (found during the inventory)
 
 These items are not about HTML in the responses, so they are out of scope for the JSON change. But we decided to fix them as part of this work. Do them as one separate task, after all other tasks of the migration (see `README.md`, "Next tasks", step 6):
+
+Status: done in issue 61.
 
 1. `removeDataFromDb` (#5) and `resetCache` (#10) change data, but they use GET.
 2. `resetCache` (#10) gives no success message to the user.
