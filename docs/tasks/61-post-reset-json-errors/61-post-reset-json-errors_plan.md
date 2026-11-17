@@ -82,7 +82,7 @@ Design corrections:
 ## Update 2026-11-17 (review fixes)
 
 - Review found no Critical or Important finding. Minor findings 1 and 6 fixed: `jsonErrorResult` now converts the error array to UTF-8, and a test runs all 10 methods with a throwing loader. A mutation run (conversion removed) made the new UTF-8 test fail.
-- Skipped with reason: finding 2 (English-only message, same as code 1000), finding 5 (HTML insert of `additional_message`, same as before the change, no injection path).
+- Findings 2 and 5 were skipped first. The user then asked for both, so they are fixed: the messages come from the language files (`error_internal`, `error_wrong_method`) with an English fallback, and `showTranslateExpertErrorMessage` escapes `additional_message`.
 - Recorded, no action: finding 3 (a PHP warning or notice before the JSON, or the OC 1.5 `mysql` driver `trigger_error` and `exit`, is not caught by the helper) and finding 4 (`removeDataFromDb`, `resetCache` and `resetCharCount` have no `modify` permission check, candidate for a follow-up task).
 - No re-review: the fixes are small and tested. The review found only minor items.
 
@@ -90,6 +90,6 @@ Design corrections:
 
 - Landed: POST for `removeDataFromDb` and `resetCache` (non-POST gives error_code 2001), success alert in `#te-debug-alerts`, and `runJsonAction` in 10 AJAX methods (error_code 2000). The model is unchanged.
 - The helper writes to the OpenCart error log, not to `client_translate_expert.log`. The model already writes `\Exception` to the debug log.
-- Final version 04.01.0200. 9 test suites pass (new suite: 49 checks). Release build passes.
+- Final version 04.01.0201. 9 test suites pass (new suite: 60 checks). Release build passes.
 - No example of a PHP warning before the JSON output was found. No store run was done.
 - Follow-up: add a `modify` permission check to the data-changing AJAX methods.

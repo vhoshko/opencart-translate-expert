@@ -484,9 +484,21 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		return array('success' => 0, 'message' => $this->language->get('error_bad_filter'));
 	}
 
+	private function errorText($key, $default) {
+		try {
+			$this->load->language('extension/module/client_translate_expert');
+			$text = $this->language->get($key);
+		} catch (\Exception $e) {
+			return $default;
+		} catch (\Throwable $e) {
+			return $default;
+		}
+		return ($text === $key || $text === '' || $text === null) ? $default : $text;
+	}
+
 	private function jsonErrorResult($e) {
 		$this->log->write(get_class($e) . ': ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-		return $this->convert_from_latin1_to_utf8_recursively(array('success' => 0, 'error_code' => 2000, 'message' => 'Internal error.', 'additional_message' => get_class($e) . ': ' . $e->getMessage()));
+		return $this->convert_from_latin1_to_utf8_recursively(array('success' => 0, 'error_code' => 2000, 'message' => $this->errorText('error_internal', 'Internal error.'), 'additional_message' => get_class($e) . ': ' . $e->getMessage()));
 	}
 
 	private function runJsonAction($action) {
@@ -609,7 +621,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	public function removeDataFromDb() {
 		$this->runJsonAction(function () {
 			if (!isset($this->request->server['REQUEST_METHOD']) || $this->request->server['REQUEST_METHOD'] != 'POST') {
-				return array('success' => 0, 'error_code' => 2001, 'message' => 'Wrong request method.');
+				return array('success' => 0, 'error_code' => 2001, 'message' => $this->errorText('error_wrong_method', 'Wrong request method.'));
 			}
 
 			$langIdTo = isset($this->request->post['langIdTo']) ? (int)$this->request->post['langIdTo'] : 0;
@@ -708,7 +720,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	{
 		$this->runJsonAction(function () {
 			if (!isset($this->request->server['REQUEST_METHOD']) || $this->request->server['REQUEST_METHOD'] != 'POST') {
-				return array('success' => 0, 'error_code' => 2001, 'message' => 'Wrong request method.');
+				return array('success' => 0, 'error_code' => 2001, 'message' => $this->errorText('error_wrong_method', 'Wrong request method.'));
 			}
 
 			$this->load->model('extension/module/client_translate_expert');

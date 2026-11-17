@@ -111,6 +111,8 @@ $_['value_analization_mode_both'] = 'Search for empty and identical values';
 // Error;
 $_['error_permission'] = 'You do not have permission to manage this module!';
 $_['error_bad_filter'] = 'The filter values are not valid. Reload the page and select the filters again.';
+$_['error_internal'] = 'Internal error.';
+$_['error_wrong_method'] = 'Wrong request method.';
 $_['error_language_to_required'] = 'Select the language to remove the translations from.';
 $_['te_site_error_bad_detail_request'] = 'The table, the column or the language is not valid.';
 $_['error_width'] =' You must specify the width! ';

@@ -956,6 +956,8 @@ function testSiteLangbar(w) {
 
 	w.hideTranslateExpertModal = function() {};
 	w.showTranslateExpertErrorMessage({ message: 'Boom' }, null);
+	w.showTranslateExpertErrorMessage({ message: 'Boom', additional_message: '<img src=x id="te-xss"> & more' }, null);
+	check('additional_message of showTranslateExpertErrorMessage is escaped', () => w.$('#te-xss').length === 0 && w.$('.alert-danger').text().indexOf('<img src=x') !== -1);
 	check('the fallback anchor of showTranslateExpertErrorMessage is #te-site-alerts', () => w.$('#te-site-alerts').prev('.alert-danger').length === 1);
 }
 

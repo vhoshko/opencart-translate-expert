@@ -45,9 +45,11 @@ class StubLog {
 }
 
 class StubLanguage {
+	public static $texts = array('error_internal' => 'Interner Fehler.', 'error_wrong_method' => 'Falsche Methode.');
+
 	public function get($key)
 	{
-		return $key;
+		return isset(self::$texts[$key]) ? self::$texts[$key] : $key;
 	}
 }
 
@@ -202,7 +204,7 @@ class ClientTranslateExpertAjaxGuardTest {
 		$body = $this->decoded();
 		$this->check($body['success'], 0, 'success is 0');
 		$this->check($body['error_code'], 2000, 'error_code is 2000');
-		$this->check($body['message'], 'Internal error.', 'message is the generic text');
+		$this->check($body['message'], 'Interner Fehler.', 'message is the translated generic text');
 		$this->check($body['additional_message'], 'RuntimeException: db down', 'additional_message has class and text');
 		$this->check(count($this->log->lines), 1, 'one log line');
 		$this->check(strpos($this->log->lines[0], 'db down') !== false, true, 'log line has the exception text');
@@ -244,6 +246,7 @@ class ClientTranslateExpertAjaxGuardTest {
 		$body = $this->decoded();
 		$this->check($body['success'], 0, 'removeDataFromDb: success is 0');
 		$this->check($body['error_code'], 2001, 'removeDataFromDb: error_code is 2001');
+		$this->check($body['message'], 'Falsche Methode.', 'removeDataFromDb: message is translated');
 		$this->check($this->model->calls, array(), 'removeDataFromDb: model is not called');
 		$this->check(count($this->log->lines), 0, 'removeDataFromDb: no log line');
 
@@ -281,6 +284,7 @@ class ClientTranslateExpertAjaxGuardTest {
 			$body = $this->decoded();
 			$this->check(is_array($body) ? $body['error_code'] : null, 2000, "$method: error_code is 2000");
 			$this->check(count($this->log->lines), 1, "$method: one log line");
+			$this->check(is_array($body) ? $body['message'] : null, 'Internal error.', "$method: message falls back to English when the language load fails");
 		}
 	}
 

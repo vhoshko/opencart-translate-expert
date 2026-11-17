@@ -220,7 +220,7 @@ function showTranslateExpertErrorMessage(data, el) {
 	}
 
 	if (data.hasOwnProperty('additional_message'))
-		error += '<br>' + data.additional_message;
+		error += '<br>' + $('<div></div>').text(String(data.additional_message)).html();
 
 	error = error.substring(0,2000);
 
