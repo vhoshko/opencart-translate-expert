@@ -57,7 +57,6 @@ $_['entry_analization_mode']     = 'Режим анализа';
 $_['entry_stop_modal_process']          = 'Остановить';
 $_['entry_stop_modal_process_confirmation']          = 'Вы действительно хотите остановить операцию?';
 $_['entry_close']     = 'Закрыть';
-$_['entry_try_translate']     = 'Форма проверки перевода<br>Тест API ключа';
 $_['entry_try_translate_text']     = 'Форма проверки перевода';
 $_['entry_translate_expert_version']     = 'Версия модуля';
 $_['entry_php_version']     = 'Версия PHP';

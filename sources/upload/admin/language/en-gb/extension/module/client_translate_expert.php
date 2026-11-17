@@ -52,7 +52,6 @@ $_['entry_analization_mode'] = 'Analysis mode';
 $_['entry_stop_modal_process'] = 'Stop';
 $_['entry_stop_modal_process_confirmation'] = 'Are you sure you want to stop current process?';
 $_['entry_close'] = 'Close';
-$_['entry_try_translate']     = 'Translation verification form<br>API key test';
 $_['entry_try_translate_text']     = 'Translation verification form';
 $_['entry_translate_expert_version']     = 'Module version';
 $_['entry_php_version']     = 'PHP version';

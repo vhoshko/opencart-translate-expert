@@ -120,7 +120,6 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['entry_stop_modal_process'] = $this->language->get('entry_stop_modal_process');
 		$data['entry_close'] = $this->language->get('entry_close');
 		$data['entry_stop_modal_process_confirmation'] = $this->language->get('entry_stop_modal_process_confirmation');
-		$data['entry_try_translate'] = $this->language->get('entry_try_translate');
 		$data['entry_try_translate_text'] = $this->language->get('entry_try_translate_text');
 		$data['entry_translate_expert_version'] = $this->language->get('entry_translate_expert_version');
 		$data['entry_php_version'] = $this->language->get('entry_php_version');
