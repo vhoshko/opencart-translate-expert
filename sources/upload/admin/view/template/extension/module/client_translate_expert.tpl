@@ -143,6 +143,29 @@
 				      </div>
 				    </div>
 				    <div class="te-card">
+				      <div class="te-card__head"><?php echo $te_settings_card_language_codes; ?></div>
+				      <div class="te-card__body">
+				        <div class="te-alerts" id="te-lcm-alerts"></div>
+				        <div class="te-form">
+				          <div class="te-field">
+				            <div class="te-field__label" id="te-lcm-label"><?php echo $entry_language_code_map; ?></div>
+				            <div class="te-field__control">
+				              <input type="hidden" name="client_translate_expert_language_code_map" id="input-client_translate_expert_language_code_map" value="<?php echo htmlspecialchars($client_translate_expert_language_code_map, ENT_QUOTES, 'UTF-8'); ?>" data-te-default="<?php echo htmlspecialchars($te_language_code_map_default, ENT_QUOTES, 'UTF-8'); ?>" />
+				              <div class="te-lcm-head"><span><?php echo $te_lcm_col_key; ?></span><span><?php echo $te_lcm_col_value; ?></span><span class="te-lcm-head__gap"></span></div>
+				              <div id="te-lcm-rows" role="group" aria-labelledby="te-lcm-label" data-te-delete="<?php echo htmlspecialchars($te_lcm_delete, ENT_QUOTES, 'UTF-8'); ?>"></div>
+				              <div class="te-field__help te-hidden" id="te-lcm-empty"><?php echo $te_lcm_empty; ?></div>
+				              <div class="te-lcm-actions">
+				                <button type="button" id="te-lcm-add" class="btn btn-default"><?php echo $te_lcm_add; ?></button>
+				                <button type="button" id="te-lcm-reset" class="btn btn-default"><?php echo $te_lcm_reset; ?></button>
+				              </div>
+				            </div>
+				            <div class="te-field__help"><?php echo $help_language_code_map; ?></div>
+				            <?php if (!empty($error_language_code_map)) { ?><div class="text-danger te-field__error"><?php echo $error_language_code_map; ?></div><?php } ?>
+				          </div>
+				        </div>
+				      </div>
+				    </div>
+				    <div class="te-card">
 				      <div class="te-card__head">
 				        <button type="button" class="te-collapse-toggle te-js-collapse" data-te-target="#te-try-panel" aria-expanded="false" aria-controls="te-try-panel"><?php echo $te_settings_card_try; ?></button>
 				      </div>

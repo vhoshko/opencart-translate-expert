@@ -143,6 +143,29 @@
                   </div>
                 </div>
                 <div class="te-card">
+                  <div class="te-card__head">{{ te_settings_card_language_codes }}</div>
+                  <div class="te-card__body">
+                    <div class="te-alerts" id="te-lcm-alerts"></div>
+                    <div class="te-form">
+                      <div class="te-field">
+                        <div class="te-field__label" id="te-lcm-label">{{ entry_language_code_map }}</div>
+                        <div class="te-field__control">
+                          <input type="hidden" name="client_translate_expert_language_code_map" id="input-client_translate_expert_language_code_map" value="{{ client_translate_expert_language_code_map|escape('html_attr') }}" data-te-default="{{ te_language_code_map_default|escape('html_attr') }}" />
+                          <div class="te-lcm-head"><span>{{ te_lcm_col_key }}</span><span>{{ te_lcm_col_value }}</span><span class="te-lcm-head__gap"></span></div>
+                          <div id="te-lcm-rows" role="group" aria-labelledby="te-lcm-label" data-te-delete="{{ te_lcm_delete|escape('html_attr') }}"></div>
+                          <div class="te-field__help te-hidden" id="te-lcm-empty">{{ te_lcm_empty }}</div>
+                          <div class="te-lcm-actions">
+                            <button type="button" id="te-lcm-add" class="btn btn-outline-secondary">{{ te_lcm_add }}</button>
+                            <button type="button" id="te-lcm-reset" class="btn btn-outline-secondary">{{ te_lcm_reset }}</button>
+                          </div>
+                        </div>
+                        <div class="te-field__help">{{ help_language_code_map }}</div>
+                        {% if error_language_code_map %}<div class="text-danger te-field__error">{{ error_language_code_map }}</div>{% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="te-card">
                   <div class="te-card__head">
                     <button type="button" class="te-collapse-toggle te-js-collapse" data-te-target="#te-try-panel" aria-expanded="false" aria-controls="te-try-panel">{{ te_settings_card_try }}</button>
                   </div>

@@ -268,6 +268,8 @@ class LocalizationChildTest
 		{
 			writeFile("$tmp/extension/client_translate_expert/system/library/translate_expert/translate_expert_core.php",
 				"<?php\nrequire_once " . var_export(realpath(__DIR__ . '/../sources/upload/system/library/translate_expert/translate_expert_core.php'), true) . ";\n");
+			writeFile("$tmp/extension/client_translate_expert/system/library/translate_expert/translate_expert_language_code_map.php",
+				"<?php\nrequire_once " . var_export(realpath(__DIR__ . '/../sources/upload/system/library/translate_expert/translate_expert_language_code_map.php'), true) . ";\n");
 			// An installed extension with admin files of the source language
 			writeFile("$tmp/extension/opencart/admin/language/en-gb/module/account.php", langFile(array('heading_title' => 'Account')));
 			// An extension without files of the source language
