@@ -838,6 +838,9 @@ function teLcmInit() {
 			for (var i = 0; i < result.errors.length; i++) {
 				teAlerts.show('#te-lcm-alerts', 'error', result.errors[i]);
 			}
+			// The alerts are in a collapsed card: open it so that the user sees them.
+			$('#te-lcm-panel').removeClass('te-hidden');
+			$('[data-te-target="#te-lcm-panel"]').attr('aria-expanded', 'true');
 			event.preventDefault();
 			return false;
 		}

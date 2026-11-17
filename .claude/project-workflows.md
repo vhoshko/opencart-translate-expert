@@ -59,6 +59,7 @@ Edit `sources/` only. `sources_release*/` and `releases/` are build output.
 | Language code map tests | `php tests/test_translate_expert_language_code_map.php`, `php tests/test_translate_expert_language_code_map_default.php`, `php tests/test_client_translate_expert_language_code_map_save.php` | No DB and no API key needed. Any PHP warning fails a test |
 | Translate loop tests | `php tests/test_client_translate_expert_translate_loop.php` | No DB and no API key needed. Any PHP warning fails a test |
 | Version rules tests | `php tests/test_client_translate_expert_version_rules.php` | No DB and no API key needed. Any PHP warning fails a test. It checks the version helpers of the admin controller and the model (token name, setting key, routes, template engine, flag URL) |
+| Settings cards tests | `php tests/test_client_translate_expert_settings_cards.php` | Static check of the 4 collapsible cards in the `.tpl` and the `.oc4.twig`. No DB and no API key needed |
 | OC4 Twig name test | `php tests/test_oc4_twig_filters.php` | Static check. Fails on a filter, test, function or tag that Twig v3.4.2 (OC 4.0.2.x) or v3.18.0 (OC 4.1.0.x) does not define |
 | Bump version | `/bump-version` | Changes the patch part of `_version.txt` (`MM.mm.pppp`). **Do it before every build** |
 | Build per-version zips | `./build.sh` | Leaves zips in the root. Use the release build instead |
