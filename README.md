@@ -51,6 +51,8 @@ Install:
 
 Update: copy the `upload/` contents of the new package over the old files, then click **Refresh** in **Extensions > Modifications** again. Do not uninstall the module: an uninstall deletes its settings.
 
+If you update from an older package, note that the library moved to `system/library/translate_expert/`. After the update and the **Refresh**, delete these old files in `system/library/`: `client_translate_expert.php`, `client_translate_expert_core.php`, `client_localization_translate_expert.php`, `client_translate_expert_cron_helper.php`, `client_translate_expert_i18n.php`, `client_translate_expert_route_filter.php` and `vh_google_translator.php`. The module no longer uses them.
+
 ### OpenCart 1.5
 
 OpenCart 1.5 has no OCMOD. The module changes the admin header with [vQmod](https://github.com/vqmod/vqmod) instead, so install vQmod first. If vQmod is already installed, skip these steps.
@@ -65,6 +67,8 @@ Install the module:
 3. In the admin, open **Extensions > Modules**. Find **Translate Expert (Full)** and click **Install**, then **Edit**.
 
 Update: copy the `upload/` contents of the new package over the old files, then delete `vqmod/mods.cache` and the `vq2-*` files in `vqmod/vqcache/` again. Do not uninstall the module: an uninstall deletes its settings. Packages before 04.01.0147 put the XML in `system/OpenCartTranslateExpertClient.ocmod.xml`, where vQmod does not read it. You can delete that file.
+
+If you update from an older package, note that the library moved to `system/library/translate_expert/`. After the update and the **Refresh** (the vQmod cache clear for OpenCart 1.5), delete these old files in `system/library/`: `client_translate_expert.php`, `client_translate_expert_core.php`, `client_localization_translate_expert.php`, `client_translate_expert_cron_helper.php`, `client_translate_expert_i18n.php`, `client_translate_expert_route_filter.php` and `vh_google_translator.php`. The module no longer uses them.
 
 If the admin header does not load the module (no `client_translate_expert.js` in the page source), first delete `vqmod/mods.cache` and the `vq2-*` files in `vqmod/vqcache/`, and reload the page. If that does not help, look in `vqmod/logs/` for an error about `OpenCartTranslateExpertClient.xml`.
 
@@ -95,10 +99,10 @@ The build scripts produce OCMOD `.zip` packages per supported OpenCart version (
 
 ```bash
 # Unit tests only (no API key needed)
-php tests/test_vh_google_translator.php
+php tests/test_translate_expert_google_client.php
 
 # Unit + integration tests
-php tests/test_vh_google_translator.php YOUR_GOOGLE_API_KEY
+php tests/test_translate_expert_google_client.php YOUR_GOOGLE_API_KEY
 ```
 
 ### Test stores (Docker)

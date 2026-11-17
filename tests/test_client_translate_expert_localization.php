@@ -1,6 +1,6 @@
 <?php
 /**
- * Test script for the localization scopes of LocalizationLibraryClientTranslateExpert
+ * Test script for the localization scopes of TranslateExpertLocalization
  * (catalog and admin language files, OC 4.x extension roots, main file rename, include folder, save guard).
  *
  * Usage:
@@ -18,7 +18,7 @@ if ($isChild)
 
 	// PHP declares a class with a parent from another file only when execution reaches the declaration.
 	// For this reason, the declaration comes after setupChild() loads the library.
-	class TestableLocalizationLibrary extends LocalizationLibraryClientTranslateExpert
+	class TestableLocalizationLibrary extends TranslateExpertLocalization
 	{
 		public function roots($scope, $from, $to) { return $this->getLocalizationRoots($scope, $from, $to); }
 		public function mainName($language) { return $this->getMainLanguageFileName($language); }
@@ -156,7 +156,7 @@ function setupChild($version, $tmp)
 	$t->buildTree();
 
 	// The OC4 library loads the core from DIR_EXTENSION. A stub there loads the source file.
-	require_once __DIR__ . '/../sources/upload/system/library/client_localization_translate_expert.php';
+	require_once __DIR__ . '/../sources/upload/system/library/translate_expert/translate_expert_localization.php';
 
 	return $t;
 }
@@ -266,8 +266,8 @@ class LocalizationChildTest
 
 		if ($this->isOc4)
 		{
-			writeFile("$tmp/extension/client_translate_expert/system/library/client_translate_expert_core.php",
-				"<?php\nrequire_once " . var_export(realpath(__DIR__ . '/../sources/upload/system/library/client_translate_expert_core.php'), true) . ";\n");
+			writeFile("$tmp/extension/client_translate_expert/system/library/translate_expert/translate_expert_core.php",
+				"<?php\nrequire_once " . var_export(realpath(__DIR__ . '/../sources/upload/system/library/translate_expert/translate_expert_core.php'), true) . ";\n");
 			// An installed extension with admin files of the source language
 			writeFile("$tmp/extension/opencart/admin/language/en-gb/module/account.php", langFile(array('heading_title' => 'Account')));
 			// An extension without files of the source language

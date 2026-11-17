@@ -10,7 +10,7 @@ The mock-ups use ASCII. They show the layout and the order of the elements. They
 |---|---|
 | Templates | 2 sources: `client_translate_expert.tpl` (BS3 markup, OC 1.5–3.0) and `client_translate_expert.oc4.twig` (BS5 markup, OC 4.x) |
 | Tabs | `#tab-general`, `#tab-translate-site`, `#tab-localization`, `#tab-admin-localization`, `#tab-debug`, `#tab-about` |
-| Dynamic content | The server builds HTML in `client_translate_expert_core.php` (40 lines with tags) and `client_localization_translate_expert.php` (30 lines with tags). The JS inserts it with `.html()` |
+| Dynamic content | The server builds HTML in `translate_expert_core.php` (40 lines with tags) and `translate_expert_localization.php` (30 lines with tags). The JS inserts it with `.html()` |
 | Progress | One shared modal `#translateExpertModal` for all long operations. The modal title is the same for all operations |
 | Counters | The JS reads the totals back from the DOM with `parseInt($(id).html())` |
 | Errors | The JS inserts `.alert.alert-danger` before `#te-analization-mode`, also when the user is on a different tab |
@@ -197,7 +197,7 @@ Notes:
 
 Notes:
 
-1. The table has one count column, for the target language of the `te-langbar`. The current `analize()` also returns counts only for `languageIdTo` (`client_translate_expert_core.php`, the `if ($languageIdTo != $langIdTo) continue;` checks). The column head comes from `target` in the JSON (see `endpoints-json.md`, section 3.2).
+1. The table has one count column, for the target language of the `te-langbar`. The current `analize()` also returns counts only for `languageIdTo` (`translate_expert_core.php`, the `if ($languageIdTo != $langIdTo) continue;` checks). The column head comes from `target` in the JSON (see `endpoints-json.md`, section 3.2).
 2. Each column row has a "Details" link (opens the detail view) and a "Translate" button.
 3. A table row expands and collapses its column rows.
 4. The JS adds new rows with `append()` of DOM nodes. It does not re-parse the table.

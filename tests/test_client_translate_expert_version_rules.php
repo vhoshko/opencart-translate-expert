@@ -28,7 +28,7 @@ class Model {
 
 define('DIR_SYSTEM', __DIR__ . '/../sources/upload/system/');
 
-require_once __DIR__ . '/../sources/upload/system/library/client_translate_expert_cron_helper.php';
+require_once __DIR__ . '/../sources/upload/system/library/translate_expert/translate_expert_cron_helper.php';
 require_once __DIR__ . '/../sources/upload/admin/controller/extension/module/client_translate_expert.php';
 require_once __DIR__ . '/../sources/upload/admin/model/extension/module/client_translate_expert.php';
 
@@ -94,7 +94,7 @@ class ClientTranslateExpertVersionRulesTest {
 	{
 		echo "\nsettingKey:\n";
 		foreach ($this->versions as $version) {
-			$expected = ClientTranslateExpertCronHelper::settingKey('client_translate_expert_status', $version);
+			$expected = TranslateExpertCronHelper::settingKey('client_translate_expert_status', $version);
 			$this->check($this->call('ControllerExtensionModuleClientTranslateExpert', 'settingKey', array('client_translate_expert_status', $version)), $expected, "controller $version matches the cron helper");
 			$this->check($this->call('ModelExtensionModuleClientTranslateExpert', 'settingKey', array('client_translate_expert_status', $version)), $expected, "model $version matches the cron helper");
 		}

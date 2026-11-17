@@ -11,7 +11,7 @@
  *
  * Keep this file PHP 5.6 compatible and free of OpenCart dependencies (it is loaded on every admin page).
  */
-class ClientTranslateExpertI18n
+class TranslateExpertI18n
 {
 	/**
 	 * @return string[] Language keys that document.te_i18n_global holds

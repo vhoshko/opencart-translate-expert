@@ -23,7 +23,7 @@ Your tools can write. This rule is a standing instruction, not a sandbox that st
 
 Check the standard code-quality concerns and these items:
 
-- Does each file have one clear responsibility and a well-defined interface? The core logic belongs in `system/library/client_translate_expert_core.php`. The controller handles routes and AJAX. The model handles DB queries.
+- Does each file have one clear responsibility and a well-defined interface? The core logic belongs in `system/library/translate_expert/translate_expert_core.php`. The controller handles routes and AJAX. The model handles DB queries.
 - Can a reader understand and test each unit independently?
 - Does the implementation follow the file structure from the plan?
 - Did the implementation create files that are already large, or make existing files much larger?

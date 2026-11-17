@@ -1,14 +1,14 @@
 <?php
 
 if (defined('DIR_EXTENSION') && version_compare(VERSION, '4.0', '>=')) {
-	include_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert_core.php');
-	include_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert_cron_helper.php');
+	include_once(DIR_EXTENSION . 'client_translate_expert/system/library/translate_expert/translate_expert_core.php');
+	include_once(DIR_EXTENSION . 'client_translate_expert/system/library/translate_expert/translate_expert_cron_helper.php');
 } else {
-	include_once(DIR_SYSTEM . 'library/client_translate_expert_core.php');
-	include_once(DIR_SYSTEM . 'library/client_translate_expert_cron_helper.php');
+	include_once(DIR_SYSTEM . 'library/translate_expert/translate_expert_core.php');
+	include_once(DIR_SYSTEM . 'library/translate_expert/translate_expert_cron_helper.php');
 }
 
-class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
+class TranslateExpert extends TranslateExpertCore
 {
 	const CRON_TIME_LIMIT = 900;
 
@@ -100,21 +100,21 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 	{
 		$this->_lastBudget = null;
 		$version = VERSION;
-		$secretKey = ClientTranslateExpertCronHelper::settingKey('client_translate_expert_cron_secret', $version);
+		$secretKey = TranslateExpertCronHelper::settingKey('client_translate_expert_cron_secret', $version);
 		$config = $this->_model->config;
 
 		$knownSecret = (string)$config->get($secretKey);
 		$givenSecret = isset($get['secret']) && is_string($get['secret']) ? $get['secret'] : '';
-		if (!ClientTranslateExpertCronHelper::isValidSecret($knownSecret)
-			|| !ClientTranslateExpertCronHelper::secretsMatch($knownSecret, $givenSecret))
+		if (!TranslateExpertCronHelper::isValidSecret($knownSecret)
+			|| !TranslateExpertCronHelper::secretsMatch($knownSecret, $givenSecret))
 		{
 			return $this->cronError('forbidden', 403);
 		}
 
-		if (!$config->get(ClientTranslateExpertCronHelper::settingKey('client_translate_expert_status', $version)))
+		if (!$config->get(TranslateExpertCronHelper::settingKey('client_translate_expert_status', $version)))
 			return $this->cronError('disabled');
 
-		$filters = ClientTranslateExpertCronHelper::parseParams($get);
+		$filters = TranslateExpertCronHelper::parseParams($get);
 		if ($filters === false)
 			return $this->cronError('bad_params');
 
@@ -131,7 +131,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 		if ($filters['bulk_amount'] !== '')
 			$rowCap = $filters['bulk_amount'];
 		else
-			$rowCap = ClientTranslateExpertCronHelper::clampBulkAmount($config->get(ClientTranslateExpertCronHelper::settingKey('client_translate_expert_cron_bulk_amount', $version)));
+			$rowCap = TranslateExpertCronHelper::clampBulkAmount($config->get(TranslateExpertCronHelper::settingKey('client_translate_expert_cron_bulk_amount', $version)));
 
 		$db = $this->_model->db;
 		$lockName = 'te_cron_' . md5(DB_DATABASE . DB_PREFIX);
@@ -148,7 +148,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 
 		try
 		{
-			if ($config->get(ClientTranslateExpertCronHelper::settingKey('client_translate_expert_reset_char_count_on_start_month', $version)))
+			if ($config->get(TranslateExpertCronHelper::settingKey('client_translate_expert_reset_char_count_on_start_month', $version)))
 				$this->resetCharCountOnNewMonth(date('m'));
 
 			$res = $this->translateNextBatch($filters, $rowCap);
@@ -196,22 +196,22 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 
 	public function getListMaxItems()
 	{
-		return ClientTranslateExpertCronHelper::LIST_MAX_ITEMS;
+		return TranslateExpertCronHelper::LIST_MAX_ITEMS;
 	}
 
 	public function parseIdList($value)
 	{
-		return ClientTranslateExpertCronHelper::parseIdList($value);
+		return TranslateExpertCronHelper::parseIdList($value);
 	}
 
 	public function parseTableList($value)
 	{
-		return ClientTranslateExpertCronHelper::parseTableList($value);
+		return TranslateExpertCronHelper::parseTableList($value);
 	}
 
 	public function isValidCronSecret($secret)
 	{
-		return ClientTranslateExpertCronHelper::isValidSecret($secret);
+		return TranslateExpertCronHelper::isValidSecret($secret);
 	}
 
 	protected function cronFailure($e, $knownSecret)
@@ -239,7 +239,7 @@ class LibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
 
 	public function clampCronBulkAmount($value)
 	{
-		return ClientTranslateExpertCronHelper::clampBulkAmount($value);
+		return TranslateExpertCronHelper::clampBulkAmount($value);
 	}
 
 	protected function cronError($code, $httpStatus = 200)

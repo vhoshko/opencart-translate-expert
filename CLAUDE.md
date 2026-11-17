@@ -76,16 +76,22 @@ If a change touches only files under `docs/**`, run the unit tests. Do not bump 
 
 ```bash
 # Unit tests only (no API key needed)
-php tests/test_vh_google_translator.php
+php tests/test_translate_expert_google_client.php
 
 # Unit + integration tests
-php tests/test_vh_google_translator.php YOUR_GOOGLE_API_KEY
+php tests/test_translate_expert_google_client.php YOUR_GOOGLE_API_KEY
+
+# Core translate tests: language code mapping and format parameter fix in TranslateExpertCore (stub Google client, no DB, no API key)
+php tests/test_translate_expert_core_translate.php
+
+# Library path tests: each translate_expert/ path in sources/ exists, and no old library file or class name remains (static)
+php tests/test_translate_expert_library_paths.php
 
 # Route filter unit tests (no API key needed)
-php tests/test_client_translate_expert_route_filter.php
+php tests/test_translate_expert_route_filter.php
 
 # Cron helper unit tests (no API key needed)
-php tests/test_client_translate_expert_cron_helper.php
+php tests/test_translate_expert_cron_helper.php
 
 # Translate loop tests (row cap, empty results, duplicate texts, time limits, admin batch, analize and detail JSON; no DB, no API key)
 php tests/test_client_translate_expert_translate_loop.php
@@ -103,19 +109,23 @@ php tests/test_oc4_twig_filters.php
 php tests/test_client_translate_expert_localization.php
 
 # Header strings tests: language file candidates, English fallback, JSON escaping (temp folders, no DB, no API key)
-php tests/test_client_translate_expert_i18n.php
+php tests/test_translate_expert_i18n.php
 
 # JS helper tests: teT, teIcon, teBs, teAlerts, localization tabs in jsdom with jQuery 3.7.1 and 1.7.1 (Node, no browser, no OpenCart)
 cd tests/js && npm ci && node test_client_translate_expert_js_helpers.js
 ```
 
-The `VHGoogleTranslator` tests cover language code mapping, format parameter preservation, batch processing and API integration.
+The `TranslateExpertGoogleClient` tests cover batch processing, the skipped empty, blank, null and "0" texts, and API integration.
 
-The `ClientTranslateExpertRouteFilter` tests cover the excluded-routes rules. Any PHP warning fails these tests.
+The core translate tests cover the language code mapping and the format parameter fix of `TranslateExpertCore` for a string and for a batch. Any PHP warning fails these tests.
 
-The `ClientTranslateExpertCronHelper` tests cover the cron secret rules, the request parameters and the setting key prefix. Any PHP warning fails these tests.
+The library path test reads each `translate_expert/` path in `sources/` and fails if the target file does not exist. It also fails on an old library file name or class name in `sources/`, `build.sh` and `tests/`.
 
-The `ClientTranslateExpertI18n` tests cover the language file candidates, the English fallback, the global keys in the 3 module language files and the JSON escaping for a `<script>` block. Any PHP warning fails these tests.
+The `TranslateExpertRouteFilter` tests cover the excluded-routes rules. Any PHP warning fails these tests.
+
+The `TranslateExpertCronHelper` tests cover the cron secret rules, the request parameters and the setting key prefix. Any PHP warning fails these tests.
+
+The `TranslateExpertI18n` tests cover the language file candidates, the English fallback, the global keys in the 3 module language files and the JSON escaping for a `<script>` block. Any PHP warning fails these tests.
 
 The JS helper tests load the real `client_translate_expert.js` in jsdom. They cover the `teT` lookup and placeholders, the FA 4 and FA 6 icon classes, the Bootstrap adapter with BS5 and with no Bootstrap, and the `teAlerts` text-only rendering of JSON, non-JSON and jqXHR responses. They also cover the localization tabs: the analysis loop, the key list, the PHP literal helpers, translate and save for one file, and "Translate all" with Stop. `npm ci` installs the pinned dev dependencies (jsdom, jQuery 3.7.1) into `tests/js/node_modules/`, which git ignores. jQuery 1.7.1 is the OC 1.5 file in `tests/js/vendor/`.
 
@@ -132,17 +142,17 @@ Controller: sources/upload/admin/controller/extension/module/client_translate_ex
     → handles admin UI routes, settings, AJAX actions
 Model: sources/upload/admin/model/extension/module/client_translate_expert.php
     → database queries for table/column analysis
-Libraries (sources/upload/system/library/):
-    client_translate_expert.php         → thin wrapper delegating to core
-    client_translate_expert_core.php    → main translation logic, table analysis, batch processing
-    client_localization_translate_expert.php → OpenCart language file parsing/writing
-    vh_google_translator.php            → Google Translate API wrapper with language code mapping
-    client_translate_expert_route_filter.php → excluded-routes check (OCMOD header op and OC4 header events)
-    client_translate_expert_cron_helper.php → cron secret rules and request parameter parsing (no OpenCart dependencies)
-    client_translate_expert_i18n.php    → header strings (document.te_i18n_global) from the module language file (no OpenCart dependencies)
+Libraries (sources/upload/system/library/translate_expert/):
+    translate_expert.php                → TranslateExpert: thin wrapper delegating to core
+    translate_expert_core.php           → TranslateExpertCore: main translation logic, table analysis, batch processing, language code mapping, format parameter fix
+    translate_expert_localization.php   → TranslateExpertLocalization: OpenCart language file parsing/writing
+    translate_expert_google_client.php  → TranslateExpertGoogleClient: Google Translate API wrapper
+    translate_expert_route_filter.php   → TranslateExpertRouteFilter: excluded-routes check (OCMOD header op and OC4 header events)
+    translate_expert_cron_helper.php    → TranslateExpertCronHelper: cron secret rules and request parameter parsing (no OpenCart dependencies)
+    translate_expert_i18n.php           → TranslateExpertI18n: header strings (document.te_i18n_global) from the module language file (no OpenCart dependencies)
 Store-front (catalog):
     sources/upload/catalog/controller/extension/module/client_translate_expert_cron.php
-    → cron link: thin controller, passes GET to LibraryClientTranslateExpert::runCron() (secret, lock, one translation batch)
+    → cron link: thin controller, passes GET to TranslateExpert::runCron() (secret, lock, one translation batch)
 Frontend:
     admin/view/javascript/client_translate_expert.js  → admin UI logic (tabs, AJAX calls, analysis)
     admin/view/template/extension/module/client_translate_expert.tpl → admin template

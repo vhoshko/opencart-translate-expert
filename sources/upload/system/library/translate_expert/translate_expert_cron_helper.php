@@ -4,7 +4,7 @@
  *
  * Keep this file PHP 5.6 compatible and free of OpenCart dependencies.
  */
-class ClientTranslateExpertCronHelper
+class TranslateExpertCronHelper
 {
 	const SECRET_MIN_LENGTH = 16;
 	const SECRET_MAX_LENGTH = 128;

@@ -10,17 +10,17 @@
     <operation>
       <search position="after"><![CDATA[public function index(]]></search>
       <add position="after"><![CDATA[
-			// Translate Expert: skip the module on excluded admin routes. The rules are in system/library/client_translate_expert_route_filter.php.
+			// Translate Expert: skip the module on excluded admin routes. The rules are in system/library/translate_expert/translate_expert_route_filter.php.
 			// If the module files are gone (uninstall without a modification refresh), do not load the module and do not stop the page.
 			$teKeyPrefix = version_compare(VERSION, '3.0', '>=') ? 'module_' : '';
-			$teFilterFile = DIR_SYSTEM . 'library/client_translate_expert_route_filter.php';
+			$teFilterFile = DIR_SYSTEM . 'library/translate_expert/translate_expert_route_filter.php';
 			$teExcluded = true;
 			if (is_file($teFilterFile)) {
 				require_once($teFilterFile);
-				$teExcluded = ClientTranslateExpertRouteFilter::isExcluded(
+				$teExcluded = TranslateExpertRouteFilter::isExcluded(
 					isset($this->request->get['route']) ? $this->request->get['route'] : null,
 					(string)$this->config->get($teKeyPrefix . 'client_translate_expert_excluded_routes'),
-					ClientTranslateExpertRouteFilter::defaultRoute()
+					TranslateExpertRouteFilter::defaultRoute()
 				);
 			}
 			$data['client_translate_expert_head_html'] = '';
@@ -32,7 +32,7 @@
 				// Strings of the header items (document.te_i18n_global). The library reads the module language file
 				// in a function scope, so the shared language object of the page does not change.
 				$teI18nJson = '{}';
-				$teI18nFile = DIR_SYSTEM . 'library/client_translate_expert_i18n.php';
+				$teI18nFile = DIR_SYSTEM . 'library/translate_expert/translate_expert_i18n.php';
 				if (is_file($teI18nFile)) {
 					require_once($teI18nFile);
 					// OC 2.2+ uses the language code as the folder name. OC 1.5–2.1 use the "directory" column.
@@ -43,9 +43,9 @@
 					}
 					// OC 2.3–3.0 keep the module file in extension/module/, OC 1.5–2.2 in module/.
 					$teSubPaths = array('/extension/module/client_translate_expert.php', '/module/client_translate_expert.php');
-					$teI18nJson = ClientTranslateExpertI18n::toJson(ClientTranslateExpertI18n::loadGlobal(
-						ClientTranslateExpertI18n::candidateFiles(DIR_LANGUAGE, $teFolders, $teSubPaths),
-						ClientTranslateExpertI18n::candidateFiles(DIR_LANGUAGE, array('en-gb', 'english'), $teSubPaths)
+					$teI18nJson = TranslateExpertI18n::toJson(TranslateExpertI18n::loadGlobal(
+						TranslateExpertI18n::candidateFiles(DIR_LANGUAGE, $teFolders, $teSubPaths),
+						TranslateExpertI18n::candidateFiles(DIR_LANGUAGE, array('en-gb', 'english'), $teSubPaths)
 					));
 				}
 				$data['client_translate_expert_head_html'] = '<script type="text/javascript" src="view/javascript/client_translate_expert.js?v={client_version}"></script>'

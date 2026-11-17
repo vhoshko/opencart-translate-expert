@@ -71,9 +71,13 @@ These constructs are valid PHP 5.6 syntax. They are not hits, in any file:
 ## Step 2 — Unit tests
 
 ```bash
-php tests/test_vh_google_translator.php
-php tests/test_client_translate_expert_route_filter.php
-php tests/test_client_translate_expert_cron_helper.php
+php tests/test_translate_expert_google_client.php
+php tests/test_translate_expert_core_translate.php
+php tests/test_translate_expert_library_paths.php
+php tests/test_translate_expert_route_filter.php
+php tests/test_translate_expert_cron_helper.php
+php tests/test_translate_expert_i18n.php
+php tests/test_client_translate_expert_localization.php
 php tests/test_client_translate_expert_translate_loop.php
 php tests/test_client_translate_expert_ajax_guard.php
 php tests/test_client_translate_expert_version_rules.php
@@ -83,7 +87,7 @@ php tests/test_oc4_twig_filters.php
 
 Run every script in `tests/` and `tests/js/`, including scripts that are not in this list. Report the counts of each script. Each script always runs its whole suite. It has no filter. To prove that one new test fails, run the suite. Then confirm that the expected test is among the failures.
 
-Run integration tests (`php tests/test_vh_google_translator.php <API_KEY>`) only if the dispatch prompt supplies a key. Never invent a key. Never look for a key in the repo.
+Run integration tests (`php tests/test_translate_expert_google_client.php <API_KEY>`) only if the dispatch prompt supplies a key. Never invent a key. Never look for a key in the repo.
 
 **In checks-only mode, stop here and report.**
 
