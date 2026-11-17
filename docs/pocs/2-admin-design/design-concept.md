@@ -114,6 +114,8 @@ Notes:
 
 ## 6. Tab "Settings" (`#tab-general`)
 
+Status: done in issue 60. The text below is the plan. The tab uses the cards of this section. Notes: the "Try a translation" card is collapsed and keeps the textareas without a "Translate" button, because no code translates them.
+
 ```
 +-- te-card: Connection -------------------------------------------------+
 | Status            [ Enabled  v ]                                        |
@@ -266,6 +268,8 @@ Notes:
 
 ## 9. Tab "Debug" (`#tab-debug`)
 
+Status: done in issue 60. The text below is the plan. The tab uses the cards of this section. Notes: the "Reset cache" success message stays for the later task (README step 6). The debug mode and the log share one card.
+
 ```
 +-- te-card: Versions ----------------------------------------------------+
 | Module 04.01.xxxx    OpenCart 4.0.2.3    PHP 8.1.27                     |
@@ -287,6 +291,8 @@ Notes:
 2. "Reset cache" shows a success message. The current code gives no feedback.
 
 ## 10. Tab "About" (`#tab-about`)
+
+Status: done in issue 60. The text below is the plan. The tab uses the cards of this section. Notes: the text of `text_about_page` is in one `te-card`.
 
 No change to the content. Put the text of `text_about_page` in a `te-card`.
 

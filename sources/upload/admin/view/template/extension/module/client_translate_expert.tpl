@@ -61,86 +61,100 @@
           </div>
 
           <div class="tab-content">
-            <div class="tab-pane <?php echo $tab_general_class; ?>" id="tab-general">
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="input-client_translate_expert_status"><?php echo $entry_status; ?></label>
-					<div class="col-sm-10">
-					  <select name="client_translate_expert_status" id="input-client_translate_expert_status" class="form-control">
-						<?php if ($client_translate_expert_status) { ?>
-						<option value="1" selected="selected"><?php echo $text_enabled; ?></option>
-						<option value="0"><?php echo $text_disabled; ?></option>
-						<?php } else { ?>
-						<option value="1"><?php echo $text_enabled; ?></option>
-						<option value="0" selected="selected"><?php echo $text_disabled; ?></option>
-						<?php } ?>
-					  </select>
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="input-client_translate_expert_key"><?php echo $entry_server_key; ?></label>
-					<div class="col-sm-10">
-					  <style>.te-key-masked { -webkit-text-security: disc; }</style>
-					  <div class="input-group">
-						<input type="text" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" name="client_translate_expert_key" value="<?php echo $client_translate_expert_key; ?>" placeholder="<?php echo $entry_server_key; ?>" id="input-client_translate_expert_key" class="form-control te-key-masked" />
-						<span class="input-group-btn"><button type="button" id="button-client_translate_expert_key_toggle" class="btn btn-default" data-text-show="<?php echo $button_show_key; ?>" data-text-hide="<?php echo $button_hide_key; ?>"><?php echo $button_show_key; ?></button></span>
-					  </div>
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-cron-bulk-amount"><?php echo $entry_cron_bulk_amount; ?></label>
-					<div class="col-sm-10">
-					  <input type="number" min="1" max="100000" step="1" name="client_translate_expert_cron_bulk_amount" value="<?php echo (int)$client_translate_expert_cron_bulk_amount; ?>" id="te-cron-bulk-amount" class="form-control" />
-					  <span class="help-block"><?php echo $help_cron_bulk_amount; ?></span>
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-cron-secret"><?php echo $entry_cron_secret; ?></label>
-					<div class="col-sm-10">
-					  <div class="input-group">
-						<input type="text" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" maxlength="128" name="client_translate_expert_cron_secret" value="<?php echo htmlspecialchars($client_translate_expert_cron_secret, ENT_QUOTES, 'UTF-8'); ?>" placeholder="<?php echo $entry_cron_secret; ?>" id="te-cron-secret" class="form-control" />
-						<span class="input-group-btn"><button type="button" id="te-cron-secret-generate" class="btn btn-default"><?php echo $button_cron_secret_generate; ?></button></span>
-					  </div>
-					  <span class="help-block"><?php echo $help_cron_secret; ?></span>
-					  <div class="text-warning" id="te-cron-secret-unsaved" style="display:none"><?php echo $text_cron_secret_unsaved; ?></div>
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="input-client_translate_expert_show_char_count_globally"><?php echo $entry_server_show_translation_char_count_globally; ?></label>
-					<div class="col-sm-10">
-					  <input type="checkbox" name="client_translate_expert_show_char_count_globally" value="1" id="input-client_translate_expert_show_char_count_globally" <?php echo $client_translate_expert_show_char_count_globally == 1 ? 'checked="1"' : ''; ?>/> <?php echo $entry_server_show_translation_char_count_globally; ?>
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="input-client_translate_expert_reset_char_count_on_start_month"><?php echo $entry_server_reset_translation_char_count_on_start_month; ?></label>
-					<div class="col-sm-10">
-					  <input type="checkbox" name="client_translate_expert_reset_char_count_on_start_month" value="1" id="input-client_translate_expert_reset_char_count_on_start_month" <?php echo $client_translate_expert_reset_char_count_on_start_month == 1 ? 'checked="1"' : ''; ?> /> <?php echo $entry_server_reset_translation_char_count_on_start_month; ?>
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="input-client_translate_expert_char_count"><?php echo $entry_server_translation_char_count; ?></label>
-					<div class="col-sm-10">
-					  <div id="input-client_translate_expert_char_count">
-						<?php echo $client_translate_expert_char_count ? $client_translate_expert_char_count : 0; ?>
-					  </div>
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="input-client_translate_expert_excluded_routes"><?php echo $entry_excluded_routes; ?></label>
-					<div class="col-sm-10">
-					  <textarea name="client_translate_expert_excluded_routes" rows="5" id="input-client_translate_expert_excluded_routes" class="form-control"><?php echo $client_translate_expert_excluded_routes; ?></textarea>
-					  <span class="help-block"><?php echo $help_excluded_routes; ?></span>
-					</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label"><?php echo $entry_try_translate; ?></label>
-					<div class="col-sm-10">
-						<?php foreach ($languages as $language) { ?>
-                        <div class="input-group">
-							<span class="input-group-addon"><img src="<?php echo $language['image_url']; ?>" title="<?php echo $language['name']; ?>" /></span>
-							<textarea name="test[<?php echo $language['language_id']; ?>][translation]" rows="7" placeholder="<?php echo $entry_try_translate_text; ?>" class="form-control"></textarea>
-                        </div>
-                        <?php } ?>
-						</div>
+				<div class="tab-pane <?php echo $tab_general_class; ?>" id="tab-general">
+				  <div class="te-app" id="te-settings-app">
+				    <div class="te-card">
+				      <div class="te-card__head"><?php echo $te_settings_card_connection; ?></div>
+				      <div class="te-card__body">
+				        <div class="te-form">
+				          <div class="te-field">
+				            <label class="te-field__label" for="input-client_translate_expert_status"><?php echo $entry_status; ?></label>
+				            <div class="te-field__control"><select name="client_translate_expert_status" id="input-client_translate_expert_status" class="form-control">
+				            <?php if ($client_translate_expert_status) { ?>
+				                                  <option value="1" selected="selected"><?php echo $text_enabled; ?></option>
+				                                  <option value="0"><?php echo $text_disabled; ?></option>
+				                                  <?php } else { ?>
+				                                  <option value="1"><?php echo $text_enabled; ?></option>
+				                                  <option value="0" selected="selected"><?php echo $text_disabled; ?></option>
+				                                  <?php } ?>
+				          </select></div>
+				          </div>
+				          <div class="te-field">
+				            <label class="te-field__label" for="input-client_translate_expert_key"><?php echo $entry_server_key; ?></label>
+				            <div class="te-field__control"><style>.te-key-masked { -webkit-text-security: disc; }</style>
+				          <div class="input-group">
+				            <input type="text" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" name="client_translate_expert_key" value="<?php echo $client_translate_expert_key; ?>" placeholder="<?php echo $entry_server_key; ?>" id="input-client_translate_expert_key" class="form-control te-key-masked" />
+				            <span class="input-group-btn"><button type="button" id="button-client_translate_expert_key_toggle" class="btn btn-default" data-text-show="<?php echo $button_show_key; ?>" data-text-hide="<?php echo $button_hide_key; ?>"><?php echo $button_show_key; ?></button></span>
+				          </div></div>
+				          </div>
+				        </div>
+				      </div>
+				    </div>
+				    <div class="te-card">
+				      <div class="te-card__head"><?php echo $te_settings_card_usage; ?></div>
+				      <div class="te-card__body">
+				        <div class="te-form">
+				          <div class="te-field">
+				            <span class="te-field__label"><?php echo $entry_server_translation_char_count; ?></span>
+				            <div class="te-field__control"><div id="input-client_translate_expert_char_count"><?php echo $client_translate_expert_char_count ? $client_translate_expert_char_count : 0; ?></div></div>
+				          </div>
+				          <div class="te-field">
+				            <span class="te-field__label"></span>
+				            <div class="te-field__control"><div class="checkbox"><label for="input-client_translate_expert_show_char_count_globally"><input type="checkbox" name="client_translate_expert_show_char_count_globally" value="1" id="input-client_translate_expert_show_char_count_globally" <?php if ($client_translate_expert_show_char_count_globally == 1) { ?>checked="checked"<?php } ?>/> <?php echo $entry_server_show_translation_char_count_globally; ?></label></div></div>
+				          </div>
+				          <div class="te-field">
+				            <span class="te-field__label"></span>
+				            <div class="te-field__control"><div class="checkbox"><label for="input-client_translate_expert_reset_char_count_on_start_month"><input type="checkbox" name="client_translate_expert_reset_char_count_on_start_month" value="1" id="input-client_translate_expert_reset_char_count_on_start_month" <?php if ($client_translate_expert_reset_char_count_on_start_month == 1) { ?>checked="checked"<?php } ?>/> <?php echo $entry_server_reset_translation_char_count_on_start_month; ?></label></div></div>
+				          </div>
+				        </div>
+				      </div>
+				    </div>
+				    <div class="te-card">
+				      <div class="te-card__head"><?php echo $te_settings_card_cron; ?></div>
+				      <div class="te-card__body">
+				        <div class="te-form">
+				          <div class="te-field">
+				            <label class="te-field__label" for="te-cron-bulk-amount"><?php echo $entry_cron_bulk_amount; ?></label>
+				            <div class="te-field__control"><input type="number" min="1" max="100000" step="1" name="client_translate_expert_cron_bulk_amount" value="<?php echo (int)$client_translate_expert_cron_bulk_amount; ?>" id="te-cron-bulk-amount" class="form-control" /></div>
+				            <div class="te-field__help"><?php echo $help_cron_bulk_amount; ?></div>
+				          </div>
+				          <div class="te-field">
+				            <label class="te-field__label" for="te-cron-secret"><?php echo $entry_cron_secret; ?></label>
+				            <div class="te-field__control"><div class="input-group">
+				            <input type="text" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" maxlength="128" name="client_translate_expert_cron_secret" value="<?php echo htmlspecialchars($client_translate_expert_cron_secret, ENT_QUOTES, 'UTF-8'); ?>" placeholder="<?php echo $entry_cron_secret; ?>" id="te-cron-secret" class="form-control" />
+				            <span class="input-group-btn"><button type="button" id="te-cron-secret-generate" class="btn btn-default"><?php echo $button_cron_secret_generate; ?></button></span>
+				          </div>
+				          <div class="text-warning" id="te-cron-secret-unsaved" style="display:none"><?php echo $text_cron_secret_unsaved; ?></div></div>
+				            <div class="te-field__help"><?php echo $help_cron_secret; ?></div>
+				          </div>
+				        </div>
+				      </div>
+				    </div>
+				    <div class="te-card">
+				      <div class="te-card__head"><?php echo $te_settings_card_routes; ?></div>
+				      <div class="te-card__body">
+				        <div class="te-form">
+				          <div class="te-field">
+				            <label class="te-field__label" for="input-client_translate_expert_excluded_routes"><?php echo $entry_excluded_routes; ?></label>
+				            <div class="te-field__control"><textarea name="client_translate_expert_excluded_routes" rows="5" id="input-client_translate_expert_excluded_routes" class="form-control"><?php echo $client_translate_expert_excluded_routes; ?></textarea></div>
+				            <div class="te-field__help"><?php echo $help_excluded_routes; ?></div>
+				          </div>
+				        </div>
+				      </div>
+				    </div>
+				    <div class="te-card">
+				      <div class="te-card__head">
+				        <button type="button" class="te-collapse-toggle te-js-collapse" data-te-target="#te-try-panel" aria-expanded="false" aria-controls="te-try-panel"><?php echo $te_settings_card_try; ?></button>
+				      </div>
+				      <div class="te-card__body te-hidden" id="te-try-panel">
+				        <?php foreach ($languages as $language) { ?>
+				        <div class="input-group" style="margin-bottom: 8px;">
+				          <span class="input-group-addon"><img src="<?php echo $language['image_url']; ?>" title="<?php echo $language['name']; ?>" /></span>
+				          <textarea name="test[<?php echo $language['language_id']; ?>][translation]" rows="7" placeholder="<?php echo $entry_try_translate_text; ?>" class="form-control"></textarea>
+				        </div>
+				        <?php } ?>
+				      </div>
+				    </div>
 				  </div>
 				</div>
 				<div class="tab-pane" id="tab-translate-site">
@@ -294,78 +308,76 @@
 
 
 				<div class="tab-pane <?php echo $tab_debug_class; ?>" id="tab-debug">
-				  <div class="form-group">
-						<label class="col-sm-2 control-label" for="client_translate_expert_version"><?php echo $entry_translate_expert_version; ?></label>
-						<div class="col-sm-10">
-							<strong name="client_translate_expert_version" id="client_translate_expert_version" class="form-control"><?php echo $translate_expert_version; ?></strong>
-						</div>
+				  <div class="te-app" id="te-debug-app">
+				    <div class="te-card">
+				      <div class="te-card__head"><?php echo $te_debug_card_versions; ?></div>
+				      <div class="te-card__body">
+				        <div class="te-form">
+				          <div class="te-field">
+				            <span class="te-field__label"><?php echo $entry_translate_expert_version; ?></span>
+				            <div class="te-field__control te-plain-value"><?php echo $translate_expert_version; ?></div>
+				          </div>
+				          <div class="te-field">
+				            <span class="te-field__label"><?php echo $entry_opencart_version; ?></span>
+				            <div class="te-field__control te-plain-value"><?php echo $opencart_version; ?></div>
+				          </div>
+				          <div class="te-field">
+				            <span class="te-field__label"><?php echo $entry_php_version; ?></span>
+				            <div class="te-field__control te-plain-value"><?php echo $php_version; ?></div>
+				          </div>
+				        </div>
+				      </div>
+				    </div>
+				    <div class="te-card">
+				      <div class="te-card__head"><?php echo $te_debug_card_cache; ?></div>
+				      <div class="te-card__body">
+				        <div class="te-form">
+				          <div class="te-field">
+				            <span class="te-field__label"><?php echo $entry_reset_translation_cache; ?></span>
+				            <div class="te-field__control"><button type="button" class="btn btn-primary" id="reset_translation_cache" title="<?php echo $entry_reset_translation_cache; ?>" onclick="resetTranslationCache()"><?php echo $entry_reset_translation_cache; ?></button></div>
+				          </div>
+				        </div>
+				      </div>
+				    </div>
+				    <div class="te-card">
+				      <div class="te-card__head"><span><i class="fa fa-exclamation-triangle"></i> <?php echo $text_debug_log; ?></span></div>
+				      <div class="te-card__body">
+				        <div class="te-form">
+				          <div class="te-field">
+				            <span class="te-field__label"><?php echo $entry_debug_status; ?></span>
+				            <div class="te-field__control te-radio-group"><label class="radio-inline"><input type="radio" name="client_translate_expert_debug_status" value="1" id="debug-status-enabled" autocomplete="off" <?php if ($client_translate_expert_debug_status) { ?>checked="checked"<?php } ?>> <?php echo $text_enabled; ?></label>
+				          <label class="radio-inline"><input type="radio" name="client_translate_expert_debug_status" value="0" id="debug-status-disabled" autocomplete="off" <?php if (!$client_translate_expert_debug_status) { ?>checked="checked"<?php } ?>> <?php echo $text_disabled; ?></label></div>
+				          </div>
+				        </div>
+				        <div class="te-toolbar">
+				          <?php if (isset($debug_log)) { ?>
+				            <a href="<?php echo $download_href; ?>" data-toggle="tooltip" title="<?php echo $button_download; ?>" class="btn btn-primary"><i class="fa fa-download"></i></a>
+				            <a onclick="confirm('<?php echo $text_clear_confirm; ?>') ? location.href='<?php echo $clear_href; ?>' : false;" data-toggle="tooltip" title="<?php echo $button_clear; ?>" class="btn btn-danger"><i class="fa fa-eraser"></i></a>
+				          <?php } else { ?>
+				            <a class="btn btn-info" href="<?php echo $view_href; ?>" data-toggle="tooltip" title="<?php echo $button_view; ?>"><i class="fa fa-eye"></i> <?php echo $button_view; ?></a>
+				          <?php } ?>
+				        </div>
+				        <?php if (isset($debug_log)) { ?>
+				          <?php if (isset($error_debug_log_warning_frm) && $error_debug_log_warning_frm) { ?>
+				            <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> <?php echo $error_debug_log_warning_frm; ?>
+				              <button type="button" class="close" data-dismiss="alert">&times;</button>
+				            </div>
+				          <?php } ?>
+				          <textarea wrap="off" rows="30" readonly class="form-control"><?php echo $debug_log; ?></textarea>
+				        <?php } ?>
+				      </div>
+				    </div>
 				  </div>
-				  <div class="form-group">
-						<label class="col-sm-2 control-label" for="php_version"><?php echo $entry_php_version; ?></label>
-						<div class="col-sm-10">
-							<strong name="php_version" id="php_version" class="form-control"><?php echo $php_version; ?></strong>
-						</div>
-				  </div>
-				  <div class="form-group">
-						<label class="col-sm-2 control-label" for="opencart_version"><?php echo $entry_opencart_version; ?></label>
-						<div class="col-sm-10">
-							<strong name="opencart_version" id="opencart_version" class="form-control"><?php echo $opencart_version; ?></strong>
-						</div>
-				  </div>
-				  <div class="form-group">
-						<label class="col-sm-2 control-label" for="reset_translation_cache"><?php echo $entry_reset_translation_cache; ?></label>
-						<div class="col-sm-10">
-							<div class="btn btn-primary" name="reset_translation_cache" id="reset_translation_cache" title="<?php echo $entry_reset_translation_cache; ?>" onclick="resetTranslationCache()"><?php echo $entry_reset_translation_cache; ?></div>
-						</div>
-				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" ><?php echo $entry_debug_status; ?></label>
-					<div class="col-sm-10">
-						<div class="btn-group" data-toggle="buttons">
-							<label class="btn btn-primary <?php if ($client_translate_expert_debug_status) { ?>active<?php } ?>">
-								<input type="radio" name="client_translate_expert_debug_status" value="1"
-									<?php if ($client_translate_expert_debug_status) { ?>checked="checked"<?php } ?>> <?php echo $text_enabled; ?>
-							</label>
-							<label class="btn btn-primary <?php if (!$client_translate_expert_debug_status) { ?>active<?php } ?>">
-								<input type="radio" name="client_translate_expert_debug_status" value="0"
-									<?php if (!$client_translate_expert_debug_status) { ?>checked="checked"<?php } ?>> <?php echo $text_disabled; ?>
-							</label>
-                        </div>
-					</div>
-				  </div>
-				  
-					<div class="panel panel-default">
-
-						<div class="container-fluid">
-							<div class="pull-left">
-								<?php if (isset($debug_log)) { ?>
-								<a href="<?php echo $download_href; ?>" data-toggle="tooltip" title="<?php echo $button_download; ?>" class="btn btn-primary"><i class="fa fa-download"></i></a>
-								<a onclick="confirm('<?php echo $text_clear_confirm; ?>') ? location.href='<?php echo $clear_href; ?>' : false;" data-toggle="tooltip" title="<?php echo $button_clear; ?>" class="btn btn-danger"><i class="fa fa-eraser"></i></a>
-								<?php } else { ?>
-								<a class="btn btn-info" href="<?php echo $view_href; ?>" data-toggle="tooltip" title="" data-original-title="<?php echo $button_view; ?>"><i class="fa fa-eye"><?php echo $button_view; ?></i></a>							
-								<?php } ?>
-							</div>
-						</div>
-						<div class="container-fluid">
-							<div class="panel-heading">
-								<h3 class="panel-title"><i class="fa fa-exclamation-triangle"></i> <?php echo $text_debug_log; ?></h3>
-							</div>
-						</div>
-						<?php if (isset($debug_log)) { ?>
-							<?php if (isset($error_debug_log_warning_frm) && $error_debug_log_warning_frm) { ?>
-							<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> <?php echo $error_debug_log_warning_frm; ?>
-								<button type="button" class="close" data-dismiss="alert">&times;</button>
-							</div>
-							<?php } ?>
-							<div class="panel-body">
-								<textarea wrap="off" rows="30" readonly class="form-control"><?php echo $debug_log; ?></textarea>
-							</div>
-						<?php } ?>
-					</div>
-				  
 				</div>
 				<div class="tab-pane" id="tab-about">
-					<?php echo $text_about_page; ?>
+				  <div class="te-app" id="te-about-app">
+				    <div class="te-card">
+				      <div class="te-card__head"><?php echo $te_about_card; ?></div>
+				      <div class="te-card__body">
+				        <?php echo $text_about_page; ?>
+				      </div>
+				    </div>
+				  </div>
 				</div>
 			</div>
         </form>

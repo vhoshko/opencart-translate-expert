@@ -52,7 +52,6 @@ $_['entry_analization_mode'] = 'Analysis mode';
 $_['entry_stop_modal_process'] = 'Stop';
 $_['entry_stop_modal_process_confirmation'] = 'Are you sure you want to stop current process?';
 $_['entry_close'] = 'Close';
-$_['entry_try_translate']     = 'Translation verification form<br>API key test';
 $_['entry_try_translate_text']     = 'Translation verification form';
 $_['entry_translate_expert_version']     = 'Module version';
 $_['entry_php_version']     = 'PHP version';
@@ -83,12 +82,22 @@ $_['entry_reset_translation_cache'] = 'Reset translation cache';
 
 
 // Tabs;
-$_['tab_general'] = 'General';
-$_['tab_translate_site'] = 'Website content translation';
+$_['tab_general'] = 'Settings';
+$_['tab_translate_site'] = 'Website content';
 $_['tab_localization']   = 'Catalog files';
 $_['tab_admin_localization']   = 'Admin files';
 $_['tab_debug']          = 'Debug';
-$_['tab_about'] = 'About module';
+$_['tab_about'] = 'About';
+
+// Settings, Debug and About tabs (card titles)
+$_['te_settings_card_connection'] = 'Connection';
+$_['te_settings_card_usage'] = 'Character usage';
+$_['te_settings_card_cron'] = 'Scheduled translation (cron)';
+$_['te_settings_card_routes'] = 'Excluded routes';
+$_['te_settings_card_try'] = 'Try a translation';
+$_['te_debug_card_versions'] = 'Versions';
+$_['te_debug_card_cache'] = 'Cache';
+$_['te_about_card'] = 'About the module';
 
 // Value;
 $_['value_analization_mode_only_empty'] = 'Search for empty values only';
