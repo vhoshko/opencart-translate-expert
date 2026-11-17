@@ -295,7 +295,7 @@ On a bug-fix task, do these steps when the suite is green:
 3. Run the suite again.
 4. Confirm that the new test is among the failures, **and that it fails on the assertion you expect**.
 5. Restore the fix from the copies. Do not retype the code.
-6. Verify the restore with `git diff --stat` and a grep for whatever you used to disable the fix. Do this before you move on.
+6. Verify the restore with `git diff --stat` and a grep for whatever you used to disable the fix. Use `grep -F` with single quotes for a code fragment. A pattern with `$` or `(` in double quotes can give a false 0 count. Do this before you move on.
 
 If a mutation passes all tests, do not add a test at once. First check if later code makes the result the same. For example, a final flush after a `break` can send the rows that an earlier flush skipped. If the result is the same, record the mutation as equivalent in the Findings of the plan. Otherwise, add a test that fails with the mutation.
 
