@@ -92,6 +92,6 @@ The About tab of the module shows the module version and the support link. Suppo
 Main images of the module (1024x1024, same design):
 main-image.en.png (English), main-image.uk.png (Ukrainian)
 
-Screenshots of the module tabs (OpenCart 4.1.0.4, English interface) are in docs/store/screenshots/:
+Screenshots of the module tabs (OpenCart 4.1.0.4, English interface) are in docs/store/screenshots/en/ (English interface) and docs/store/screenshots/uk/ (Ukrainian interface), same file names:
 01-settings.png, 02-website-content.png, 03-catalog-files.png, 04-admin-files.png, 05-debug.png, 06-about.png
 -->

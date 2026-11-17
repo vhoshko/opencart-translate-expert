@@ -84,3 +84,6 @@ The user chose 2 generated main images (Gemini, 1024x1024, en and uk). They are 
 
 ## Update 17.11.2026 (screenshots)
 The user added 6 screenshots of the module tabs (OpenCart 4.1.0.4, English UI, local test store). They are in `docs/store/screenshots/` (`01-settings.png` to `06-about.png`). Known defects for a retake: a broken flag image in "Try a translation" (01), a stray highlight on one cell (03), a cropped side menu (03, 04, 06), a different width in each file and a partial cron secret in the cron link (02).
+
+## Update 17.11.2026 (Ukrainian screenshots)
+The user added 6 screenshots of the Ukrainian interface. The files now live in `docs/store/screenshots/en/` and `docs/store/screenshots/uk/` with the same names. The earlier English defects (broken flag, cropped side menu in 03, different widths) are also in the Ukrainian set. The Ukrainian settings and website content shots show the cron secret.
