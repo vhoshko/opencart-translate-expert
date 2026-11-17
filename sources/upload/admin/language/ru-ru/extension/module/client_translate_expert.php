@@ -84,12 +84,22 @@ $_['entry_reset_translation_cache'] = 'Сбросить кеш перевода'
 
 
 // Tabs
-$_['tab_general']        = 'Общее';
-$_['tab_translate_site'] = 'Перевод контента сайта';
+$_['tab_general']        = 'Настройки';
+$_['tab_translate_site'] = 'Контент сайта';
 $_['tab_localization']   = 'Файлы магазина';
 $_['tab_admin_localization']   = 'Файлы админки';
 $_['tab_debug']          = 'Отладка';
-$_['tab_about']          = 'Про модуль';
+$_['tab_about']          = 'О модуле';
+
+// Settings, Debug and About tabs (card titles)
+$_['te_settings_card_connection'] = 'Подключение';
+$_['te_settings_card_usage'] = 'Использование символов';
+$_['te_settings_card_cron'] = 'Перевод по расписанию (cron)';
+$_['te_settings_card_routes'] = 'Исключённые маршруты';
+$_['te_settings_card_try'] = 'Пробный перевод';
+$_['te_debug_card_versions'] = 'Версии';
+$_['te_debug_card_cache'] = 'Кеш';
+$_['te_about_card'] = 'Информация о модуле';
 
 // Value
 $_['value_analization_mode_only_empty'] = 'Искать только пустые значения';

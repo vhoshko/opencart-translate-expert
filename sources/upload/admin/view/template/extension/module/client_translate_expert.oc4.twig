@@ -62,84 +62,98 @@
 
           <div class="tab-content">
             <div class="tab-pane {{ tab_general_class }}" id="tab-general">
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="input-client_translate_expert_status">{{ entry_status }}</label>
-                <div class="col-sm-10">
-                  <select name="client_translate_expert_status" id="input-client_translate_expert_status" class="form-select">
-                    {% if client_translate_expert_status %}
-                    <option value="1" selected="selected">{{ text_enabled }}</option>
-                    <option value="0">{{ text_disabled }}</option>
-                    {% else %}
-                    <option value="1">{{ text_enabled }}</option>
-                    <option value="0" selected="selected">{{ text_disabled }}</option>
-                    {% endif %}
-                  </select>
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="input-client_translate_expert_key">{{ entry_server_key }}</label>
-                <div class="col-sm-10">
-                  <style>.te-key-masked { -webkit-text-security: disc; }</style>
-                  <div class="input-group">
-                    <input type="text" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" name="client_translate_expert_key" value="{{ client_translate_expert_key }}" placeholder="{{ entry_server_key }}" id="input-client_translate_expert_key" class="form-control te-key-masked" />
-                    <button type="button" id="button-client_translate_expert_key_toggle" class="btn btn-outline-secondary" data-text-show="{{ button_show_key }}" data-text-hide="{{ button_hide_key }}">{{ button_show_key }}</button>
+              <div class="te-app" id="te-settings-app">
+                <div class="te-card">
+                  <div class="te-card__head">{{ te_settings_card_connection }}</div>
+                  <div class="te-card__body">
+                    <div class="te-form">
+                      <div class="te-field">
+                        <label class="te-field__label" for="input-client_translate_expert_status">{{ entry_status }}</label>
+                        <div class="te-field__control"><select name="client_translate_expert_status" id="input-client_translate_expert_status" class="form-select">
+                        {% if client_translate_expert_status %}
+                                              <option value="1" selected="selected">{{ text_enabled }}</option>
+                                              <option value="0">{{ text_disabled }}</option>
+                                              {% else %}
+                                              <option value="1">{{ text_enabled }}</option>
+                                              <option value="0" selected="selected">{{ text_disabled }}</option>
+                                              {% endif %}
+                      </select></div>
+                      </div>
+                      <div class="te-field">
+                        <label class="te-field__label" for="input-client_translate_expert_key">{{ entry_server_key }}</label>
+                        <div class="te-field__control"><style>.te-key-masked { -webkit-text-security: disc; }</style>
+                      <div class="input-group">
+                        <input type="text" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" name="client_translate_expert_key" value="{{ client_translate_expert_key }}" placeholder="{{ entry_server_key }}" id="input-client_translate_expert_key" class="form-control te-key-masked" />
+                        <button type="button" id="button-client_translate_expert_key_toggle" class="btn btn-outline-secondary" data-text-show="{{ button_show_key }}" data-text-hide="{{ button_hide_key }}">{{ button_show_key }}</button>
+                      </div></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-cron-bulk-amount">{{ entry_cron_bulk_amount }}</label>
-                <div class="col-sm-10">
-                  <input type="number" min="1" max="100000" step="1" name="client_translate_expert_cron_bulk_amount" value="{{ client_translate_expert_cron_bulk_amount|e('html_attr') }}" id="te-cron-bulk-amount" class="form-control" />
-                  <div class="form-text">{{ help_cron_bulk_amount }}</div>
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-cron-secret">{{ entry_cron_secret }}</label>
-                <div class="col-sm-10">
-                  <div class="input-group">
-                    <input type="text" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" maxlength="128" name="client_translate_expert_cron_secret" value="{{ client_translate_expert_cron_secret|e('html_attr') }}" placeholder="{{ entry_cron_secret }}" id="te-cron-secret" class="form-control" />
-                    <button type="button" id="te-cron-secret-generate" class="btn btn-outline-secondary">{{ button_cron_secret_generate }}</button>
-                  </div>
-                  <div class="form-text">{{ help_cron_secret }}</div>
-                  <div class="text-warning" id="te-cron-secret-unsaved" style="display:none">{{ text_cron_secret_unsaved }}</div>
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="input-client_translate_expert_show_char_count_globally">{{ entry_server_show_translation_char_count_globally }}</label>
-                <div class="col-sm-10">
-                  <input type="checkbox" name="client_translate_expert_show_char_count_globally" value="1" id="input-client_translate_expert_show_char_count_globally" class="form-check-input" {% if client_translate_expert_show_char_count_globally == 1 %}checked="checked"{% endif %}/> {{ entry_server_show_translation_char_count_globally }}
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="input-client_translate_expert_reset_char_count_on_start_month">{{ entry_server_reset_translation_char_count_on_start_month }}</label>
-                <div class="col-sm-10">
-                  <input type="checkbox" name="client_translate_expert_reset_char_count_on_start_month" value="1" id="input-client_translate_expert_reset_char_count_on_start_month" class="form-check-input" {% if client_translate_expert_reset_char_count_on_start_month == 1 %}checked="checked"{% endif %} /> {{ entry_server_reset_translation_char_count_on_start_month }}
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="input-client_translate_expert_char_count">{{ entry_server_translation_char_count }}</label>
-                <div class="col-sm-10">
-                  <div id="input-client_translate_expert_char_count">
-                    {{ client_translate_expert_char_count ? client_translate_expert_char_count : 0 }}
+                <div class="te-card">
+                  <div class="te-card__head">{{ te_settings_card_usage }}</div>
+                  <div class="te-card__body">
+                    <div class="te-form">
+                      <div class="te-field">
+                        <span class="te-field__label">{{ entry_server_translation_char_count }}</span>
+                        <div class="te-field__control"><div id="input-client_translate_expert_char_count">{{ client_translate_expert_char_count ? client_translate_expert_char_count : 0 }}</div></div>
+                      </div>
+                      <div class="te-field">
+                        <span class="te-field__label"></span>
+                        <div class="te-field__control"><div class="form-check"><input type="checkbox" name="client_translate_expert_show_char_count_globally" value="1" id="input-client_translate_expert_show_char_count_globally" class="form-check-input" {% if client_translate_expert_show_char_count_globally == 1 %}checked="checked"{% endif %}/> <label class="form-check-label" for="input-client_translate_expert_show_char_count_globally">{{ entry_server_show_translation_char_count_globally }}</label></div></div>
+                      </div>
+                      <div class="te-field">
+                        <span class="te-field__label"></span>
+                        <div class="te-field__control"><div class="form-check"><input type="checkbox" name="client_translate_expert_reset_char_count_on_start_month" value="1" id="input-client_translate_expert_reset_char_count_on_start_month" class="form-check-input" {% if client_translate_expert_reset_char_count_on_start_month == 1 %}checked="checked"{% endif %}/> <label class="form-check-label" for="input-client_translate_expert_reset_char_count_on_start_month">{{ entry_server_reset_translation_char_count_on_start_month }}</label></div></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="input-client_translate_expert_excluded_routes">{{ entry_excluded_routes }}</label>
-                <div class="col-sm-10">
-                  <textarea name="client_translate_expert_excluded_routes" rows="5" id="input-client_translate_expert_excluded_routes" class="form-control">{{ client_translate_expert_excluded_routes }}</textarea>
-                  <div class="form-text">{{ help_excluded_routes }}</div>
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label">{{ entry_try_translate }}</label>
-                <div class="col-sm-10">
-                  {% for language in languages %}
-                  <div class="input-group mb-2">
-                    <span class="input-group-text"><img src="{{ language.image_url }}" title="{{ language.name }}" /></span>
-                    <textarea name="test[{{ language.language_id }}][translation]" rows="7" placeholder="{{ entry_try_translate_text }}" class="form-control"></textarea>
+                <div class="te-card">
+                  <div class="te-card__head">{{ te_settings_card_cron }}</div>
+                  <div class="te-card__body">
+                    <div class="te-form">
+                      <div class="te-field">
+                        <label class="te-field__label" for="te-cron-bulk-amount">{{ entry_cron_bulk_amount }}</label>
+                        <div class="te-field__control"><input type="number" min="1" max="100000" step="1" name="client_translate_expert_cron_bulk_amount" value="{{ client_translate_expert_cron_bulk_amount|e('html_attr') }}" id="te-cron-bulk-amount" class="form-control" /></div>
+                        <div class="te-field__help">{{ help_cron_bulk_amount }}</div>
+                      </div>
+                      <div class="te-field">
+                        <label class="te-field__label" for="te-cron-secret">{{ entry_cron_secret }}</label>
+                        <div class="te-field__control"><div class="input-group">
+                        <input type="text" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" maxlength="128" name="client_translate_expert_cron_secret" value="{{ client_translate_expert_cron_secret|e('html_attr') }}" placeholder="{{ entry_cron_secret }}" id="te-cron-secret" class="form-control" />
+                        <button type="button" id="te-cron-secret-generate" class="btn btn-outline-secondary">{{ button_cron_secret_generate }}</button>
+                      </div>
+                      <div class="text-warning" id="te-cron-secret-unsaved" style="display:none">{{ text_cron_secret_unsaved }}</div></div>
+                        <div class="te-field__help">{{ help_cron_secret }}</div>
+                      </div>
+                    </div>
                   </div>
-                  {% endfor %}
+                </div>
+                <div class="te-card">
+                  <div class="te-card__head">{{ te_settings_card_routes }}</div>
+                  <div class="te-card__body">
+                    <div class="te-form">
+                      <div class="te-field">
+                        <label class="te-field__label" for="input-client_translate_expert_excluded_routes">{{ entry_excluded_routes }}</label>
+                        <div class="te-field__control"><textarea name="client_translate_expert_excluded_routes" rows="5" id="input-client_translate_expert_excluded_routes" class="form-control">{{ client_translate_expert_excluded_routes }}</textarea></div>
+                        <div class="te-field__help">{{ help_excluded_routes }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="te-card">
+                  <div class="te-card__head">
+                    <button type="button" class="te-collapse-toggle te-js-collapse" data-te-target="#te-try-panel" aria-expanded="false" aria-controls="te-try-panel">{{ te_settings_card_try }}</button>
+                  </div>
+                  <div class="te-card__body te-hidden" id="te-try-panel">
+                    {% for language in languages %}
+                    <div class="input-group" style="margin-bottom: 8px;">
+                      <span class="input-group-text"><img src="{{ language.image_url }}" title="{{ language.name }}" /></span>
+                      <textarea name="test[{{ language.language_id }}][translation]" rows="7" placeholder="{{ entry_try_translate_text }}" class="form-control"></textarea>
+                    </div>
+                    {% endfor %}
+                  </div>
                 </div>
               </div>
             </div>
@@ -292,73 +306,76 @@
 
 
             <div class="tab-pane {{ tab_debug_class }}" id="tab-debug">
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="client_translate_expert_version">{{ entry_translate_expert_version }}</label>
-                <div class="col-sm-10">
-                  <strong name="client_translate_expert_version" id="client_translate_expert_version" class="form-control">{{ translate_expert_version }}</strong>
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="php_version">{{ entry_php_version }}</label>
-                <div class="col-sm-10">
-                  <strong name="php_version" id="php_version" class="form-control">{{ php_version }}</strong>
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="opencart_version">{{ entry_opencart_version }}</label>
-                <div class="col-sm-10">
-                  <strong name="opencart_version" id="opencart_version" class="form-control">{{ opencart_version }}</strong>
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="reset_translation_cache">{{ entry_reset_translation_cache }}</label>
-                <div class="col-sm-10">
-                  <div class="btn btn-primary" name="reset_translation_cache" id="reset_translation_cache" title="{{ entry_reset_translation_cache }}" onclick="resetTranslationCache()">{{ entry_reset_translation_cache }}</div>
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label">{{ entry_debug_status }}</label>
-                <div class="col-sm-10">
-                  <div class="btn-group" role="group">
-                    <input type="radio" class="btn-check" name="client_translate_expert_debug_status" value="1" id="debug-status-enabled" autocomplete="off" {% if client_translate_expert_debug_status %}checked="checked"{% endif %}>
-                    <label class="btn btn-primary" for="debug-status-enabled">{{ text_enabled }}</label>
-                    <input type="radio" class="btn-check" name="client_translate_expert_debug_status" value="0" id="debug-status-disabled" autocomplete="off" {% if not client_translate_expert_debug_status %}checked="checked"{% endif %}>
-                    <label class="btn btn-primary" for="debug-status-disabled">{{ text_disabled }}</label>
+              <div class="te-app" id="te-debug-app">
+                <div class="te-card">
+                  <div class="te-card__head">{{ te_debug_card_versions }}</div>
+                  <div class="te-card__body">
+                    <div class="te-form">
+                      <div class="te-field">
+                        <span class="te-field__label">{{ entry_translate_expert_version }}</span>
+                        <div class="te-field__control te-plain-value">{{ translate_expert_version }}</div>
+                      </div>
+                      <div class="te-field">
+                        <span class="te-field__label">{{ entry_opencart_version }}</span>
+                        <div class="te-field__control te-plain-value">{{ opencart_version }}</div>
+                      </div>
+                      <div class="te-field">
+                        <span class="te-field__label">{{ entry_php_version }}</span>
+                        <div class="te-field__control te-plain-value">{{ php_version }}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              <div class="card">
-                <div class="container-fluid">
-                  <div class="float-start">
+                <div class="te-card">
+                  <div class="te-card__head">{{ te_debug_card_cache }}</div>
+                  <div class="te-card__body">
+                    <div class="te-form">
+                      <div class="te-field">
+                        <span class="te-field__label">{{ entry_reset_translation_cache }}</span>
+                        <div class="te-field__control"><button type="button" class="btn btn-primary" id="reset_translation_cache" title="{{ entry_reset_translation_cache }}" onclick="resetTranslationCache()">{{ entry_reset_translation_cache }}</button></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="te-card">
+                  <div class="te-card__head"><span><i class="fa fa-exclamation-triangle"></i> {{ text_debug_log }}</span></div>
+                  <div class="te-card__body">
+                    <div class="te-form">
+                      <div class="te-field">
+                        <span class="te-field__label">{{ entry_debug_status }}</span>
+                        <div class="te-field__control te-radio-group"><div class="form-check form-check-inline"><input type="radio" class="form-check-input" name="client_translate_expert_debug_status" value="1" id="debug-status-enabled" autocomplete="off" {% if client_translate_expert_debug_status %}checked="checked"{% endif %}> <label class="form-check-label" for="debug-status-enabled">{{ text_enabled }}</label></div>
+                      <div class="form-check form-check-inline"><input type="radio" class="form-check-input" name="client_translate_expert_debug_status" value="0" id="debug-status-disabled" autocomplete="off" {% if not client_translate_expert_debug_status %}checked="checked"{% endif %}> <label class="form-check-label" for="debug-status-disabled">{{ text_disabled }}</label></div></div>
+                      </div>
+                    </div>
+                    <div class="te-toolbar">
+                      {% if debug_log is defined %}
+                        <a href="{{ download_href }}" data-bs-toggle="tooltip" title="{{ button_download }}" class="btn btn-primary"><i class="fa fa-download"></i></a>
+                        <a onclick="confirm('{{ text_clear_confirm }}') ? location.href='{{ clear_href }}' : false;" data-bs-toggle="tooltip" title="{{ button_clear }}" class="btn btn-danger"><i class="fa fa-eraser"></i></a>
+                      {% else %}
+                        <a class="btn btn-info" href="{{ view_href }}" data-bs-toggle="tooltip" title="{{ button_view }}"><i class="fa fa-eye"></i> {{ button_view }}</a>
+                      {% endif %}
+                    </div>
                     {% if debug_log is defined %}
-                    <a href="{{ download_href }}" data-bs-toggle="tooltip" title="{{ button_download }}" class="btn btn-primary"><i class="fa fa-download"></i></a>
-                    <a onclick="confirm('{{ text_clear_confirm }}') ? location.href='{{ clear_href }}' : false;" data-bs-toggle="tooltip" title="{{ button_clear }}" class="btn btn-danger"><i class="fa fa-eraser"></i></a>
-                    {% else %}
-                    <a class="btn btn-info" href="{{ view_href }}" data-bs-toggle="tooltip" title="{{ button_view }}"><i class="fa fa-eye"> {{ button_view }}</i></a>
+                      {% if error_debug_log_warning_frm is defined and error_debug_log_warning_frm %}
+                        <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{ error_debug_log_warning_frm }}
+                          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                      {% endif %}
+                      <textarea wrap="off" rows="30" readonly class="form-control">{{ debug_log }}</textarea>
                     {% endif %}
                   </div>
                 </div>
-                <div class="container-fluid">
-                  <div class="card-header">
-                    <h3 class="card-title"><i class="fa fa-exclamation-triangle"></i> {{ text_debug_log }}</h3>
-                  </div>
-                </div>
-                {% if debug_log is defined %}
-                  {% if error_debug_log_warning_frm is defined and error_debug_log_warning_frm %}
-                  <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{ error_debug_log_warning_frm }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                  </div>
-                  {% endif %}
-                  <div class="card-body">
-                    <textarea wrap="off" rows="30" readonly class="form-control">{{ debug_log }}</textarea>
-                  </div>
-                {% endif %}
               </div>
-
             </div>
             <div class="tab-pane" id="tab-about">
-              {{ text_about_page|raw }}
+              <div class="te-app" id="te-about-app">
+                <div class="te-card">
+                  <div class="te-card__head">{{ te_about_card }}</div>
+                  <div class="te-card__body">
+                    {{ text_about_page|raw }}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </form>

@@ -83,12 +83,22 @@ $_['entry_reset_translation_cache'] = 'Reset translation cache';
 
 
 // Tabs;
-$_['tab_general'] = 'General';
-$_['tab_translate_site'] = 'Website content translation';
+$_['tab_general'] = 'Settings';
+$_['tab_translate_site'] = 'Website content';
 $_['tab_localization']   = 'Catalog files';
 $_['tab_admin_localization']   = 'Admin files';
 $_['tab_debug']          = 'Debug';
-$_['tab_about'] = 'About module';
+$_['tab_about'] = 'About';
+
+// Settings, Debug and About tabs (card titles)
+$_['te_settings_card_connection'] = 'Connection';
+$_['te_settings_card_usage'] = 'Character usage';
+$_['te_settings_card_cron'] = 'Scheduled translation (cron)';
+$_['te_settings_card_routes'] = 'Excluded routes';
+$_['te_settings_card_try'] = 'Try a translation';
+$_['te_debug_card_versions'] = 'Versions';
+$_['te_debug_card_cache'] = 'Cache';
+$_['te_about_card'] = 'About the module';
 
 // Value;
 $_['value_analization_mode_only_empty'] = 'Search for empty values only';

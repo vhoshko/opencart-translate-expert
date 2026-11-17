@@ -158,6 +158,14 @@
   }
 }
 
+.te-app .te-plain-value {
+  padding-top: 6px;
+  word-break: break-word;
+}
+.te-app .te-card__body > .te-toolbar {
+  margin-bottom: var(--te-gap);
+}
+
 /* te-toolbar: primary action left, secondary actions right */
 .te-app .te-toolbar {
   display: flex;
