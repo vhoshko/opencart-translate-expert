@@ -110,8 +110,10 @@
 				      </div>
 				    </div>
 				    <div class="te-card">
-				      <div class="te-card__head"><?php echo $te_settings_card_cron; ?></div>
-				      <div class="te-card__body">
+				      <div class="te-card__head">
+				        <button type="button" class="te-collapse-toggle te-js-collapse" data-te-target="#te-cron-panel" aria-expanded="false" aria-controls="te-cron-panel"><?php echo $te_settings_card_cron; ?></button>
+				      </div>
+				      <div class="te-card__body te-hidden" id="te-cron-panel">
 				        <div class="te-form">
 				          <div class="te-field">
 				            <label class="te-field__label" for="te-cron-bulk-amount"><?php echo $entry_cron_bulk_amount; ?></label>
@@ -131,8 +133,10 @@
 				      </div>
 				    </div>
 				    <div class="te-card">
-				      <div class="te-card__head"><?php echo $te_settings_card_routes; ?></div>
-				      <div class="te-card__body">
+				      <div class="te-card__head">
+				        <button type="button" class="te-collapse-toggle te-js-collapse" data-te-target="#te-routes-panel" aria-expanded="false" aria-controls="te-routes-panel"><?php echo $te_settings_card_routes; ?></button>
+				      </div>
+				      <div class="te-card__body te-hidden" id="te-routes-panel">
 				        <div class="te-form">
 				          <div class="te-field">
 				            <label class="te-field__label" for="input-client_translate_expert_excluded_routes"><?php echo $entry_excluded_routes; ?></label>
@@ -143,8 +147,10 @@
 				      </div>
 				    </div>
 				    <div class="te-card">
-				      <div class="te-card__head"><?php echo $te_settings_card_language_codes; ?></div>
-				      <div class="te-card__body">
+				      <div class="te-card__head">
+				        <button type="button" class="te-collapse-toggle te-js-collapse" data-te-target="#te-lcm-panel" aria-expanded="<?php echo !empty($error_language_code_map) ? 'true' : 'false'; ?>" aria-controls="te-lcm-panel"><?php echo $te_settings_card_language_codes; ?></button>
+				      </div>
+				      <div class="te-card__body<?php if (empty($error_language_code_map)) { echo ' te-hidden'; } ?>" id="te-lcm-panel">
 				        <div class="te-alerts" id="te-lcm-alerts"></div>
 				        <div class="te-form">
 				          <div class="te-field">

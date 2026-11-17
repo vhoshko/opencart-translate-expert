@@ -1491,10 +1491,10 @@ const LCM_I18N = {
 const LCM_DEFAULT = '{"ua":"uk","rs":"sr","ge":"ka","cz":"cs"}';
 
 function lcmHtml(value) {
-	return '<form id="form-bestseller"><div class="te-app"><div class="te-alerts" id="te-lcm-alerts"></div>'
+	return '<form id="form-bestseller"><div class="te-app"><button type="button" class="te-js-collapse" id="te-lcm-toggle" data-te-target="#te-lcm-panel" aria-expanded="false">t</button><div class="te-hidden" id="te-lcm-panel"><div class="te-alerts" id="te-lcm-alerts"></div>'
 		+ '<input type="hidden" name="client_translate_expert_language_code_map" id="input-client_translate_expert_language_code_map" value=\'' + value.replace(/'/g, '&#39;') + '\' data-te-default=\'' + LCM_DEFAULT + '\'>'
 		+ '<div id="te-lcm-rows" data-te-delete="Delete"></div><div class="te-hidden" id="te-lcm-empty">none</div>'
-		+ '<button type="button" id="te-lcm-add">add</button><button type="button" id="te-lcm-reset">reset</button></div></form>';
+		+ '<button type="button" id="te-lcm-add">add</button><button type="button" id="te-lcm-reset">reset</button></div></div></form>';
 }
 
 function makeLcmWindow(jqueryFile, value, withBs5) {
@@ -1563,6 +1563,19 @@ function testLcm(jqueryFile) {
 		const event = lcmSubmit(x);
 		check(c[0] + ': submit stops and shows ' + c[2], () => event.defaultPrevented === true && lcmAlerts(x).indexOf(c[2]) >= 0
 			&& x.$('#input-client_translate_expert_language_code_map').val() === '' && (c[2] === 'E-count' || x.$('#te-lcm-rows .te-lcm-invalid').length >= 1));
+	});
+	check('a submit error opens the collapsed card and the toggle', () => {
+		const x = makeLcmWindow(jqueryFile, '', false);
+		const closed = x.$('#te-lcm-panel').hasClass('te-hidden') && x.$('#te-lcm-toggle').attr('aria-expanded') === 'false';
+		lcmSetRows(x, [['', 'uk']]);
+		lcmSubmit(x);
+		return closed && !x.$('#te-lcm-panel').hasClass('te-hidden') && x.$('#te-lcm-toggle').attr('aria-expanded') === 'true';
+	});
+	check('a valid submit leaves the collapsed card closed', () => {
+		const x = makeLcmWindow(jqueryFile, '', false);
+		lcmSetRows(x, [['ua', 'uk']]);
+		lcmSubmit(x);
+		return x.$('#te-lcm-panel').hasClass('te-hidden');
 	});
 	check('exact length 20 and 100 pairs are valid', () => {
 		const x = makeLcmWindow(jqueryFile, '', false);

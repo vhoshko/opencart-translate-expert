@@ -102,6 +102,9 @@ php tests/test_client_translate_expert_ajax_guard.php
 # Version rules tests: token name, setting key prefix, routes, template engine and flag URL helpers of the admin controller and the model (stubs, no DB, no API key)
 php tests/test_client_translate_expert_version_rules.php
 
+# Settings cards tests: toggle button, body id and start state of the 4 collapsible cards in the .tpl and the .oc4.twig (static, no DB, no API key)
+php tests/test_client_translate_expert_settings_cards.php
+
 # OC4 Twig name check: filters, tests, functions, tags (static, no Twig needed)
 php tests/test_oc4_twig_filters.php
 
