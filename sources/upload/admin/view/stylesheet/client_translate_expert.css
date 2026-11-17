@@ -472,7 +472,7 @@
   font-size: 12px;
   white-space: pre-wrap;
 }
-.te-app .te-diff__foot {
+.te-app .te-diff__bar {
   grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;

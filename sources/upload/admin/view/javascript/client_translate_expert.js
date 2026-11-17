@@ -2187,6 +2187,18 @@ function teLocRenderDiff(scope, file, index) {
 	var head = teEl('div', { 'class': 'te-diff__head' });
 	head.append(teEl('span', {}, state.languageFrom ? state.languageFrom.code : ''));
 	head.append(teEl('span', {}, state.languageTo ? state.languageTo.code : ''));
+
+	// The bar (Source file, Translate file, Save file) is at the top of the key list. The source file opens under it.
+	var sourceId = 'te-loc-source-' + scope + '-' + index;
+	var bar = teEl('div', { 'class': 'te-diff__bar' });
+	bar.append(teEl('button', { 'type': 'button', 'class': 'te-collapse-toggle te-js-collapse', 'data-te-target': '#' + sourceId, 'aria-expanded': 'false', 'aria-controls': sourceId }, teT('te_loc_source_file')));
+	bar.append(teSiteButton('te-js-loc-translate', teT('te_loc_translate_file'), { 'data-index': index, 'disabled': state.running ? 'disabled' : null }));
+	bar.append(teSiteButton('te-js-loc-save', teT('te_loc_save_file'), { 'data-index': index, 'disabled': state.running ? 'disabled' : null }));
+	diff.append(bar);
+
+	var pre = teEl('pre', { 'class': 'te-loc-source te-hidden', 'id': sourceId });
+	pre[0].appendChild(teLocRenderSource(file.contentFrom, file.keys));
+	diff.append(pre);
 	diff.append(head);
 
 	for (var i = 0; i < file.keys.length; i++) {
@@ -2208,16 +2220,6 @@ function teLocRenderDiff(scope, file, index) {
 		}
 	}
 
-	var sourceId = 'te-loc-source-' + scope + '-' + index;
-	var foot = teEl('div', { 'class': 'te-diff__foot' });
-	foot.append(teEl('button', { 'type': 'button', 'class': 'te-collapse-toggle te-js-collapse', 'data-te-target': '#' + sourceId, 'aria-expanded': 'false', 'aria-controls': sourceId }, teT('te_loc_source_file')));
-	foot.append(teSiteButton('te-js-loc-translate', teT('te_loc_translate_file'), { 'data-index': index, 'disabled': state.running ? 'disabled' : null }));
-	foot.append(teSiteButton('te-js-loc-save', teT('te_loc_save_file'), { 'data-index': index, 'disabled': state.running ? 'disabled' : null }));
-	diff.append(foot);
-
-	var pre = teEl('pre', { 'class': 'te-loc-source te-hidden', 'id': sourceId });
-	pre[0].appendChild(teLocRenderSource(file.contentFrom, file.keys));
-	diff.append(pre);
 	return diff;
 }
 

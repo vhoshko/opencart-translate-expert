@@ -271,3 +271,8 @@ Findings: 04.01.0189, build green, PHP tests pass, JS 589 passed. A mutation of 
 - The user asked for a "Translate file" button in the file row, before the state badge, under "Translate all" of the total row. The third cell of the row now holds the button and the badge (`teLocBuildFileRow(scope, file, index)`). `teLocRefreshState` finds the badge in `.te-loc-state`.
 - The button uses the `.te-js-loc-translate` handler of the key list. It fills the key editors and does not save. From the file row, the key list opens after the response, so the user sees the values and can save them.
 - Findings: 04.01.0190, build green, PHP tests pass, JS 597 passed. No re-review under auto-approve: the button reuses the reviewed translate handler, and its branches have tests.
+
+## Update 2026-11-17 (store run feedback, bar at the top of the key list)
+
+- The user asked to move "Source file", "Translate file" and "Save file" to the top of the key list. The bar is now the first child of `.te-diff` (class `te-diff__bar`, was `te-diff__foot`). The source file block opens under the bar, then the language head and the keys follow.
+- Findings: 04.01.0191, build green, PHP tests pass, JS 599 passed. Layout only, no re-review.

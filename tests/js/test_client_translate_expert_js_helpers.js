@@ -1084,6 +1084,9 @@ function testLocDiff(w) {
 	check('marks: one for each statement found, text only (no HTML from the file)', () => pre.find('mark.te-loc-hl').length === 2 && pre.find('mark').eq(0).text() === ka.fullText
 		&& pre.find('mark').eq(1).text() === kb.fullText && pre.find('b, i').length === 0 && pre.text() === file.contentFrom);
 	check('a statement that is not in the content gets no mark', () => pre.find('mark').filter(function() { return w.$(this).text() === kc.fullText; }).length === 0);
+	check('the bar with Source file, Translate file and Save file is the first child of the key list, the source file block is under it, then the head and the keys', () => detail().find('.te-diff').children().eq(0).is('.te-diff__bar')
+		&& detail().find('.te-diff__bar').children().length === 3 && detail().find('.te-diff__bar .te-js-collapse').length === 1 && detail().find('.te-diff__bar .te-js-loc-translate').length === 1 && detail().find('.te-diff__bar .te-js-loc-save').length === 1
+		&& detail().find('.te-diff').children().eq(1).is('pre.te-loc-source') && detail().find('.te-diff').children().eq(2).is('.te-diff__head') && detail().find('.te-diff').children().eq(3).is('.te-diff__key'));
 	check('the buttons Translate file and Save file have the row index', () => detail().find('.te-js-loc-translate').attr('data-index') === '0' && detail().find('.te-js-loc-save').attr('data-index') === '0');
 	w.$('#te-loc-result-catalog .te-js-loc-toggle').trigger('click');
 	check('a second click hides the detail row', () => detail().hasClass('te-hidden') && w.$('#te-loc-result-catalog .te-js-loc-toggle').attr('aria-expanded') === 'false');
