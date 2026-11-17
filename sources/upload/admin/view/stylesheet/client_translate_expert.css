@@ -577,13 +577,9 @@
   word-break: break-word;
 }
 .te-app .te-table__total td {
-  border-top: 2px solid var(--te-border);
+  border-bottom: 2px solid var(--te-border);
   background: var(--te-bg-soft);
   font-weight: 700;
-}
-.te-app .te-table tfoot td {
-  position: sticky;
-  bottom: 0;
 }
 .te-app .te-site-actions {
   white-space: nowrap;

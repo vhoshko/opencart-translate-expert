@@ -248,3 +248,10 @@ Remove the old rules 33-57. Add under `.te-app`: `.te-loc-totals`, `.te-diff__he
 - Final version: 04.01.0187. PHP tests 1535+ and JS tests 569 pass. A round-trip probe of 20 cases passes.
 - Gotchas: Google keeps input entities with `format: 'html'`, so the JS decodes only when the source has no entity. A `?>` inside a literal is not a close tag.
 - Deferred: char total of escaped literals (finding 7), UTF-8 byte escapes (v2 Minor 1), the HTML alert function of the other flows (PoC step 5 or 6).
+
+## Update 2026-11-17 (store run feedback)
+
+- The user asked to move the "Total ... Translate all" row of the Website content table to the top of the table. The row is now the second row of `thead`, under the column heads. The `tfoot` and its sticky rule are removed, and the border of the row is at the bottom.
+- Files: JS `teSiteBuildTableSkeleton`, CSS `.te-table__total`, JS test (2 selectors and 1 new check).
+- Verify: 04.01.0188, build green, PHP tests pass, JS 571 passed.
+- No re-review: the user said to push without a re-review. The change is layout only.

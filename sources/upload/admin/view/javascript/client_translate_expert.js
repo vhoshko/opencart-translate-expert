@@ -1462,13 +1462,13 @@ function teSiteBuildTableSkeleton() {
 	headRow.append(teEl('th', {}, teT('te_site_col_table')));
 	headRow.append(teEl('th', { 'class': 'te-num te-site-chars-head' }, teT('te_site_col_chars')));
 	headRow.append(teEl('th', {}, teT('te_site_col_actions')));
-	table.append(teEl('thead').append(headRow));
-	table.append(teEl('tbody', { 'class': 'te-site-tbody' }));
+	// The total row with "Translate all" is at the top of the table, under the column heads.
 	var totalRow = teEl('tr', { 'class': 'te-table__total' });
 	totalRow.append(teEl('td', {}, teT('te_site_total')));
 	totalRow.append(teEl('td', { 'class': 'te-num te-site-total' }, '0'));
 	totalRow.append(teEl('td', { 'class': 'te-site-actions' }).append(teSiteButton('te-js-site-translate-all te-hidden', teT('te_site_translate_all'), {})));
-	table.append(teEl('tfoot').append(totalRow));
+	table.append(teEl('thead').append(headRow).append(totalRow));
+	table.append(teEl('tbody', { 'class': 'te-site-tbody' }));
 	return wrap.append(table);
 }
 

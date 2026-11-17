@@ -588,7 +588,11 @@ function testSiteAnalysis(w) {
 	check('batch 1: group row, column rows, counts with the space format', () => !!groupRow && w.$(groupRow).children('td.te-num').text() === '100'
 		&& w.$(nameRow).children('td.te-num').text() === '40' && w.$('tr[data-table="oc_a"][data-column]').length === 3);
 	check('batch 1: the head shows the target code, the total row the count', () => w.$('#te-analization-result thead th').eq(1).text() === 'Characters (uk-ua)'
-		&& w.$('#te-analization-result tfoot .te-num').text() === '100');
+		&& w.$('#te-analization-result thead .te-table__total .te-num').text() === '100');
+	check('the total row with Translate all is at the top: in thead after the column heads, no tfoot', () => w.$('#te-analization-result thead tr').length === 2
+		&& w.$('#te-analization-result thead tr').eq(1).hasClass('te-table__total')
+		&& w.$('#te-analization-result thead .te-table__total .te-js-site-translate-all').length === 1
+		&& w.$('#te-analization-result tfoot').length === 0);
 	check('batch 1: buttons: a column with characters has Details and Translate, a column with 0 has neither Details nor Translate', () => {
 		const r = w.$(nameRow);
 		const z = w.$('tr[data-column="zero"]');
@@ -631,7 +635,7 @@ function testSiteAnalysis(w) {
 			&& w.$('tr.te-table__group[data-table="oc_b"]').prev().hasClass('te-table__spacer') && w.$('tr.te-table__group[data-table="oc_c"]').prev().hasClass('te-table__spacer')
 			&& w.$('tr.te-table__spacer td').attr('colspan') === '3';
 	});
-	check('batch 2: the total and the counters come from the state, no request after done', () => w.$('#te-analization-result tfoot .te-num').text() === '180' && calls.get.length === 2
+	check('batch 2: the total and the counters come from the state, no request after done', () => w.$('#te-analization-result thead .te-table__total .te-num').text() === '180' && calls.get.length === 2
 		&& w.$('#te-site-progress .te-progress__counters').text() === 'Table 3 of 3Request 2Characters found: 180Time: 0.7 s'
 		&& w.$('#te-site-progress .te-progress__fill')[0].style.width === '100%');
 	check('done: the panel is done, the stop button is hidden, the buttons work again', () => w.$('#te-site-progress').hasClass('te-progress--done') && w.$('#te-site-progress .te-js-stop').hasClass('te-hidden')
