@@ -399,6 +399,33 @@ function testShowCharCount(w) {
 	check('other page: a rejected request adds no alert and does not throw', () => countAlerts() === 0 && w.$('#te-translated-char-count-info').length === 1);
 
 	clean();
+	body.append('<div id="header"><div class="div1"><div class="div3">Logged in as admin</div></div></div>');
+	reply = ok;
+	w.document.js_const_client_translate_expert_show_char_count_is_enabled = true;
+	w.showTranslatedCharCount();
+	check('OC 1.5 header: the item is a span in #header .div3 with the value text', () => requests === 1
+		&& w.$('#header .div3 > span#te-translated-char-count-info .te-header-count').length === 1
+		&& w.$('#te-translated-char-count-info .te-header-count__value').text() === '300 000 / 500 000 ($0.00)'
+		&& w.$('#te-translated-char-count-info .te-header-count__reset').length === 1);
+	w.showTranslatedCharCount();
+	check('OC 1.5 header: the second call reuses the item', () => w.$('#te-translated-char-count-info').length === 1);
+
+	clean();
+	body.append('<div id="header"><div class="div2"></div></div>');
+	const logged = [];
+	w.console.log = function(m) { logged.push(String(m)); };
+	w.showTranslatedCharCount();
+	w.console.log = function() {};
+	check('no known header element: no item, no throw, one console line', () => requests === 1
+		&& w.$('#te-translated-char-count-info').length === 0 && logged.length === 1 && logged[0].indexOf('no admin header element') !== -1);
+
+	clean();
+	body.append('<div id="header"><ul class="nav pull-right"></ul><div class="div3"></div></div>');
+	w.showTranslatedCharCount();
+	check('selector priority: a header list wins over .div3', () => w.$('#header > ul.nav > li#te-translated-char-count-info').length === 1
+		&& w.$('#header .div3').children().length === 0);
+
+	clean();
 	w.console.log = origLog;
 	w.$.get = origGet;
 }

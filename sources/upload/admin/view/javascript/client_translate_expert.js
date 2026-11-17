@@ -588,7 +588,19 @@ function showTranslatedCharCount()
 			{
 				parentElement = $('#header .navbar-nav');
 			}
-			item = teEl('li', { 'class': 'dropdown nav-item', 'id': 'te-translated-char-count-info' });
+			var tag = 'li';
+			if (parentElement.length == 0)
+			{
+				// OC 1.5: the header has no list. Put the item in the logged-in text block (div3).
+				parentElement = $('#header .div3').first();
+				tag = 'span';
+			}
+			if (parentElement.length == 0)
+			{
+				console.log('Translate Expert: no admin header element found for the character count.');
+				return;
+			}
+			item = teEl(tag, { 'class': 'dropdown nav-item', 'id': 'te-translated-char-count-info' });
 			parentElement.prepend(item);
 		}
 		item.empty().append(teRenderHeaderCount(data));
