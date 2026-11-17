@@ -66,16 +66,23 @@ Translate Expert is an OpenCart admin module. It uses the Google Cloud Translati
 - Debug tab: module, OpenCart and PHP versions, reset of the translation cache, debug mode and the log (view, download, clear).
 - The module interface has English, Russian and Ukrainian.
 
-## Google Cloud Translation API key
+## How to get a Google Cloud Translation API key
 
-1. Sign in to your Google account and open the Google Cloud console: https://console.cloud.google.com/
-2. Create a project or choose one.
-3. Enable the Cloud Translation API for the project.
-4. Set up billing if Google asks for it. Google can give new accounts a free trial credit. Check the current offer.
-5. Create an API key in the credentials section.
-6. Enter the key in the module settings, in the Connection card.
+1. Sign in to your Google account.
+2. Go to Google Cloud Platform: https://console.cloud.google.com/
+3. Create a project or choose one.
+4. In the search box, enter "Cloud Translation API" and select it.
+5. Enable "Cloud Translation API".
+6. You may need to enable billing. A new user can get a 300 USD credit to try Google Cloud Platform. The offer can change, so check the current offer.
+7. Go to "Credentials" and create an API key. At the top, select "Create credentials", then select "API key".
+8. Enter the key in the module settings, in the Connection card.
 
 Google prices and rules can change. Check them in your Google Cloud account.
+
+A separate article and a video tell how to get the key:
+
+- Article: https://support.demollc.pw/133/poluchenie-klyucha-api-dlya-google-translate/
+- Video: https://www.youtube.com/watch?v=5hTlSGD4_zk
 
 ## Compatibility
 
