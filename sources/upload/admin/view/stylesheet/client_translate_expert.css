@@ -650,6 +650,19 @@
     height: 60px;
   }
 }
+/* OC 1.5: the item is a span in the logged-in text block (#header .div3), without a list */
+#header .div3 > #te-translated-char-count-info {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-right: 12px;
+}
+/* OC 1.5: the header background is dark blue. Use light colors for the text, the hover and the over state. */
+#header .div3 > #te-translated-char-count-info .te-header-count { color: #fff; }
+#header .div3 > #te-translated-char-count-info .te-header-count__label { color: #cfe3f2; }
+#header .div3 > #te-translated-char-count-info .te-header-count__value { color: #fff; }
+#header .div3 > #te-translated-char-count-info .te-header-count--over .te-header-count__value { color: #ffb3b3; }
+#header .div3 > #te-translated-char-count-info .te-header-count__reset { color: #fff; text-decoration: underline; }
+#header .div3 > #te-translated-char-count-info .te-header-count:hover { background: rgba(255, 255, 255, 0.12); }
 /* OC 4.x: the li stretches to the height of the navbar row */
 #header .navbar-nav > #te-translated-char-count-info {
   align-self: stretch;
