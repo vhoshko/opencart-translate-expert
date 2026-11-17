@@ -1141,7 +1141,6 @@ function teRenderHeaderCount(data) {
 	text.append(teEl('span', { 'class': 'te-header-count__label' }, teT('te_global_char_count')));
 	text.append(teEl('span', { 'class': 'te-header-count__value' }, valueText));
 	root.append(text);
-	root.append(teEl('button', { 'type': 'button', 'class': 'te-header-count__reset te-js-reset-char-count' }, teT('te_global_reset')));
 	return root;
 }
 
@@ -1169,7 +1168,7 @@ function teRenderSummaryCount(data) {
 	return root;
 }
 
-// Binds one delegated click handler for all reset buttons (header item and summary).
+// Binds one delegated click handler for the reset button of the module page summary.
 var teResetHandlerBound = false;
 function bindTeResetCharCountHandler() {
 	if (teResetHandlerBound) {

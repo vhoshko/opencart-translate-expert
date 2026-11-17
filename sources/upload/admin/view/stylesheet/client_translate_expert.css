@@ -630,7 +630,7 @@
 
 /* te-header-count: character count item in the admin header (all admin pages, outside .te-app).
    It must not depend on Bootstrap: OC 1.5 pages other than the module page have no Bootstrap.
-   Two lines (label above value) and the reset button at the right. The item fills the header height
+   Two lines (label above value). The item has no button. The item fills the header height
    and gets the grey hover background of the other header items (#eee on OC 2.x-4.x). */
 #te-translated-char-count-info {
   display: flex;
@@ -661,7 +661,6 @@
 #header .div3 > #te-translated-char-count-info .te-header-count__label { color: #cfe3f2; }
 #header .div3 > #te-translated-char-count-info .te-header-count__value { color: #fff; }
 #header .div3 > #te-translated-char-count-info .te-header-count--over .te-header-count__value { color: #ffb3b3; }
-#header .div3 > #te-translated-char-count-info .te-header-count__reset { color: #fff; text-decoration: underline; }
 #header .div3 > #te-translated-char-count-info .te-header-count:hover { background: rgba(255, 255, 255, 0.12); }
 /* OC 4.x: the li stretches to the height of the navbar row */
 #header .navbar-nav > #te-translated-char-count-info {
@@ -669,10 +668,8 @@
 }
 .te-header-count {
   --te-error: #c53030;
-  --te-accent: #1e6fd9;
   display: flex;
   align-items: center;
-  gap: 10px;
   padding: 0 12px;
   color: #6d6d6d;
   font-size: 12px;
@@ -701,17 +698,4 @@
 }
 .te-header-count--over .te-header-count__value {
   color: var(--te-error);
-}
-.te-header-count .te-header-count__reset {
-  padding: 2px 4px;
-  border: 0;
-  background: transparent;
-  color: var(--te-accent);
-  font-size: 11px;
-  line-height: 1.25;
-  cursor: pointer;
-}
-.te-header-count .te-header-count__reset:hover,
-.te-header-count .te-header-count__reset:focus {
-  text-decoration: underline;
 }
