@@ -54,7 +54,7 @@ fi
 OC23_CTRL="sources_release/upload/admin/controller/extension/module/client_translate_expert.php"
 cp "$OC23_CTRL" "${OC23_CTRL}.oc4bak"
 strip_oc4_event_blocks "$OC23_CTRL"
-cd sources_release && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.3-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4bak' -x '*.oc4.twig' && cd "$SCRIPT_DIR"
+cd sources_release && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.3-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4bak' -x '*.oc4.twig' -x 'upload/admin/view/stylesheet/oc15/*' && cd "$SCRIPT_DIR"
 mv "${OC23_CTRL}.oc4bak" "$OC23_CTRL"
 
 # prepare release for OpenCart 2.2
@@ -92,7 +92,7 @@ mkdir -p sources_release_22/upload/admin/view/template/module
 mv sources_release_22/upload/admin/view/template/extension/module/* sources_release_22/upload/admin/view/template/module/
 rm -rf sources_release_22/upload/admin/view/template/extension
 
-cd sources_release_22 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.2-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4.twig' && cd "$SCRIPT_DIR"
+cd sources_release_22 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.2-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4.twig' -x 'upload/admin/view/stylesheet/oc15/*' && cd "$SCRIPT_DIR"
 
 # prepare release for OpenCart 2.1
 cp -r sources_release_22 sources_release_21
@@ -102,13 +102,13 @@ mv sources_release_21/upload/admin/language/en-gb sources_release_21/upload/admi
 mv sources_release_21/upload/admin/language/ru-ru sources_release_21/upload/admin/language/russian
 mv sources_release_21/upload/admin/language/uk-ua sources_release_21/upload/admin/language/ukrainian
 
-cd sources_release_21 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.1-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4.twig' && cd "$SCRIPT_DIR"
+cd sources_release_21 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.1-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4.twig' -x 'upload/admin/view/stylesheet/oc15/*' && cd "$SCRIPT_DIR"
 
 # prepare release for OpenCart 2.0
 cp -r sources_release_21 sources_release_20
 file_replace sources_release_20/upload/admin/controller/module/client_translate_expert.php 'language->load' 'load->language'
 
-cd sources_release_20 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.0-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4.twig' && cd "$SCRIPT_DIR"
+cd sources_release_20 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.0-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4.twig' -x 'upload/admin/view/stylesheet/oc15/*' && cd "$SCRIPT_DIR"
 
 # prepare release for OpenCart 1.5
 cp -r sources_release_20 sources_release_15
@@ -162,7 +162,7 @@ file_replace sources_release_30/upload/admin/view/javascript/client_translate_ex
 OC30_CTRL="sources_release_30/upload/admin/controller/extension/module/client_translate_expert.php"
 cp "$OC30_CTRL" "${OC30_CTRL}.oc4bak"
 strip_oc4_event_blocks "$OC30_CTRL"
-cd sources_release_30 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc3.0-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4bak' -x '*.oc4.twig' && cd "$SCRIPT_DIR"
+cd sources_release_30 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc3.0-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4bak' -x '*.oc4.twig' -x 'upload/admin/view/stylesheet/oc15/*' && cd "$SCRIPT_DIR"
 mv "${OC30_CTRL}.oc4bak" "$OC30_CTRL"
 
 # ============================================================
