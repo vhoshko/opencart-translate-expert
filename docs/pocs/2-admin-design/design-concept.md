@@ -223,6 +223,15 @@ The current translation loop builds its modal from the language string `js_const
 
 ## 8. Tabs "Catalog files" and "Admin files"
 
+Status: done in issue 59. The text below is the plan. These notes give the state after issue 59.
+
+- The key list is the main view. The source file is in a collapsed "Source file" block. The JS highlights the keys with text nodes.
+- The table shows only files with at least 1 key.
+- The JS builds the saved file with single-quoted literals. A new file starts with `<?php`.
+- "Translate all" runs in the `te-progress` panel. The Stop button works. Each tab has its own run. The languages stay as they were at the start of the analysis.
+- There is no "Source folder" line.
+- "Translate file" and "Save file" are in the expanded key list.
+
 The two tabs have the same layout. The tab `#tab-localization` uses the scope `catalog`. The tab `#tab-admin-localization` uses the scope `admin`.
 
 ```

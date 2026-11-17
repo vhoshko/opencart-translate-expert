@@ -81,24 +81,13 @@ $_['help_excluded_routes'] = 'Вкажіть один маршрут сторі�
 // скинути кеш
 $_['entry_reset_translation_cache'] = 'Скинути кеш перекладу';
 
-$_['entry_localization_analization'] = 'Аналізувати не переведені значення';
-$_['entry_localization_analization_result'] = 'Результат аналізу';
-$_['entry_localization_file_to_translate_info'] = '{path}: <b>Не перекладено {count} значень</b>';
-$_['entry_localization_file_to_translate_info_full_translated'] = '{path}: Повністю перекладений';
-$_['entry_localization_file_expression_info'] = '<b>({count} з PHP-кодом: копіюються без змін, відредагуйте їх вручну)</b>';
-$_['entry_localization_file_target_missing'] = '<b>(цільовий файл не існує)</b>';
 
-$_['entry_fileCount'] = 'Файлів всього';
-$_['entry_needToTranslateFileCount'] = 'Файлів не перекладено';
-$_['entry_needToTranslateValueCount'] = 'Значень не перекладено';
-$_['entry_needToTranslateCharCount'] = 'Кількість символів не перекладено';
-$_['entry_TranslateAll'] = 'Перекласти все';
 
 // Tabs
 $_['tab_general']        = 'Загальна';
 $_['tab_translate_site'] = 'Переклад контенту сайту';
-$_['tab_localization']   = 'Переклад файлів локалізації';
-$_['tab_admin_localization']   = 'Переклад файлів локалізації адмінки';
+$_['tab_localization']   = 'Файли магазину';
+$_['tab_admin_localization']   = 'Файли адмінки';
 $_['tab_debug']          = 'Відлагоджування';
 $_['tab_about']          = 'Про модуль';
 
@@ -109,11 +98,6 @@ $_['value_analization_mode_both'] = 'Шукати порожні і однако
 
 
 // js constants
-$_['js_const_saved'] = 'Збережено!';
-$_['js_const_localization_translate_progress'] = 'Переклад файлу локалізації {currIndex} з {count}: {path}.';
-$_['js_const_localization_translate_done'] = 'Переклад файлу локалізації {currIndex} з {count}: Готово!';
-$_['button_localization_translate'] = 'Перекласти';
-$_['button_localization_save'] = 'Зберегти';
 
 // Error
 $_['error_permission'] = 'У вас немає прав для управління цим модулем!';
@@ -207,3 +191,31 @@ $_['te_site_detail_more'] = 'Показано лише перші 100 значе
 $_['te_site_state_done'] = 'Завершено';
 $_['te_site_state_stopped'] = 'Зупинено';
 $_['te_site_state_error'] = 'Помилка';
+$_['te_loc_card_files'] = 'Файли локалізації';
+$_['te_loc_analyze'] = 'Аналізувати файли';
+$_['te_loc_translate_all'] = 'Перекласти все';
+$_['te_loc_analyzing'] = 'Триває аналіз файлів';
+$_['te_loc_translating'] = 'Переклад: {path}';
+$_['te_loc_cnt_files'] = 'Файли {n} з {total}';
+$_['te_loc_totals_files'] = 'Файлів: {count}';
+$_['te_loc_totals_to_translate'] = 'Файлів для перекладу: {count}';
+$_['te_loc_totals_values'] = 'Значень для перекладу: {count}';
+$_['te_loc_totals_chars'] = 'Символів для перекладу: {count}';
+$_['te_loc_col_file'] = 'Файл';
+$_['te_loc_col_keys'] = 'Ключів для перекладу';
+$_['te_loc_col_chars'] = 'Символів для перекладу';
+$_['te_loc_col_state'] = 'Стан';
+$_['te_loc_state_missing'] = 'немає файла';
+$_['te_loc_state_partial'] = 'частково';
+$_['te_loc_state_saved'] = 'збережено';
+$_['te_loc_toggle'] = 'Показати або сховати ключі файла {path}';
+$_['te_loc_root'] = 'Розширення: {name}';
+$_['te_loc_expression'] = 'PHP-код, копіюється без змін';
+$_['te_loc_source_file'] = 'Вихідний файл';
+$_['te_loc_translate_file'] = 'Перекласти файл';
+$_['te_loc_translate_save_file'] = 'Перекласти і зберегти файл';
+$_['te_loc_save_file'] = 'Зберегти файл';
+$_['te_loc_saved'] = 'Збережено: {path}';
+$_['te_loc_nothing_to_save'] = 'Нічого зберігати: {path}';
+$_['te_loc_no_files'] = 'Усі файли перекладено.';
+$_['te_loc_translate_all_confirm'] = 'Ви впевнені, що хочете перекласти та зберегти всі файли зі списку ({lang})?';

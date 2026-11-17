@@ -256,39 +256,39 @@
 
 
             <div class="tab-pane" id="tab-localization">
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-begin-localization-analization">{{ entry_localization_analization }}</label>
-                <div class="col-sm-10">
-                  <input type="button" id="te-begin-localization-analization" value="{{ entity_begin_analization }}" class="btn btn-primary">
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-localization-analization-result">{{ entry_localization_analization_result }}</label>
-                <div class="col-sm-10">
-                  <div id="te-localization-analization-result" data-scope="catalog">
+              <div class="te-app te-loc-app" id="te-loc-app-catalog" data-scope="catalog">
+                <div class="te-alerts" id="te-loc-alerts-catalog"></div>
+                <div class="te-card">
+                  <div class="te-card__head">{{ te_loc_card_files }}</div>
+                  <div class="te-card__body">
+                    <div class="te-loc-totals te-hidden" id="te-loc-totals-catalog"></div>
+                    <div class="te-toolbar">
+                      <button type="button" id="te-begin-localization-analization" class="btn btn-primary te-js-loc-analyze">{{ te_loc_analyze }}</button>
+                    </div>
                   </div>
                 </div>
+                <div class="te-progress te-hidden" id="te-loc-progress-catalog" role="status" aria-live="polite"></div>
+                <div class="te-loc-result" id="te-loc-result-catalog"></div>
               </div>
             </div>
 
 
             <div class="tab-pane" id="tab-admin-localization">
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-begin-admin-localization-analization">{{ entry_localization_analization }}</label>
-                <div class="col-sm-10">
-                  <input type="button" id="te-begin-admin-localization-analization" value="{{ entity_begin_analization }}" class="btn btn-primary">
-                </div>
-              </div>
-              <div class="mb-3 row">
-                <label class="col-sm-2 form-label" for="te-admin-localization-analization-result">{{ entry_localization_analization_result }}</label>
-                <div class="col-sm-10">
-                  <div id="te-admin-localization-analization-result" data-scope="admin">
+              <div class="te-app te-loc-app" id="te-loc-app-admin" data-scope="admin">
+                <div class="te-alerts" id="te-loc-alerts-admin"></div>
+                <div class="te-card">
+                  <div class="te-card__head">{{ te_loc_card_files }}</div>
+                  <div class="te-card__body">
+                    <div class="te-loc-totals te-hidden" id="te-loc-totals-admin"></div>
+                    <div class="te-toolbar">
+                      <button type="button" id="te-begin-admin-localization-analization" class="btn btn-primary te-js-loc-analyze">{{ te_loc_analyze }}</button>
+                    </div>
                   </div>
                 </div>
+                <div class="te-progress te-hidden" id="te-loc-progress-admin" role="status" aria-live="polite"></div>
+                <div class="te-loc-result" id="te-loc-result-admin"></div>
               </div>
             </div>
-
-
 
 
             <div class="tab-pane {{ tab_debug_class }}" id="tab-debug">
@@ -385,9 +385,6 @@
 </div>
 <!-- js constants -->
 <script>
-	document.js_const_saved = "{{ js_const_saved|raw }}";
-	document.js_const_localization_translate_progress = "{{ js_const_localization_translate_progress|raw }}";
-	document.js_const_localization_translate_done = "{{ js_const_localization_translate_done|raw }}";
 	// removing
 	document.js_const_entry_remove_translation_records_from_db_confirmation = "{{ entry_remove_translation_records_from_db_confirmation }}";
 	document.js_const_entry_removing_data_from_db_process_is_started = "{{ entry_removing_data_from_db_process_is_started }}";

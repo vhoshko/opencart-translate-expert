@@ -30,32 +30,6 @@
     max-height: 600px;
 }
 
-.localization-analize-file textarea {
-    width: 100%;
-	height: 400px;
-}
-
-.localization-analize-file pre b {
-    color: red;
-}
-
-.localization-analize-file-header b {
-    color: red;
-}
-
-.localization-analize-file-header .info {
-    cursor: pointer;
-	width: fit-content;
-}
-
-.localization-analize-file-toolbar.to .translate_localization_button {
-    margin-left: 10px;
-}
-
-.localization-analize-file-toolbar.to .save_translation_button {
-    margin-left: 10px;
-}
-
 /* ==========================================================================
    te-* component layer of the new admin design (docs/pocs/2-admin-design/design-concept.md, section 3).
    The header loads this file on all admin pages, so every rule below is under .te-app
@@ -283,6 +257,9 @@
 .te-app .te-table__detail td {
   background: #fff;
 }
+.te-app .te-table__detail > td {
+  padding: var(--te-gap);
+}
 
 /* te-meter: small usage bar */
 .te-app .te-meter {
@@ -448,6 +425,86 @@
 .te-app .te-diff__source {
   background: var(--te-bg-soft);
 }
+.te-app .te-diff__head {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--te-gap);
+  color: var(--te-muted);
+  font-weight: 600;
+}
+.te-app textarea.te-diff__target {
+  width: 100%;
+  min-height: 60px;
+  box-sizing: border-box;
+  font: inherit;
+  resize: vertical;
+}
+.te-app .te-diff__cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+.te-app .te-diff__cell textarea.te-diff__target {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.te-app .te-loc-key-translate {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: cover;
+  cursor: pointer;
+}
+.te-app .te-loc-key-translate:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.te-app .te-diff__source--code,
+.te-app .te-diff__target--code {
+  font-family: monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+.te-app .te-diff__bar {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--te-gap);
+  align-items: center;
+}
+.te-app .te-loc-source {
+  grid-column: 1 / -1;
+  max-height: 320px;
+  overflow: auto;
+  margin: 0;
+  font-family: monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  background: var(--te-bg-soft);
+}
+.te-app .te-loc-hl {
+  background: #fff3a3;
+  font-weight: 600;
+  color: inherit;
+}
+.te-app .te-loc-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--te-gap);
+  margin-bottom: var(--te-gap);
+  color: var(--te-muted);
+  font-size: 12px;
+}
+.te-app .te-loc-root td {
+  color: var(--te-muted);
+}
 @media (max-width: 767px) {
   .te-app .te-diff {
     grid-template-columns: 1fr;
@@ -546,13 +603,9 @@
   word-break: break-word;
 }
 .te-app .te-table__total td {
-  border-top: 2px solid var(--te-border);
+  border-bottom: 2px solid var(--te-border);
   background: var(--te-bg-soft);
   font-weight: 700;
-}
-.te-app .te-table tfoot td {
-  position: sticky;
-  bottom: 0;
 }
 .te-app .te-site-actions {
   white-space: nowrap;

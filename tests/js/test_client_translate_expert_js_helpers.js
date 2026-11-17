@@ -165,6 +165,30 @@ function testAlerts(w) {
 	check('a missing container gives null', () => w.teAlerts.show('#none', 'error', 'x') === null);
 	check('an unknown type becomes error', () => w.teAlerts.show('#al', 'weird', 'x').hasClass('te-alert--error'));
 	check('an error alert has role alert, an info alert has role status', () => w.teAlerts.show('#al', 'error', 'x').attr('role') === 'alert' && w.teAlerts.show('#al', 'info', 'x').attr('role') === 'status');
+	{
+		// A success alert closes itself after teAlerts.successTimeout. Error and info alerts stay.
+		const timers = [];
+		const realSetTimeout = w.setTimeout;
+		w.setTimeout = function(fn, ms) { timers.push({ fn: fn, ms: ms }); return timers.length; };
+		w.jQuery.fx.off = true;
+		w.$('#al').empty();
+		const ok = w.teAlerts.show('#al', 'success', 'Saved');
+		const err = w.teAlerts.show('#al', 'error', 'Bad');
+		const inf = w.teAlerts.show('#al', 'info', 'Note');
+		check('only a success alert starts a close timer, of teAlerts.successTimeout (5000 ms)', () => timers.length === 1 && timers[0].ms === 5000 && w.teAlerts.successTimeout === 5000);
+		check('the success alert stays until the timer runs', () => w.$('#al .te-alert--success').length === 1);
+		timers[0].fn();
+		check('after the timer the success alert is removed, the error and info alerts stay', () => w.$('#al .te-alert--success').length === 0 && ok.closest('body').length === 0
+			&& err.closest('#al').length === 1 && inf.closest('#al').length === 1);
+		// jQuery 3 fadeOut also uses setTimeout. Count the alert timers (5000 ms) only.
+		w.teAlerts.successTimeout = 0;
+		w.teAlerts.show('#al', 'success', 'Kept');
+		check('successTimeout 0: no timer, the success alert stays', () => timers.filter((t) => t.ms === 5000).length === 1 && w.$('#al .te-alert--success').length === 1);
+		w.teAlerts.successTimeout = 5000;
+		w.jQuery.fx.off = false;
+		w.setTimeout = realSetTimeout;
+		w.$('#al').empty();
+	}
 	check('clear empties the area', () => {
 		w.teAlerts.clear('#al');
 		return w.$('#al').children().length === 0;
@@ -396,6 +420,14 @@ const SITE_I18N = {
 	value_analization_mode_same_value: 'Same', te_alert_details: 'Details', te_alert_close: 'Close', te_alert_not_json: 'Not JSON.',
 	te_global_error_internal: 'Internal'
 };
+const LOC_I18N = {
+	te_loc_analyzing: 'Analyzing files', te_loc_translating: 'Translating {path}', te_loc_cnt_files: 'Files {n} of {total}', te_loc_totals_files: 'Files: {count}',
+	te_loc_totals_to_translate: 'To translate: {count}', te_loc_totals_values: 'Values: {count}', te_loc_totals_chars: 'Chars: {count}', te_loc_col_file: 'File',
+	te_loc_col_keys: 'Keys', te_loc_col_chars: 'Chars', te_loc_col_state: 'State', te_loc_state_missing: 'missing', te_loc_state_partial: 'partial', te_loc_state_saved: 'saved',
+	te_loc_toggle: 'Toggle {path}', te_loc_root: 'Extension: {name}', te_loc_expression: 'PHP code', te_loc_source_file: 'Source file',
+	te_loc_translate_file: 'Translate file', te_loc_translate_save_file: 'Translate and save file', te_loc_save_file: 'Save file', te_loc_saved: 'Saved: {path}', te_loc_nothing_to_save: 'Nothing: {path}',
+	te_loc_no_files: 'All translated.', te_loc_translate_all: 'Translate all', te_loc_translate_all_confirm: 'Translate all ({lang})?'
+};
 
 function siteHtml(activeTab) {
 	const li = (id, href, label) => '<li' + (activeTab === href ? ' class="active"' : '') + '><a id="' + id + '" href="' + href + '" data-toggle="tab">' + label + '</a></li>';
@@ -420,13 +452,21 @@ function siteHtml(activeTab) {
 		+ '<div id="te-cron-link-panel" data-cron-url="http://shop/index.php?route=cron" data-te-max-length="4000"><input id="te-cron-link"><div id="te-cron-link-error"></div><div id="te-cron-link-long"></div></div>'
 		+ '<input id="te-cron-secret" value="abcdefghijklmnopqrstuvwx"><input id="te-cron-bulk-amount" value="">'
 		+ '<div class="te-progress te-hidden" id="te-site-progress"></div><div id="te-analization-result"><p id="keep">old</p></div></div>'
+		+ '<div class="te-app te-loc-app" id="te-loc-app-catalog" data-scope="catalog"><div class="te-alerts" id="te-loc-alerts-catalog"></div>'
+		+ '<div class="te-loc-totals te-hidden" id="te-loc-totals-catalog"></div>'
+		+ '<button type="button" id="te-begin-localization-analization" class="te-js-loc-analyze">Analyze</button>'
+		+ '<div class="te-progress te-hidden" id="te-loc-progress-catalog"></div><div class="te-loc-result" id="te-loc-result-catalog"></div></div>'
+		+ '<div class="te-app te-loc-app" id="te-loc-app-admin" data-scope="admin"><div class="te-alerts" id="te-loc-alerts-admin"></div>'
+		+ '<div class="te-loc-totals te-hidden" id="te-loc-totals-admin"></div>'
+		+ '<button type="button" id="te-begin-admin-localization-analization" class="te-js-loc-analyze">Analyze</button>'
+		+ '<div class="te-progress te-hidden" id="te-loc-progress-admin"></div><div class="te-loc-result" id="te-loc-result-admin"></div></div>'
 		+ '<div class="modal" id="translateExpertModal"><h5 id="translateExpertModalLabel">Orig</h5><button class="stop_modal_process">stop</button>'
 		+ '<div class="modal-body">body</div><button class="close_modal" disabled>close</button></div>';
 }
 
 function makeSiteWindow(jqueryFile, withBs5, activeTab) {
 	const w = makeWindow(jqueryFile, withBs5, siteHtml(activeTab || '#tab-general'));
-	w.document.te_i18n = Object.assign({}, SITE_I18N);
+	w.document.te_i18n = Object.assign({}, SITE_I18N, LOC_I18N);
 	w.document.js_const_module_prefix = 'extension/module';
 	w.console.log = function() {};
 	if (!withBs5) {
@@ -572,7 +612,11 @@ function testSiteAnalysis(w) {
 	check('batch 1: group row, column rows, counts with the space format', () => !!groupRow && w.$(groupRow).children('td.te-num').text() === '100'
 		&& w.$(nameRow).children('td.te-num').text() === '40' && w.$('tr[data-table="oc_a"][data-column]').length === 3);
 	check('batch 1: the head shows the target code, the total row the count', () => w.$('#te-analization-result thead th').eq(1).text() === 'Characters (uk-ua)'
-		&& w.$('#te-analization-result tfoot .te-num').text() === '100');
+		&& w.$('#te-analization-result thead .te-table__total .te-num').text() === '100');
+	check('the total row with Translate all is at the top: in thead after the column heads, no tfoot', () => w.$('#te-analization-result thead tr').length === 2
+		&& w.$('#te-analization-result thead tr').eq(1).hasClass('te-table__total')
+		&& w.$('#te-analization-result thead .te-table__total .te-js-site-translate-all').length === 1
+		&& w.$('#te-analization-result tfoot').length === 0);
 	check('batch 1: buttons: a column with characters has Details and Translate, a column with 0 has neither Details nor Translate', () => {
 		const r = w.$(nameRow);
 		const z = w.$('tr[data-column="zero"]');
@@ -615,7 +659,7 @@ function testSiteAnalysis(w) {
 			&& w.$('tr.te-table__group[data-table="oc_b"]').prev().hasClass('te-table__spacer') && w.$('tr.te-table__group[data-table="oc_c"]').prev().hasClass('te-table__spacer')
 			&& w.$('tr.te-table__spacer td').attr('colspan') === '3';
 	});
-	check('batch 2: the total and the counters come from the state, no request after done', () => w.$('#te-analization-result tfoot .te-num').text() === '180' && calls.get.length === 2
+	check('batch 2: the total and the counters come from the state, no request after done', () => w.$('#te-analization-result thead .te-table__total .te-num').text() === '180' && calls.get.length === 2
 		&& w.$('#te-site-progress .te-progress__counters').text() === 'Table 3 of 3Request 2Characters found: 180Time: 0.7 s'
 		&& w.$('#te-site-progress .te-progress__fill')[0].style.width === '100%');
 	check('done: the panel is done, the stop button is hidden, the buttons work again', () => w.$('#te-site-progress').hasClass('te-progress--done') && w.$('#te-site-progress .te-js-stop').hasClass('te-hidden')
@@ -847,7 +891,7 @@ function testSiteTranslate(w) {
 }
 
 function testSiteLangbar(w) {
-	console.log('\nLangbar, localization ids, collapse, fallback anchor:');
+	console.log('\nLangbar, collapse, fallback anchor:');
 	const bar = () => w.$('#te-langbar-app .te-langbar');
 	w.teInitPage();
 	check('init: the active tab is general, the langbar is hidden', () => bar().hasClass('te-hidden'));
@@ -887,12 +931,6 @@ function testSiteLangbar(w) {
 	check('swap with the same language in both: both stay the same', () => w.$('#te-langbar-from').val() === '1' && w.$('#te-langbar-to').val() === '1');
 	w.$('#te-langbar-to').val('2').trigger('change');
 
-	check('the localization ids point to the langbar', () => ['catalog', 'admin'].every((scope) => w.translateExpertLocalizationIds[scope].from === '#te-langbar-from'
-		&& w.translateExpertLocalizationIds[scope].to === '#te-langbar-to'));
-	const calls = stubAjax(w);
-	w.makeLocalizationAnalizeRequest('admin');
-	check('the localization request reads the langbar', () => /langIdFrom=1&langIdTo=2&nextFileIndex=0&scope=admin/.test(calls.get[0].url));
-
 	w.$('#cbtn').trigger('click');
 	check('the collapse button opens its block', () => !w.$('#te-site-more-filters').hasClass('te-hidden') && w.$('#cbtn').attr('aria-expanded') === 'true');
 	w.$('#cbtn').trigger('click');
@@ -901,8 +939,6 @@ function testSiteLangbar(w) {
 	w.hideTranslateExpertModal = function() {};
 	w.showTranslateExpertErrorMessage({ message: 'Boom' }, null);
 	check('the fallback anchor of showTranslateExpertErrorMessage is #te-site-alerts', () => w.$('#te-site-alerts').prev('.alert-danger').length === 1);
-	w.showTranslateExpertInfoMessage('Info', null);
-	check('the fallback anchor of showTranslateExpertInfoMessage is #te-site-alerts', () => w.$('#te-site-alerts').prev('.te-info').length === 1);
 }
 
 function testSiteBs5(w) {
@@ -917,6 +953,441 @@ function testSiteBs5(w) {
 	w.$('tr[data-column="name"] .te-js-site-detail').trigger('click');
 	check('the detail opens the module modal with Bootstrap 5', () => w.teCalls.indexOf('Modal.show') >= 0);
 	w.$('#te-site-alerts').empty();
+}
+
+// ---- Tabs "Catalog files" and "Admin files" ----
+
+const LANG_FROM = { language_id: 1, code: 'en-gb', name: 'English', image: '' };
+const locKey = (key, text) => ({ key: key, text: text, fullText: "$_['" + key + "'] = '" + text + "';", expression: 0 });
+const locExpr = (key, code) => ({ key: key, text: '', fullText: "$_['" + key + "'] = " + code + ';', expression: 1 });
+const locFile = (pathFrom, keys, extra) => Object.assign({
+	root: 'core', rootName: '', pathFrom: pathFrom, pathTo: pathFrom, targetExists: 1, keys: keys,
+	contentFrom: '<?php\n' + keys.map((k) => k.fullText).join('\n') + '\n', contentTo: '<?php\n// head\n'
+}, extra || {});
+const locBatch = (files, next, done, totals) => {
+	const data = { success: 1, done: done ? 1 : 0, nextFileIndex: next, languageFrom: LANG_FROM, languageTo: TARGET, files: files };
+	if (totals) {
+		data.totals = totals;
+	}
+	return data;
+};
+const LOC_TOTALS = { fileCount: 12, needToTranslateFileCount: 2, needToTranslateValueCount: 5, needToTranslateCharCount: 1234 };
+
+function locStart(w, calls, scope) {
+	const id = scope === 'admin' ? '#te-begin-admin-localization-analization' : '#te-begin-localization-analization';
+	w.$(id).trigger('click');
+	return calls.get[calls.get.length - 1];
+}
+
+// Runs one analysis with a single batch (done) and returns after the end of the run.
+function locLoad(w, calls, files, scope) {
+	const req = locStart(w, calls, scope || 'catalog');
+	req.dfd.resolve(locBatch(files, files.length, true, { fileCount: files.length, needToTranslateFileCount: files.length, needToTranslateValueCount: 1, needToTranslateCharCount: 1 }));
+}
+
+function testLocAnalysis(w) {
+	console.log('\nLocalization analysis loop:');
+	const calls = stubAjax(w);
+	w.teLocInit();
+	w.$('#te-begin-localization-analization').trigger('click');
+	w.$('#te-begin-localization-analization').trigger('click');
+	check('one click sends one request, a second click while running sends none', () => calls.get.length === 1);
+	check('request: route, token, language ids from the langbar, nextFileIndex 0, scope', () => /route=extension\/module\/client_translate_expert\/analizeLocalization&token=/.test(calls.get[0].url)
+		&& calls.get[0].data.langIdFrom == 1 && calls.get[0].data.langIdTo == 2 && calls.get[0].data.nextFileIndex === 0 && calls.get[0].data.scope === 'catalog');
+	check('running: Analyze is disabled, the panel shows, the result has the table skeleton', () => w.$('#te-begin-localization-analization').prop('disabled') === true
+		&& !w.$('#te-loc-progress-catalog').hasClass('te-hidden') && w.$('#te-loc-progress-catalog .te-js-stop').length === 1 && w.$('#te-loc-result-catalog table.te-table').length === 1);
+
+	const f0 = locFile('/a.php', [locKey('a', 'A')]);
+	const f1 = locFile('/b.php', []);
+	const f2 = locFile('/c.php', [locKey('c', 'C')], { targetExists: 0, contentTo: '' });
+	calls.get[0].dfd.resolve(locBatch([f0, f1, f2], 10, false, LOC_TOTALS));
+	const rows = () => w.$('#te-loc-result-catalog tr.te-loc-file');
+	const row0 = rows()[0];
+	check('batch 0: only files with keys are rows, data-index is the server index', () => rows().length === 2 && w.$(rows()[0]).attr('data-index') === '0' && w.$(rows()[1]).attr('data-index') === '2');
+	check('batch 0: badges partial and missing, key count, toggle button', () => w.$(rows()[0]).find('.te-badge--warn').text() === 'partial' && w.$(rows()[1]).find('.te-badge--error').text() === 'missing'
+		&& w.$(rows()[0]).children('td.te-num').eq(0).text() === '1' && w.$(rows()[0]).children('td.te-loc-chars').text() === '0' && w.$(rows()[0]).find('button.te-table__expand').attr('aria-expanded') === 'false');
+	check('batch 0: totals text and progress counters', () => !w.$('#te-loc-totals-catalog').hasClass('te-hidden') && w.$('#te-loc-totals-catalog').text() === 'Files: 12To translate: 2Values: 5Chars: 1 234'
+		&& w.$('#te-loc-progress-catalog .te-progress__counters').text() === 'Files 10 of 12Request 1');
+	check('batch 0: the second request has nextFileIndex 10 and the same scope', () => calls.get.length === 2 && calls.get[1].data.nextFileIndex === 10 && calls.get[1].data.scope === 'catalog');
+	check('batch 0: the per-file buttons are disabled while the analysis runs', () => w.$('#te-loc-result-catalog .te-js-loc-translate').length === 2 && w.$('#te-loc-result-catalog .te-js-loc-translate-save').length === 2 && w.$('#te-loc-result-catalog .te-js-loc-translate, #te-loc-result-catalog .te-js-loc-translate-save, #te-loc-result-catalog .te-js-loc-save').filter(function() { return !this.disabled; }).length === 0);
+	check('batch 0: the per-key translate buttons are disabled while the analysis runs', () => w.$('#te-loc-result-catalog .te-js-loc-key-translate').length > 0 && w.$('#te-loc-result-catalog .te-js-loc-key-translate').filter(function() { return !this.disabled; }).length === 0);
+	check('batch 0: the total row is the second head row, with the keys to translate of the totals and a hidden Translate all', () => w.$('#te-loc-result-catalog thead tr').length === 2
+		&& w.$('#te-loc-result-catalog thead tr').eq(1).hasClass('te-table__total') && w.$('#te-loc-result-catalog thead .te-loc-total').text() === '5'
+		&& w.$('#te-loc-result-catalog thead tr').eq(0).children('th').map(function() { return w.$(this).text(); }).get().join('|') === 'File|Keys|Chars|State'
+		&& w.$('#te-loc-result-catalog thead .te-table__total td').eq(2).is('.te-loc-total-chars') && w.$('#te-loc-result-catalog thead .te-loc-total-chars').text() === '1 234'
+		&& w.$('#te-loc-result-catalog thead .te-table__total #te-loc-translate-all-catalog.te-js-loc-translate-all').length === 1
+		&& w.$('#te-loc-translate-all-catalog').hasClass('te-hidden') && w.$('#te-loc-result-catalog tfoot').length === 0);
+	calls.get[1].dfd.resolve(locBatch([locFile('/d.php', [locKey('d', 'D')])], 12, true, null));
+	check('batch 1 (no totals): the nodes of batch 0 stay, a new row is added, the totals stay', () => rows().length === 3 && rows()[0] === row0 && w.$(rows()[2]).attr('data-index') === '3'
+		&& w.$('#te-loc-totals-catalog').text().indexOf('Files: 12') === 0);
+	check('done: the per-key translate buttons are enabled', () => w.$('#te-loc-result-catalog .te-js-loc-key-translate').filter(function() { return this.disabled; }).length === 0);
+	check('done: the per-file buttons of all rows are enabled', () => w.$('#te-loc-result-catalog .te-js-loc-save').length === 3 && w.$('#te-loc-result-catalog .te-js-loc-translate, #te-loc-result-catalog .te-js-loc-save').filter(function() { return this.disabled; }).length === 0);
+	check('done: te-progress--done, Analyze enabled, Translate all visible, no alert', () => w.$('#te-loc-progress-catalog').hasClass('te-progress--done') && w.$('#te-begin-localization-analization').prop('disabled') === false
+		&& !w.$('#te-loc-translate-all-catalog').hasClass('te-hidden') && w.$('#te-loc-alerts-catalog .te-alert').length === 0 && w.teLocState.catalog.running === false);
+
+	// stop between batches
+	let req = locStart(w, calls, 'catalog');
+	w.$('#te-loc-progress-catalog .te-js-stop').trigger('click');
+	const countBefore = calls.get.length;
+	req.dfd.resolve(locBatch([locFile('/a.php', [locKey('a', 'A')])], 10, false, LOC_TOTALS));
+	check('stop: te-progress--stopped, no further request, the rows stay', () => calls.get.length === countBefore && w.$('#te-loc-progress-catalog').hasClass('te-progress--stopped')
+		&& w.$('#te-loc-result-catalog tr.te-loc-file').length === 1 && w.$('#te-begin-localization-analization').prop('disabled') === false);
+
+	// errors
+	req = locStart(w, calls, 'catalog');
+	req.dfd.resolve(locBatch([locFile('/a.php', [locKey('a', 'A')])], 10, false, LOC_TOTALS));
+	calls.get[calls.get.length - 1].dfd.resolve({ success: 0, error_code: 3002, message: 'Boom', additional_message: 'More' });
+	check('success 0: an error alert in the tab, te-progress--error, the rows stay, Analyze enabled', () => w.$('#te-loc-alerts-catalog .te-alert--error .te-alert__message').text() === 'Boom'
+		&& w.$('#te-loc-progress-catalog').hasClass('te-progress--error') && w.$('#te-loc-result-catalog tr.te-loc-file').length === 1 && w.$('#te-begin-localization-analization').prop('disabled') === false);
+	req = locStart(w, calls, 'catalog');
+	check('a new analysis clears the alerts and the rows', () => w.$('#te-loc-alerts-catalog .te-alert').length === 0 && w.$('#te-loc-result-catalog tr.te-loc-file').length === 0);
+	req.dfd.reject(xhr({ status: 500, responseText: JSON.stringify({ success: 0, message: 'Server down' }), responseJSON: { success: 0, message: 'Server down' } }));
+	check('.fail with a jqXHR: the same error alert and state', () => w.$('#te-loc-alerts-catalog .te-alert__message').text() === 'Server down' && w.$('#te-loc-progress-catalog').hasClass('te-progress--error'));
+	req = locStart(w, calls, 'catalog');
+	req.dfd.resolve('<html><title>Login</title></html>');
+	check('a non-JSON response: the not-JSON alert', () => w.$('#te-loc-alerts-catalog .te-alert__message').text() === 'Not JSON.' && w.$('#te-loc-progress-catalog').hasClass('te-progress--error'));
+
+	// no keys at all
+	req = locStart(w, calls, 'catalog');
+	req.dfd.resolve(locBatch([locFile('/b.php', [])], 1, true, { fileCount: 1, needToTranslateFileCount: 0, needToTranslateValueCount: 0, needToTranslateCharCount: 0 }));
+	check('no file has keys: an info alert, no Translate all, no table row', () => w.$('#te-loc-alerts-catalog .te-alert--info .te-alert__message').text() === 'All translated.'
+		&& w.$('#te-loc-translate-all-catalog').hasClass('te-hidden') && w.$('#te-loc-result-catalog tr.te-loc-file').length === 0 && w.$('#te-loc-progress-catalog').hasClass('te-progress--done'));
+
+	// nextFileIndex does not grow
+	const before = calls.get.length;
+	req = locStart(w, calls, 'catalog');
+	req.dfd.resolve(locBatch([locFile('/a.php', [locKey('a', 'A')])], 0, false, LOC_TOTALS));
+	check('nextFileIndex that does not grow ends the run, no request loop', () => calls.get.length === before + 1 && w.$('#te-loc-progress-catalog').hasClass('te-progress--done'));
+
+	// roots and renamed files
+	req = locStart(w, calls, 'catalog');
+	req.dfd.resolve(locBatch([
+		locFile('/a.php', [locKey('a', 'A')]),
+		locFile('/p/x.php', [locKey('x', 'X')], { root: 'ext:opencart', rootName: 'opencart' }),
+		locFile('/p/y.php', [locKey('y', 'Y')], { root: 'ext:opencart', rootName: 'opencart' }),
+		locFile('/old.php', [locKey('o', 'O')], { pathTo: '/new.php' }),
+		locFile('/z.php', [locKey('z', 'Z')])
+	], 5, true, { fileCount: 5, needToTranslateFileCount: 5, needToTranslateValueCount: 5, needToTranslateCharCount: 5 }));
+	check('OC4 roots: one group row with the extension name, none for core files', () => w.$('#te-loc-result-catalog tr.te-loc-root').length === 1 && w.$('#te-loc-result-catalog tr.te-loc-root').text() === 'Extension: opencart'
+		&& w.$('#te-loc-result-catalog tr.te-loc-root td').attr('colspan') === '4');
+	check('a renamed main file shows from and to', () => w.$('#te-loc-result-catalog tr.te-loc-file').eq(3).find('.te-table__name').text() === '/old.php → /new.php'
+		&& w.$('#te-loc-result-catalog tr.te-loc-file').eq(0).find('.te-table__name').text() === '/a.php');
+
+	// admin tab is independent
+	const catalogFiles = w.teLocState.catalog.files.length;
+	req = locStart(w, calls, 'admin');
+	check('admin: scope admin in the request, its own panel and table, Analyze of catalog stays enabled', () => req.data.scope === 'admin' && w.$('#te-loc-result-admin table.te-table').length === 1
+		&& w.$('#te-begin-admin-localization-analization').prop('disabled') === true && w.$('#te-begin-localization-analization').prop('disabled') === false);
+	req.dfd.resolve(locBatch([locFile('/adm.php', [locKey('q', 'Q')])], 1, true, { fileCount: 1, needToTranslateFileCount: 1, needToTranslateValueCount: 1, needToTranslateCharCount: 1 }));
+	check('admin: rows only in the admin result, the catalog state is unchanged', () => w.$('#te-loc-result-admin tr.te-loc-file').length === 1 && w.teLocState.catalog.files.length === catalogFiles
+		&& w.$('#te-loc-result-catalog tr.te-loc-file .te-table__name').text().indexOf('/adm.php') === -1 && w.$('#te-loc-progress-admin').hasClass('te-progress--done'));
+}
+
+function testLocDiff(w) {
+	console.log('\nLocalization key list and source file:');
+	const calls = stubAjax(w);
+	w.teLocInit();
+	w.teInitCollapse();
+	const kb = { key: 'b', text: '', fullText: "$_['b'] = sprintf('<b>%s</b>', $x);", expression: 1 };
+	const ka = { key: 'a', text: "It\\'s", fullText: "$_['a'] = 'It\\'s';", expression: 0 };
+	const kc = { key: 'c', text: 'Gone', fullText: "$_['c'] = 'Gone';", expression: 0 };
+	const file = locFile('/a.php', [ka, kb, kc], { contentFrom: "<?php\n// <i>x</i>\n" + ka.fullText + "\n" + kb.fullText + "\n$_['other'] = 'z';\n" });
+	locLoad(w, calls, [file]);
+	const detail = () => w.$('#te-loc-result-catalog tr.te-table__detail[data-index="0"]');
+	check('the detail row is hidden at first', () => detail().length === 1 && detail().hasClass('te-hidden'));
+	w.$('#te-loc-result-catalog .te-js-loc-toggle').trigger('click');
+	check('toggle shows the detail row and sets aria-expanded', () => !detail().hasClass('te-hidden') && w.$('#te-loc-result-catalog .te-js-loc-toggle').attr('aria-expanded') === 'true');
+	check('the head shows the 2 language codes', () => detail().find('.te-diff__head span').length === 2 && detail().find('.te-diff__head span').eq(0).text() === 'en-gb' && detail().find('.te-diff__head span').eq(1).text() === 'uk-ua');
+	check('a literal: the source shows the unescaped text, the target is an empty textarea with the key', () => detail().find('.te-diff__source').eq(0).text() === "It's"
+		&& detail().find('textarea.te-diff__target[data-key="a"]').length === 1 && detail().find('textarea.te-diff__target[data-key="a"]').val() === '');
+	check('an expression: the statement as text in both cells, a muted badge, no textarea', () => detail().find('.te-diff__source--code').text() === kb.fullText
+		&& detail().find('.te-diff__target--code[data-key="b"]').text() === kb.fullText + 'PHP code' && detail().find('.te-diff__target--code .te-badge--muted').length === 1
+		&& detail().find('textarea[data-key="b"]').length === 0 && detail().find('b').length === 0);
+	const pre = detail().find('pre.te-loc-source');
+	check('the source block is hidden at first', () => pre.hasClass('te-hidden') && detail().find('.te-js-collapse').attr('aria-expanded') === 'false');
+	detail().find('.te-js-collapse').trigger('click');
+	check('the collapse button opens the source block', () => !pre.hasClass('te-hidden') && detail().find('.te-js-collapse').attr('aria-expanded') === 'true');
+	check('marks: one for each statement found, text only (no HTML from the file)', () => pre.find('mark.te-loc-hl').length === 2 && pre.find('mark').eq(0).text() === ka.fullText
+		&& pre.find('mark').eq(1).text() === kb.fullText && pre.find('b, i').length === 0 && pre.text() === file.contentFrom);
+	check('a statement that is not in the content gets no mark', () => pre.find('mark').filter(function() { return w.$(this).text() === kc.fullText; }).length === 0);
+	check('the bar with Source file, Translate file and Save file is the first child of the key list, the source file block is under it, then the head and the keys', () => detail().find('.te-diff').children().eq(0).is('.te-diff__bar')
+		&& detail().find('.te-diff__bar').children().length === 3 && detail().find('.te-diff__bar .te-js-collapse').length === 1 && detail().find('.te-diff__bar .te-js-loc-translate').length === 1 && detail().find('.te-diff__bar .te-js-loc-save').length === 1
+		&& detail().find('.te-diff').children().eq(1).is('pre.te-loc-source') && detail().find('.te-diff').children().eq(2).is('.te-diff__head') && detail().find('.te-diff').children().eq(3).is('.te-diff__key'));
+	check('the buttons Translate file and Save file have the row index', () => detail().find('.te-js-loc-translate').attr('data-index') === '0' && detail().find('.te-js-loc-save').attr('data-index') === '0');
+	w.$('#te-loc-result-catalog .te-js-loc-toggle').trigger('click');
+	check('a second click hides the detail row', () => detail().hasClass('te-hidden') && w.$('#te-loc-result-catalog .te-js-loc-toggle').attr('aria-expanded') === 'false');
+}
+
+function testLocFileHelpers(w) {
+	console.log('\nLocalization file helpers:');
+	check('teLocQuote: single and double quote, default', () => w.teLocQuote("$_['a'] = 'x';") === "'" && w.teLocQuote('$_["a"] = "x";') === '"' && w.teLocQuote('$_[\'a\'] = "x";') === '"' && w.teLocQuote('') === "'");
+	check("teLocUnescape single quote: \\' \\\\ and \\\\' in one pass", () => w.teLocUnescape("It\\'s", "'") === "It's" && w.teLocUnescape('a\\\\b', "'") === 'a\\b'
+		&& w.teLocUnescape("a\\\\'", "'") === "a\\'" && w.teLocUnescape('a\\nb', "'") === 'a\\nb');
+	check('teLocUnescape double quote: \\" \\n \\t \\$ \\\\', () => w.teLocUnescape('say \\"hi\\"', '"') === 'say "hi"' && w.teLocUnescape('a\\nb\\tc', '"') === 'a\nb\tc'
+		&& w.teLocUnescape('\\$x', '"') === '$x' && w.teLocUnescape('a\\\\b', '"') === 'a\\b');
+	check('teLocEscape: single quote and backslash', () => w.teLocEscape("It's") === "It\\'s" && w.teLocEscape('a\\b') === 'a\\\\b' && w.teLocEscape('plain') === 'plain');
+	check('teLocStatement', () => w.teLocStatement('k', "It's") === "$_['k'] = 'It\\'s';");
+	check('teLocDecodeEntities: numeric, named, ampersand, plain', () => w.teLocDecodeEntities('It&#39;s') === "It's" && w.teLocDecodeEntities('&quot;a&quot;') === '"a"'
+		&& w.teLocDecodeEntities('a &amp; b') === 'a & b' && w.teLocDecodeEntities('plain') === 'plain');
+	check('teLocDecodeEntities: a source with an entity keeps the answer verbatim, a source without entity is decoded', () => w.teLocDecodeEntities('&lt;b&gt; &#39;', '&lt;b&gt; x') === '&lt;b&gt; &#39;'
+		&& w.teLocDecodeEntities('&lt;b&gt; &#39;', 'plain <b> text') === "<b> '" && w.teLocDecodeEntities('It&#39;s', 'a & b; c') === "It's");
+	check('teLocUnescape double quote: \\v \\e \\f', () => w.teLocUnescape('a\\vb\\ec\\fd', '"') === 'a\vb\x1bc\fd');
+	check('teLocUnescape double quote: octal', () => w.teLocUnescape('\\101\\7\\0x', '"') === 'A\x07\x00x' && w.teLocUnescape('\\1011', '"') === 'A1');
+	check('teLocUnescape double quote: hex', () => w.teLocUnescape('\\x41\\x4a\\xZ', '"') === 'AJ\\xZ' && w.teLocUnescape('\\x4', '"') === '\x04');
+	check('teLocUnescape double quote: unicode', () => w.teLocUnescape('\\u{41}\\u{1F600}\\u{e9}', '"') === 'A\u{1F600}\u00e9' && w.teLocUnescape('\\u{zz}', '"') === '\\u{zz}');
+	check('teLocUnescape double quote: an unknown escape keeps the backslash, a single pass', () => w.teLocUnescape('\\q \\\\n \\\\101', '"') === '\\q \\n \\101' && w.teLocUnescape("\\v", "'") === '\\v');
+	check('teLocDecodeEntities: a tag stays text and no script runs', () => w.teLocDecodeEntities('<img src=x onerror=window.teHit=1>&lt;b&gt;') === '<img src=x onerror=window.teHit=1><b>' && !w.teHit
+		&& w.teLocDecodeEntities('<script>window.teHit=1</script>') === '<script>window.teHit=1</script>' && !w.teHit);
+	const keys = [locKey('a', 'A'), locExpr('e', "sprintf('x')"), locKey('b', 'B')];
+	check('teLocBuildFile: a missing target starts with <?php and a line break only', () => w.teLocBuildFile({ keys: keys, contentTo: '' }, { a: 'AA', b: "B'" }) === "<?php\n$_['a'] = 'AA';\n$_['e'] = sprintf('x');\n$_['b'] = 'B\\'';\n");
+	check('teLocBuildFile: an existing target without ?> gets a blank line and the lines', () => w.teLocBuildFile({ keys: keys, contentTo: "<?php\n$_['z'] = 'Z';\n\n" }, { a: 'AA' }) === "<?php\n$_['z'] = 'Z';\n\n$_['a'] = 'AA';\n$_['e'] = sprintf('x');\n");
+	check('teLocBuildFile: a target that ends with ?> gets a new <?php', () => w.teLocBuildFile({ keys: keys, contentTo: "<?php\n$_['z'] = 'Z';\n?>\n" }, { a: 'AA' }) === "<?php\n$_['z'] = 'Z';\n?>\n\n<?php\n$_['a'] = 'AA';\n$_['e'] = sprintf('x');\n");
+	check('teLocBuildFile: an empty value is skipped', () => w.teLocBuildFile({ keys: keys, contentTo: '' }, { a: '  ', b: 'B' }) === "<?php\n$_['e'] = sprintf('x');\n$_['b'] = 'B';\n");
+	check('teLocBuildFile: no line gives null', () => w.teLocBuildFile({ keys: [locKey('a', 'A')], contentTo: '<?php\n' }, {}) === null && w.teLocBuildFile({ keys: [], contentTo: '' }, { a: 'x' }) === null);
+	check('teLocBuildFile: the same input gives the same output (no duplicate on a second save)', () => {
+		const file = { keys: keys, contentTo: "<?php\n$_['z'] = 'Z';\n" };
+		return w.teLocBuildFile(file, { a: 'AA' }) === w.teLocBuildFile(file, { a: 'AA' });
+	});
+	check('teLocBuildFile: a ?> inside a literal gives no second <?php', () => w.teLocBuildFile({ keys: keys, contentTo: "<?php\n$_['z'] = 'see ?> here';\n" }, { a: 'AA' }) === "<?php\n$_['z'] = 'see ?> here';\n\n$_['a'] = 'AA';\n$_['e'] = sprintf('x');\n");
+	check('teLocBuildFile: a whitespace-only target starts with <?php', () => w.teLocBuildFile({ keys: keys, contentTo: ' \n\t\n' }, { a: 'AA' }) === "<?php\n$_['a'] = 'AA';\n$_['e'] = sprintf('x');\n");
+	check('the content ends with one line break', () => /[^\n]\n$/.test(w.teLocBuildFile({ keys: keys, contentTo: '' }, { a: 'AA' })));
+}
+
+function testLocTranslateSave(w) {
+	console.log('\nLocalization: translate and save one file:');
+	const calls = stubAjax(w);
+	w.teLocInit();
+	let charCountCalls = 0;
+	w.showTranslatedCharCount = function() { charCountCalls++; };
+	const f0 = locFile('/a.php', [locKey('a', '  Hello  '), locKey('b', "It\\'s"), locExpr('c', "sprintf('x')"), locKey('d', '')], { contentTo: '' });
+	const f1 = locFile('/b.php', [locKey('e', 'Empty')]);
+	const f2 = locFile('/c.php', [locKey('f', 'Fail')]);
+	locLoad(w, calls, [f0, f1, f2]);
+	w.$('#te-langbar-from').val('2');
+	w.$('#te-langbar-to').val('1');
+	const row = (i) => w.$('#te-loc-result-catalog tr.te-table__detail[data-index="' + i + '"]');
+	const ta = (i, key) => row(i).find('textarea[data-key="' + key + '"]');
+	row(0).find('.te-js-loc-translate').trigger('click');
+	const t = calls.post[0];
+	check('translate file: route, the languages of the analysis (not the langbar), format html, texts of the literals only, trimmed and unescaped', () => /client_translate_expert\/translate&token=/.test(t.url) && !/translateTable/.test(t.url)
+		&& t.data.source == 1 && t.data.target == 2 && t.data.format === 'html' && t.data.textArr === JSON.stringify(['Hello', "It's"]));
+	check('the clicked button is disabled until the response', () => row(0).find('.te-js-loc-translate').prop('disabled') === true);
+	t.dfd.resolve({ success: 1, texts: ['Hi &amp; co', 'It&#39;s <b>x</b>'] });
+	check('the textareas get the decoded texts, the char count is shown again, the button works again', () => ta(0, 'a').val() === 'Hi & co' && ta(0, 'b').val() === "It's <b>x</b>"
+		&& charCountCalls === 1 && row(0).find('.te-js-loc-translate').prop('disabled') === false);
+
+	row(0).find('.te-js-loc-save').trigger('click');
+	const s = calls.post[1];
+	const expected = w.teLocBuildFile(f0, { a: 'Hi & co', b: "It's <b>x</b>" });
+	check('save: route, content from teLocBuildFile, the target language of the analysis, path, scope, root', () => /client_translate_expert\/saveLocalizationFile&token=/.test(s.url)
+		&& s.data.fileContent === expected && s.data.langId == 2 && s.data.path === '/a.php' && s.data.scope === 'catalog' && s.data.root === 'core'
+		&& expected === "<?php\n$_['a'] = 'Hi & co';\n$_['b'] = 'It\\'s <b>x</b>';\n$_['c'] = sprintf('x');\n");
+	s.dfd.resolve({ success: 1 });
+	check('saved: badge saved, a success alert with the path', () => w.$('#te-loc-result-catalog tr.te-loc-file').eq(0).find('.te-badge--ok').text() === 'saved'
+		&& w.$('#te-loc-alerts-catalog .te-alert--success .te-alert__message').text() === 'Saved: /a.php');
+	row(0).find('.te-js-loc-save').trigger('click');
+	check('a second save sends the same content', () => calls.post.length === 3 && calls.post[2].data.fileContent === expected);
+	calls.post[2].dfd.resolve({ success: 1 });
+
+	const posts = calls.post.length;
+	row(1).find('.te-js-loc-save').trigger('click');
+	check('an empty file: an info alert with the path, no request', () => calls.post.length === posts && w.$('#te-loc-alerts-catalog .te-alert--info .te-alert__message').text() === 'Nothing: /b.php'
+		&& row(1).find('.te-js-loc-save').prop('disabled') === false);
+	ta(2, 'f').val('Fehler');
+	row(2).find('.te-js-loc-save').trigger('click');
+	calls.post[calls.post.length - 1].dfd.resolve({ success: 0, message: 'Cannot write' });
+	check('save with success 0: an error alert, the badge stays', () => w.$('#te-loc-alerts-catalog .te-alert--error .te-alert__message').text() === 'Cannot write'
+		&& w.$('#te-loc-result-catalog tr.te-loc-file').eq(2).find('.te-badge--warn').length === 1 && row(2).find('.te-js-loc-save').prop('disabled') === false);
+	row(2).find('.te-js-loc-translate').trigger('click');
+	calls.post[calls.post.length - 1].dfd.reject(xhr({ status: 500, responseText: 'oops' }));
+	check('translate .fail: an error alert and the button works again', () => w.$('#te-loc-alerts-catalog .te-alert--error').length === 2 && row(2).find('.te-js-loc-translate').prop('disabled') === false);
+	w.$('#te-langbar-from').val('1');
+	w.$('#te-langbar-to').val('2');
+
+	locLoad(w, calls, [locFile('/ent.php', [locKey('p', '&lt;b&gt; x'), locKey('q', 'plain')])]);
+	w.$('#te-loc-result-catalog tr.te-table__detail').eq(0).find('.te-js-loc-translate').trigger('click');
+	calls.post[calls.post.length - 1].dfd.resolve({ success: 1, texts: ['&lt;b&gt; &#39;y', 'It&#39;s'] });
+	const eta = (key) => w.$('#te-loc-result-catalog tr.te-table__detail').eq(0).find('textarea[data-key="' + key + '"]').val();
+	check('a source with an entity keeps the Google value verbatim, a source without entity is decoded', () => eta('p') === '&lt;b&gt; &#39;y' && eta('q') === "It's");
+
+	locLoad(w, calls, [locFile('/race.php', [locKey('r', 'R')])]);
+	w.$('#te-loc-result-catalog tr.te-table__detail').eq(0).find('textarea[data-key="r"]').val('RR');
+	w.$('#te-loc-result-catalog tr.te-table__detail').eq(0).find('.te-js-loc-save').trigger('click');
+	const raceSave = calls.post[calls.post.length - 1];
+	let thrown = null;
+	w.addEventListener('error', function(e) { thrown = e; });
+	w.$('#te-begin-localization-analization').trigger('click');
+	try {
+		raceSave.dfd.resolve({ success: 1 });
+	} catch (e) {
+		thrown = e;
+	}
+	check('save, then a new analysis before the answer: no exception, the success alert names the path', () => thrown === null && w.$('#te-loc-alerts-catalog .te-alert--success .te-alert__message').text() === 'Saved: /race.php');
+	calls.get[calls.get.length - 1].dfd.resolve(locBatch([], 0, true, null));
+
+	// The translate button of one key
+	locLoad(w, calls, [locFile('/key.php', [locKey('k1', 'One'), locKey('k2', "Two\\'s"), locExpr('k3', "sprintf('x')"), locKey('k4', '')])]);
+	const krow = w.$('#te-loc-result-catalog tr.te-table__detail').eq(0);
+	const kbtn = (key) => krow.find('.te-js-loc-key-translate[data-key="' + key + '"]');
+	check('each literal key has a translate button before its textarea, with the field icon, an expression has none', () => kbtn('k1').length === 1 && kbtn('k2').length === 1 && kbtn('k4').length === 1 && kbtn('k3').length === 0
+		&& kbtn('k1').next().is('textarea[data-key="k1"]') && kbtn('k1').attr('title') === 'Translate'
+		&& /view\/image\/translate_expert_client\/translate-icon-32\.png/.test(kbtn('k1').attr('style')));
+	krow.find('textarea[data-key="k1"]').val('hand made');
+	const kposts = calls.post.length;
+	kbtn('k2').trigger('click');
+	const kp = calls.post[calls.post.length - 1];
+	check('key button: one request with only the text of this key, unescaped, the languages of the analysis', () => calls.post.length === kposts + 1 && /client_translate_expert\/translate&token=/.test(kp.url)
+		&& kp.data.textArr === JSON.stringify(["Two\\'s".replace("\\'", "'")]) && kp.data.source == 1 && kp.data.target == 2 && kp.data.format === 'html'
+		&& kbtn('k2').prop('disabled') === true);
+	kp.dfd.resolve({ success: 1, texts: ['Zwei&#39;s'] });
+	check('key button: only its textarea changes (decoded), the hand-made value of another key stays, the button works again', () => krow.find('textarea[data-key="k2"]').val() === "Zwei's"
+		&& krow.find('textarea[data-key="k1"]').val() === 'hand made' && kbtn('k2').prop('disabled') === false);
+	const kposts2 = calls.post.length;
+	kbtn('k4').trigger('click');
+	check('key button of an empty value: no request', () => calls.post.length === kposts2 && kbtn('k4').prop('disabled') === false);
+	kbtn('k1').trigger('click');
+	calls.post[calls.post.length - 1].dfd.resolve({ success: 0, message: 'Key failed' });
+	check('key button with success 0: an error alert, the textarea keeps its value, the button works again', () => w.$('#te-loc-alerts-catalog .te-alert--error .te-alert__message').last().text() === 'Key failed'
+		&& krow.find('textarea[data-key="k1"]').val() === 'hand made' && kbtn('k1').prop('disabled') === false);
+
+	// The Translate and save file button of the file row
+	locLoad(w, calls, [locFile('/account/account.php', [locKey('heading_title', 'My Account')], { targetExists: 0, contentTo: '', charCount: 1500 })]);
+	const frow = w.$('#te-loc-result-catalog tr.te-loc-file').eq(0);
+	const fbtn = frow.find('.te-js-loc-translate-save');
+	const fdetail = w.$('#te-loc-result-catalog tr.te-table__detail').eq(0);
+	check('file row: the third cell holds the characters to translate of the file (charCount), the key list spans 4 columns', () => frow.children('td').eq(1).text() === '1'
+		&& frow.children('td').eq(2).is('.te-num.te-loc-chars') && frow.children('td').eq(2).text() === '1 500' && fdetail.children('td').attr('colspan') === '4');
+	check('file row: a Translate and save file button in the third cell (under Translate all), before the state badge, no Translate file button in the row', () => fbtn.length === 1 && fbtn.text() === 'Translate and save file' && fbtn.attr('data-index') === '0'
+		&& frow.children('td').eq(3).children().eq(0).is(fbtn) && frow.children('td').eq(3).children().eq(1).find('.te-badge--error').length === 1 && frow.find('.te-js-loc-translate').length === 0
+		&& w.$('#te-loc-result-catalog thead .te-table__total td').eq(3).find('.te-js-loc-translate-all').length === 1 && fdetail.find('.te-js-loc-translate').text() === 'Translate file');
+	const fposts = calls.post.length;
+	fbtn.trigger('click');
+	const fp = calls.post[calls.post.length - 1];
+	check('file row: first the translate request with the texts of the file, the button is disabled', () => calls.post.length === fposts + 1 && /client_translate_expert\/translate&token=/.test(fp.url)
+		&& fp.data.textArr === JSON.stringify(['My Account']) && fbtn.prop('disabled') === true);
+	fp.dfd.resolve({ success: 1, texts: ['Мій акаунт'] });
+	const fs2 = calls.post[calls.post.length - 1];
+	check('file row: then the save request with the translated content, the button is still disabled', () => calls.post.length === fposts + 2 && /client_translate_expert\/saveLocalizationFile&token=/.test(fs2.url)
+		&& fs2.data.fileContent === "<?php\n$_['heading_title'] = 'Мій акаунт';\n" && fs2.data.path === '/account/account.php' && fbtn.prop('disabled') === true);
+	fs2.dfd.resolve({ success: 1 });
+	check('file row: after the save the badge is saved, a success alert names the path, the button works again, the key list stays closed', () => frow.find('.te-badge--ok').text() === 'saved'
+		&& w.$('#te-loc-alerts-catalog .te-alert--success .te-alert__message').last().text() === 'Saved: /account/account.php' && fbtn.prop('disabled') === false && fdetail.hasClass('te-hidden'));
+	locLoad(w, calls, [locFile('/f.php', [locKey('x', 'X')])]);
+	const gbtn = w.$('#te-loc-result-catalog tr.te-loc-file').eq(0).find('.te-js-loc-translate-save');
+	const gposts = calls.post.length;
+	gbtn.trigger('click');
+	calls.post[calls.post.length - 1].dfd.resolve({ success: 0, message: 'Translate failed' });
+	check('file row: a failed translation sends no save, shows an error alert, the button works again, the badge stays', () => calls.post.length === gposts + 1
+		&& w.$('#te-loc-alerts-catalog .te-alert--error .te-alert__message').last().text() === 'Translate failed' && gbtn.prop('disabled') === false
+		&& w.$('#te-loc-result-catalog tr.te-loc-file').eq(0).find('.te-badge--warn').length === 1);
+	gbtn.trigger('click');
+	calls.post[calls.post.length - 1].dfd.resolve({ success: 1, texts: ['Y'] });
+	calls.post[calls.post.length - 1].dfd.resolve({ success: 0, message: 'Save failed' });
+	check('file row: a failed save shows an error alert, the button works again, the badge stays', () => w.$('#te-loc-alerts-catalog .te-alert--error .te-alert__message').last().text() === 'Save failed'
+		&& gbtn.prop('disabled') === false && w.$('#te-loc-result-catalog tr.te-loc-file').eq(0).find('.te-badge--warn').length === 1);
+}
+
+function testLocTranslateAll(w) {
+	console.log('\nLocalization: Translate all:');
+	const calls = stubAjax(w);
+	w.teLocInit();
+	let charCountCalls = 0;
+	w.showTranslatedCharCount = function() { charCountCalls++; };
+	const asked = [];
+	w.confirm = function(text) { asked.push(text); return false; };
+	locLoad(w, calls, [locFile('/a.php', [locKey('a', 'A')]), locFile('/n.php', []), locFile('/c.php', [locKey('c', 'C')])]);
+	w.$('#te-loc-translate-all-catalog').trigger('click');
+	check('confirm false: no request, the question names the language', () => calls.post.length === 0 && asked[0] === 'Translate all (Ukrainian)?' && w.teLocState.catalog.running === false);
+	w.confirm = function() { return true; };
+	w.$('#te-loc-translate-all-catalog').trigger('click');
+	check('run: translate request of the first file, panel title with the file, buttons disabled, a second click does nothing', () => calls.post.length === 1 && /translate&token=/.test(calls.post[0].url)
+		&& w.$('#te-loc-progress-catalog .te-progress__title').text() === 'Translating /a.php' && w.$('#te-begin-localization-analization').prop('disabled') === true
+		&& w.$('#te-loc-translate-all-catalog').prop('disabled') === true && w.$('#te-loc-result-catalog .te-js-loc-save').prop('disabled') === true
+		&& (w.$('#te-loc-translate-all-catalog').prop('disabled', false).trigger('click'), calls.post.length === 1) && (w.$('#te-loc-translate-all-catalog').prop('disabled', true), true));
+	calls.post[0].dfd.resolve({ success: 1, texts: ['AA'] });
+	check('then save of the same file', () => calls.post.length === 2 && /saveLocalizationFile/.test(calls.post[1].url) && calls.post[1].data.path === '/a.php');
+	calls.post[1].dfd.resolve({ success: 1 });
+	check('a log line per saved file, the next file starts, the badge is saved', () => w.$('#te-loc-progress-catalog .te-progress__line').text() === 'Saved: /a.php' && calls.post.length === 3
+		&& /translate&token=/.test(calls.post[2].url) && w.$('#te-loc-progress-catalog .te-progress__title').text() === 'Translating /c.php'
+		&& w.$('#te-loc-result-catalog tr.te-loc-file').eq(0).find('.te-badge--ok').length === 1
+		&& w.$('#te-loc-progress-catalog .te-progress__counters').text() === 'Now: /c.phpFiles 2 of 2');
+	calls.post[2].dfd.resolve({ success: 1, texts: ['CC'] });
+	calls.post[3].dfd.resolve({ success: 1 });
+	check('done: te-progress--done, the buttons work, the char count is shown again', () => w.$('#te-loc-progress-catalog').hasClass('te-progress--done') && w.$('#te-begin-localization-analization').prop('disabled') === false
+		&& w.$('#te-loc-translate-all-catalog').prop('disabled') === false && w.$('#te-loc-progress-catalog .te-progress__line').length === 2 && charCountCalls >= 3
+		&& w.$('#te-loc-progress-catalog .te-progress__counters').text().indexOf('Files 2 of 2') >= 0 && w.teLocState.catalog.running === false);
+
+	check('after a full run: Translate all is hidden and a forced second start sends no request', () => {
+		const n = calls.post.length;
+		const hidden = w.$('#te-loc-translate-all-catalog').hasClass('te-hidden');
+		w.teLocTranslateAllStart('catalog');
+		return hidden && calls.post.length === n && w.teLocState.catalog.running === false;
+	});
+	w.teLocState.catalog.files.forEach(function(f) { f.saved = 0; });
+
+	// stop
+	const before = calls.post.length;
+	w.$('#te-loc-translate-all-catalog').trigger('click');
+	w.$('#te-loc-progress-catalog .te-js-stop').trigger('click');
+	check('stop: the button is disabled at once', () => w.$('#te-loc-progress-catalog .te-js-stop').prop('disabled') === true);
+	calls.post[before].dfd.resolve({ success: 1, texts: ['AA'] });
+	calls.post[before + 1].dfd.resolve({ success: 1 });
+	check('stop after the first file: te-progress--stopped, no request for the next file', () => calls.post.length === before + 2 && w.$('#te-loc-progress-catalog').hasClass('te-progress--stopped')
+		&& w.$('#te-begin-localization-analization').prop('disabled') === false);
+
+	// save error
+	const before2 = calls.post.length;
+	w.$('#te-loc-translate-all-catalog').trigger('click');
+	calls.post[before2].dfd.resolve({ success: 1, texts: ['AA'] });
+	calls.post[before2 + 1].dfd.resolve({ success: 0, message: 'Disk full' });
+	check('save error: te-progress--error, an error alert, all buttons work again, no next file', () => calls.post.length === before2 + 2 && w.$('#te-loc-progress-catalog').hasClass('te-progress--error')
+		&& w.$('#te-loc-alerts-catalog .te-alert--error .te-alert__message').text() === 'Disk full' && w.$('#te-begin-localization-analization').prop('disabled') === false
+		&& w.$('#te-loc-translate-all-catalog').prop('disabled') === false && w.$('#te-loc-result-catalog .te-js-loc-save').prop('disabled') === false);
+
+	// translate error
+	const before3 = calls.post.length;
+	w.$('#te-loc-translate-all-catalog').trigger('click');
+	calls.post[before3].dfd.reject(xhr({ status: 500, responseText: 'oops' }));
+	check('translate error: te-progress--error and the run ends', () => w.$('#te-loc-progress-catalog').hasClass('te-progress--error') && w.teLocState.catalog.running === false);
+
+	// expression-only file
+	locLoad(w, calls, [locFile('/e.php', [locExpr('x', "sprintf('a')")], { contentTo: '' })]);
+	const before4 = calls.post.length;
+	w.$('#te-loc-translate-all-catalog').trigger('click');
+	check('an expression-only file: no translate request, the first request is the save with the statement', () => calls.post.length === before4 + 1 && /saveLocalizationFile/.test(calls.post[before4].url)
+		&& calls.post[before4].data.fileContent === "<?php\n$_['x'] = sprintf('a');\n");
+	calls.post[before4].dfd.resolve({ success: 1 });
+	check('the run of the expression-only file is done', () => w.$('#te-loc-progress-catalog').hasClass('te-progress--done') && w.$('#te-loc-progress-catalog .te-progress__line').text() === 'Saved: /e.php');
+}
+
+function testLocBs5(w) {
+	console.log('\nLocalization tabs on Bootstrap 5:');
+	const calls = stubAjax(w);
+	w.teLocInit();
+	w.$('#te-begin-localization-analization').trigger('click');
+	check('the stop button has the BS5 class', () => w.$('#te-loc-progress-catalog .te-js-stop').hasClass('btn-secondary'));
+	calls.get[0].dfd.resolve(locBatch([locFile('/a.php', [locKey('a', 'A')])], 1, true, { fileCount: 1, needToTranslateFileCount: 1, needToTranslateValueCount: 1, needToTranslateCharCount: 1 }));
+	check('the file buttons have the BS5 class', () => w.$('#te-loc-result-catalog .te-js-loc-translate').hasClass('btn-outline-secondary') && w.$('#te-loc-result-catalog .te-js-loc-save').hasClass('btn-outline-secondary'));
+}
+
+function testLocStatic() {
+	console.log('\nLocalization tabs (static):');
+	const base = path.join(__dirname, '../../sources/upload/admin');
+	for (const tpl of ['client_translate_expert.tpl', 'client_translate_expert.oc4.twig']) {
+		const text = fs.readFileSync(path.join(base, 'view/template/extension/module', tpl), 'utf8');
+		check(tpl + ': both loc apps with data-scope, the 2 Analyze ids, progress and result blocks', () => /id="te-loc-app-catalog" data-scope="catalog"/.test(text) && /id="te-loc-app-admin" data-scope="admin"/.test(text)
+			&& text.indexOf('id="te-begin-localization-analization"') > 0 && text.indexOf('id="te-begin-admin-localization-analization"') > 0
+			&& ['catalog', 'admin'].every((sc) => text.indexOf('id="te-loc-progress-' + sc + '"') > 0 && text.indexOf('id="te-loc-result-' + sc + '"') > 0 && text.indexOf('id="te-loc-alerts-' + sc + '"') > 0));
+		check(tpl + ': no old localization markup and no removed js constants', () => text.indexOf('localization-analize') === -1 && text.indexOf('js_const_saved') === -1
+			&& text.indexOf('js_const_localization') === -1 && text.indexOf('te-localization-analization-result') === -1);
+		check(tpl + ': the toolbar has no Translate all (it is in the total row of the table)', () => text.indexOf('te-js-loc-translate-all') === -1 && text.indexOf('te-loc-translate-all-') === -1);
+		check(tpl + ': the tab panes keep their ids', () => text.indexOf('id="tab-localization"') > 0 && text.indexOf('id="tab-admin-localization"') > 0);
+	}
+	const js = fs.readFileSync(JS_FILE, 'utf8');
+	const code = js.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
+	check('the JS has no arrow function, Object.entries or replaceAll outside a comment line', () => code.indexOf('=>') === -1 && code.indexOf('Object.entries(') === -1 && code.indexOf('.replaceAll(') === -1);
+	check('the JS has no removed function of the old localization flow', () => ['makeLocalizationAnalizeRequest', 'doTranslateLocalization', 'translateExpertLocalizationIds', 'localizationAnalizationResults', 'showTranslateExpertInfoMessage'].every((n) => js.indexOf(n) === -1));
+	check('the CSS has no old localization rule', () => fs.readFileSync(path.join(base, 'view/stylesheet/client_translate_expert.css'), 'utf8').indexOf('localization-analize') === -1);
 }
 
 console.log('=== client_translate_expert.js helper tests ===');
@@ -943,12 +1414,25 @@ for (const version of JQUERY_VERSIONS) {
 	w = makeSiteWindow(version.file, false);
 	w.__jq = version.file;
 	testSiteLangbar(w);
+	w = makeSiteWindow(version.file, false);
+	testLocAnalysis(w);
+	w = makeSiteWindow(version.file, false);
+	testLocDiff(w);
+	w = makeSiteWindow(version.file, false);
+	testLocFileHelpers(w);
+	w = makeSiteWindow(version.file, false);
+	testLocTranslateSave(w);
+	w = makeSiteWindow(version.file, false);
+	testLocTranslateAll(w);
 	w = makeWindow(version.file, true);
 	testBs5(w);
 	testCharCountHelpers(w);
 	w = makeSiteWindow(version.file, true);
 	testSiteBs5(w);
+	w = makeSiteWindow(version.file, true);
+	testLocBs5(w);
 }
+testLocStatic();
 
 console.log('\nTemplates (static):');
 for (const tpl of ['client_translate_expert.tpl', 'client_translate_expert.oc4.twig']) {
@@ -956,11 +1440,5 @@ for (const tpl of ['client_translate_expert.tpl', 'client_translate_expert.oc4.t
 	const radios = text.match(/<input[^>]*name="te-analization-mode"[^>]*>/g) || [];
 	check(tpl + ': the 3 mode radios are outside the settings form (form="te-no-form")', () => radios.length === 3 && radios.every((r) => r.indexOf('form="te-no-form"') >= 0));
 }
-{
-	const w = makeWindow(JQUERY_VERSIONS[0].file, false);
-	check('the localization alerts go before the Analyze button of their own tab', () => w.translateExpertLocalizationIds.catalog.anchor === '#te-begin-localization-analization'
-		&& w.translateExpertLocalizationIds.admin.anchor === '#te-begin-admin-localization-analization');
-}
-
 console.log('\n=== Results: ' + passed + ' passed, ' + failed + ' failed, 0 skipped ===');
 process.exit(failed === 0 ? 0 : 1);

@@ -258,41 +258,41 @@
 
 
 				<div class="tab-pane" id="tab-localization">
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-begin-localization-analization"><?php echo $entry_localization_analization; ?></label>
-					<div class="col-sm-10">
-						<input type="button" id="te-begin-localization-analization" value="<?php echo $entity_begin_analization; ?>">
-					</div>
+				  <div class="te-app te-loc-app" id="te-loc-app-catalog" data-scope="catalog">
+				    <div class="te-alerts" id="te-loc-alerts-catalog"></div>
+				    <div class="te-card">
+				      <div class="te-card__head"><?php echo $te_loc_card_files; ?></div>
+				      <div class="te-card__body">
+				        <div class="te-loc-totals te-hidden" id="te-loc-totals-catalog"></div>
+				        <div class="te-toolbar">
+				          <button type="button" id="te-begin-localization-analization" class="btn btn-primary te-js-loc-analyze"><?php echo $te_loc_analyze; ?></button>
+				        </div>
+				      </div>
+				    </div>
+				    <div class="te-progress te-hidden" id="te-loc-progress-catalog" role="status" aria-live="polite"></div>
+				    <div class="te-loc-result" id="te-loc-result-catalog"></div>
 				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-localization-analization-result"><?php echo $entry_localization_analization_result; ?></label>
-					<div class="col-sm-10">
-						<div id="te-localization-analization-result" data-scope="catalog">
-						</div>
-					</div>
-				  </div>	  
 				</div>
 
 
 				<div class="tab-pane" id="tab-admin-localization">
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-begin-admin-localization-analization"><?php echo $entry_localization_analization; ?></label>
-					<div class="col-sm-10">
-						<input type="button" id="te-begin-admin-localization-analization" value="<?php echo $entity_begin_analization; ?>">
-					</div>
+				  <div class="te-app te-loc-app" id="te-loc-app-admin" data-scope="admin">
+				    <div class="te-alerts" id="te-loc-alerts-admin"></div>
+				    <div class="te-card">
+				      <div class="te-card__head"><?php echo $te_loc_card_files; ?></div>
+				      <div class="te-card__body">
+				        <div class="te-loc-totals te-hidden" id="te-loc-totals-admin"></div>
+				        <div class="te-toolbar">
+				          <button type="button" id="te-begin-admin-localization-analization" class="btn btn-primary te-js-loc-analyze"><?php echo $te_loc_analyze; ?></button>
+				        </div>
+				      </div>
+				    </div>
+				    <div class="te-progress te-hidden" id="te-loc-progress-admin" role="status" aria-live="polite"></div>
+				    <div class="te-loc-result" id="te-loc-result-admin"></div>
 				  </div>
-				  <div class="form-group">
-					<label class="col-sm-2 control-label" for="te-admin-localization-analization-result"><?php echo $entry_localization_analization_result; ?></label>
-					<div class="col-sm-10">
-						<div id="te-admin-localization-analization-result" data-scope="admin">
-						</div>
-					</div>
-				  </div>	  
 				</div>
-				
-				
-				
-				
+
+
 				<div class="tab-pane <?php echo $tab_debug_class; ?>" id="tab-debug">
 				  <div class="form-group">
 						<label class="col-sm-2 control-label" for="client_translate_expert_version"><?php echo $entry_translate_expert_version; ?></label>
@@ -392,9 +392,6 @@
 </div>
 <!-- js constants -->
 <script>
-	document.js_const_saved = "<?php echo $js_const_saved; ?>";
-	document.js_const_localization_translate_progress = "<?php echo $js_const_localization_translate_progress; ?>";
-	document.js_const_localization_translate_done = "<?php echo $js_const_localization_translate_done; ?>";
 	// removing
 	document.js_const_entry_remove_translation_records_from_db_confirmation = "<?php echo $entry_remove_translation_records_from_db_confirmation; ?>";
 	document.js_const_entry_removing_data_from_db_process_is_started = "<?php echo $entry_removing_data_from_db_process_is_started; ?>";

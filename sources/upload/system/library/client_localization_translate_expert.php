@@ -26,8 +26,12 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 		if ($languageIdFrom == $languageIdTo)
 			return (object)array('success' => 0, 'error_code' => 3003, 'message' => 'Internal error.',
 				'additional_message' => $this->_model->language->get('error_lang_from_and_lang_to_are_equal'));
+		$nextFileIndex = max(0, (int)$nextFileIndex);
 		$languageFrom = $this->_model->model_localisation_language->getLanguage($languageIdFrom);
 		$languageTo = $this->_model->model_localisation_language->getLanguage($languageIdTo);
+		if (empty($languageFrom) || empty($languageTo))
+			return (object)array('success' => 0, 'error_code' => 3002, 'message' => 'Internal error.',
+				'additional_message' => $this->_model->language->get('error_bad_filter'));
 		// array ( 'language_id' => '1', 'name' => 'Russian', 'code' => 'ru-ru', 'locale' => 'ru_RU.UTF-8,ru_RU,russian', 'image' => 'ru.png', 'directory' => 'russian', 'sort_order' => '3', 'status' => '1', );
 
 		$roots = $this->getLocalizationRoots($scope, $languageFrom, $languageTo);
@@ -63,17 +67,18 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 			}
 		}
 
-		$analizeHtml = $this->buildAnalizeHtml($analize);
-		$analizeDetails = array_slice($analize, $nextFileIndex, self::ANALIZE_BULK_SIZE);
-		$analizeDetailsHtml = $this->buildAnalizeDetailedHtml($analizeDetails);
-
-		//$analizeHtml .= var_export(array_keys($languageFromFiles), true);
-		//$analizeHtml .= '<br><br>';
-		//$analizeHtml .= var_export(array_keys($languageToFiles), true);
-
 		$newNextFileIndex = $nextFileIndex + self::ANALIZE_BULK_SIZE;
-		$done = $newNextFileIndex >= count($analize);
-		$res = (object)array('success' => 1, 'done' => $done, 'analize' => $analizeDetails, 'html' => $analizeHtml, 'detailsHtml' => $analizeDetailsHtml, 'nextFileIndex' => $newNextFileIndex);
+		$files = array();
+		foreach (array_slice($analize, $nextFileIndex, self::ANALIZE_BULK_SIZE) as $analizeFile)
+			$files[] = $this->buildAnalizeFileItem($analizeFile);
+
+		$res = array('success' => 1, 'done' => $newNextFileIndex >= count($analize) ? 1 : 0, 'nextFileIndex' => $newNextFileIndex);
+		if ($nextFileIndex == 0)
+			$res['totals'] = $this->calcAnalizeTotals($analize);
+		$res['languageFrom'] = $this->buildLanguageObject((int)$languageIdFrom);
+		$res['languageTo'] = $this->buildLanguageObject((int)$languageIdTo);
+		$res['files'] = $files;
+		$res = (object)$res;
 
 		$this->gebugLog(var_export($res, true));
 		$this->gebugLog('analizeLocalization: ============FINISH============', $startTime);
@@ -240,131 +245,38 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 		return $roots;
 	}
 
-	private function buildAnalizeHtml($analize)
+	private function buildAnalizeFileItem($analizeFile)
 	{
-		$analizeTotals = $this->calcAnalizeTotals($analize);
+		$keys = array();
+		foreach ($analizeFile['toTranslate'] as $key => $line)
+			$keys[] = array(
+				'key' => (string)$key,
+				'text' => $line['text'],
+				'fullText' => $line['full_text'],
+				'expression' => !empty($line['expression']) ? 1 : 0);
 
-		$entry_fileCount = $this->_model->language->get('entry_fileCount');
-		$entry_needToTranslateFileCount = $this->_model->language->get('entry_needToTranslateFileCount');
-		$entry_needToTranslateValueCount = $this->_model->language->get('entry_needToTranslateValueCount');
-		$entry_needToTranslateCharCount = $this->_model->language->get('entry_needToTranslateCharCount');
-		$entry_TranslateAll = $this->_model->language->get('entry_TranslateAll');
-
-		$html = '';
-		$html .= '<div class="container localization-analize-totals">';
-		$html .= 	"<div class='row localization-analize-total-row'>";
-		$html .= 		"<div class='col-md-3'>{$entry_fileCount}</div>";
-		$html .= 		"<div class='col-md-3'>{$analizeTotals['fileCount']}</div>";
-		$html .= 	'</div>';
-		$html .= 	"<div class='row localization-analize-total-row'>";
-		$html .= 		"<div class='col-md-3'>{$entry_needToTranslateFileCount}</div>";
-		$html .= 		"<div class='col-md-3'>{$analizeTotals['needToTranslateFileCount']}</div>";
-		$html .= 	'</div>';
-		$html .= 	"<div class='row localization-analize-total-row'>";
-		$html .= 		"<div class='col-md-3'>{$entry_needToTranslateValueCount}</div>";
-		$html .= 		"<div class='col-md-3'>{$analizeTotals['needToTranslateValueCount']}</div>";
-		$html .= 	'</div>';
-		$html .= 	"<div class='row localization-analize-total-row'>";
-		$html .= 		"<div class='col-md-3'>{$entry_needToTranslateCharCount}</div>";
-		$html .= 		"<div class='col-md-3'>{$analizeTotals['needToTranslateCharCount']}</div>";
-		$html .= 	'</div>';
-		if ($analizeTotals['needToTranslateFileCount'] > 0)
-		{
-			$html .= 	"<div class='row localization-analize-total-row'>";
-			$html .= 		"<div class='col-md-3'><button type='button' class='translate_localization_all_button' title='{$entry_TranslateAll}' onclick='doTranslateLocalizationAllExpert(0, this)'><i class='fa fa-language'></i>{$entry_TranslateAll}</button></div>";
-			$html .= 	'</div>';
-			$html .= "";
-		}
-		$html .= '</div>';
-		$html .= '<br><br>';
-
-		$html .= '<div class="container localization-analize-table">';
-		$html .= '</div>';
-//		$html .= '<script>initTranslateExpertLocalization();</script>';
-
-		return $html;
+		return array(
+			'root' => $analizeFile['root'],
+			'rootName' => $analizeFile['rootName'],
+			'pathFrom' => $analizeFile['pathFrom'],
+			'pathTo' => $analizeFile['pathTo'],
+			'targetExists' => $analizeFile['targetExists'] ? 1 : 0,
+			'keys' => $keys,
+			'charCount' => $this->calcFileCharCount($analizeFile['toTranslate']),
+			'contentFrom' => $analizeFile['contentFrom'],
+			'contentTo' => $analizeFile['contentTo']);
 	}
 
-	private function buildAnalizeDetailedHtml($analize)
+	// The characters to translate of one file. The file items (charCount) and the totals use this count.
+	private function calcFileCharCount($toTranslate)
 	{
-		$toTranslateInfo = $this->_model->language->get('entry_localization_file_to_translate_info');
-		$toTranslateInfoFullTranslated = $this->_model->language->get('entry_localization_file_to_translate_info_full_translated');
-		$targetMissingInfo = $this->_model->language->get('entry_localization_file_target_missing');
-		$expressionInfo = $this->_model->language->get('entry_localization_file_expression_info');
-		$buttonTranslate = htmlspecialchars($this->_model->language->get('button_localization_translate'), ENT_QUOTES, 'UTF-8');
-		$buttonSave = htmlspecialchars($this->_model->language->get('button_localization_save'), ENT_QUOTES, 'UTF-8');
-
-		$html = '';
-		foreach($analize as $analizeFile)
+		$charCount = 0;
+		foreach($toTranslate as $toTranslateLine)
 		{
-			$contentFrom = $analizeFile['contentFrom'];
-			$contentTo = $analizeFile['contentTo'];
-
-			$langFrom = $analizeFile['languageFrom'];
-			$langTo = $analizeFile['languageTo'];
-
-			$langFromImgUrl = $this->getLangImgUrl($langFrom['code']);
-			$langToImgUrl = $this->getLangImgUrl($langTo['code']);
-
-			$toTranslate = $analizeFile['toTranslate'];
-			$toTranslateCount = count($toTranslate);
-
-			$contentFrom = $this->highlightToTranslate($contentFrom, $toTranslate);
-
-			$displayPath = $analizeFile['pathFrom'];
-			if ($analizeFile['pathFrom'] != $analizeFile['pathTo'])
-				$displayPath = $analizeFile['pathFrom'] . ' => ' . $analizeFile['pathTo'];
-			$rootName = isset($analizeFile['rootName']) ? $analizeFile['rootName'] : '';
-			if ($rootName !== '')
-				$displayPath = '[' . $rootName . '] ' . $displayPath;
-			$displayPath = htmlspecialchars($displayPath, ENT_QUOTES, 'UTF-8');
-			$pathToAttr = htmlspecialchars($analizeFile['pathTo'], ENT_QUOTES, 'UTF-8');
-			$rootAttr = htmlspecialchars(isset($analizeFile['root']) ? $analizeFile['root'] : self::ROOT_CORE, ENT_QUOTES, 'UTF-8');
-
-			$targetExists = !isset($analizeFile['targetExists']) || $analizeFile['targetExists'];
-			$expressionCount = 0;
-			foreach ($toTranslate as $toTranslateLine)
-				if (!empty($toTranslateLine['expression']))
-					$expressionCount++;
-
-			if ($toTranslateCount == 0 && $targetExists)
-				$fileToTranslateInfo = str_replace('{path}', $displayPath, $toTranslateInfoFullTranslated);
-			elseif ($toTranslateCount == 0)
-				$fileToTranslateInfo = $displayPath . ':';
-			else
-				$fileToTranslateInfo = str_replace(array('{path}', '{count}'), array($displayPath, $toTranslateCount), $toTranslateInfo);
-			if ($expressionCount > 0)
-				$fileToTranslateInfo .= ' ' . str_replace('{count}', $expressionCount, $expressionInfo);
-			if (!$targetExists)
-				$fileToTranslateInfo .= ' ' . $targetMissingInfo;
-
-			//$contentFrom = htmlentities($contentFrom); // already entited
-			$contentTo = htmlentities($contentTo);
-
-			$html .= "<div class='row localization-analize-row' data-path-to='{$pathToAttr}' data-root='{$rootAttr}'>";
-			$html .= 	"<div class='col-md-12 localization-analize-file-header'><div class='info' onclick='clickTranslateExpertLocalizationHeader(this)'>{$fileToTranslateInfo}</div></div>";
-			$html .= "</div>";
-			$html .= "<div class='row localization-analize-row info' style='display:none;'>";
-			$html .= 	"<div class='col-md-6 localization-analize-file-toolbar from'>";
-			$html .= 		"<img src='{$langFromImgUrl}' alt='{$langFrom['name']}' title='{$langFrom['name']}'>";
-			$html .= 	"</div>";
-			$html .= 	"<div class='col-md-6 localization-analize-file-toolbar to'>";
-			$html .= 		"<img src='{$langToImgUrl}' alt='{$langTo['name']}' title='{$langTo['name']}'>";
-			if ($toTranslateCount > 0)
-				$html .= 	"<button type='button' class='translate_localization_button' title='{$buttonTranslate}' onclick='doTranslateLocalizationExpert(this); return false;'><i class='fa fa-language'></i> {$buttonTranslate}</button>";
-			$html .= 		"<button type='button' class='save_translation_button' title='{$buttonSave}' onclick='doSaveLocalizationExpert(this); return false;'><i class='fa fa-save'></i> {$buttonSave}</button>";
-			$html .= 	"</div>";
-			$html .= "</div>";
-			$html .= "<div class='row localization-analize-row info' style='display:none;'>";
-			$html .= 	"<div class='col-md-6 localization-analize-file from'><pre data-lang-from='{$langFrom['language_id']}'>{$contentFrom}</pre></div>";
-			$html .= 	"<div class='col-md-6 localization-analize-file to'><textarea data-lang-to='{$langTo['language_id']}'>{$contentTo}</textarea></div>";
-			$html .= "</div>";
-			$html .= "<div class='row localization-analize-row info' style='display:none;'>";
-			$html .= "</div>";
+			// The admin controller html_entity_decode()s each text before the send and the count: use the same call.
+			$charCount += mb_strlen(trim(html_entity_decode($toTranslateLine['text'])), 'UTF-8');
 		}
-		$html .= '</div>';
-
-		return $html;
+		return $charCount;
 	}
 
 	private function calcAnalizeTotals($analize)
@@ -381,11 +293,7 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 			if ($toTranslateCount > 0)
 				$needToTranslateFileCount++;
 			$needToTranslateValueCount += $toTranslateCount;
-			foreach($toTranslate as $key => $toTranslateLine)
-			{
-				// The admin controller html_entity_decode()s each text before the send and the count: use the same call.
-				$needToTranslateCharCount += mb_strlen(trim(html_entity_decode($toTranslateLine['text'])), 'UTF-8');
-			}
+			$needToTranslateCharCount += $this->calcFileCharCount($toTranslate);
 		}
 
 		return array(
@@ -394,16 +302,6 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 			'needToTranslateValueCount' => $needToTranslateValueCount,
 			'needToTranslateCharCount' => $needToTranslateCharCount,
 		);
-	}
-
-	private function highlightToTranslate($content, $toTranslate)
-	{
-		foreach($toTranslate as $key => $toTranslateLine)
-			$content = str_replace($toTranslateLine['full_text'], '{begin_highlight_vh}' . $toTranslateLine['full_text'] . '{end_highlight_vh}', $content);
-		$content = htmlentities($content);
-		$content = str_replace('{begin_highlight_vh}', '<b>', $content);
-		$content = str_replace('{end_highlight_vh}', '</b>', $content);
-		return $content;
 	}
 
 	public function analizeLocalizationFile($languageFrom, $languageTo, $contentFrom, $contentTo, $pathFrom, $pathTo, $includeFolder = null)
