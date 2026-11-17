@@ -440,6 +440,32 @@
   font: inherit;
   resize: vertical;
 }
+.te-app .te-diff__cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+.te-app .te-diff__cell textarea.te-diff__target {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.te-app .te-loc-key-translate {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: cover;
+  cursor: pointer;
+}
+.te-app .te-loc-key-translate:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
 .te-app .te-diff__source--code,
 .te-app .te-diff__target--code {
   font-family: monospace;

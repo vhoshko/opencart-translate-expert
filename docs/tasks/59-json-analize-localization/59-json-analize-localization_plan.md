@@ -255,3 +255,13 @@ Remove the old rules 33-57. Add under `.te-app`: `.te-loc-totals`, `.te-diff__he
 - Files: JS `teSiteBuildTableSkeleton`, CSS `.te-table__total`, JS test (2 selectors and 1 new check).
 - Verify: 04.01.0188, build green, PHP tests pass, JS 571 passed.
 - No re-review: the user said to push without a re-review. The change is layout only.
+
+## Update 2026-11-17 (store run feedback, localization tabs)
+
+The user asked for 3 changes after a store run:
+
+1. A total row in the file table: "Total <keys to translate> [Translate all]". It is the second row of `thead`, as on the Website content tab. The value is `totals.needToTranslateValueCount`. `teLocBuildTableSkeleton(scope)` builds the row. The "Translate all" button keeps the id `te-loc-translate-all-<scope>`.
+2. A translate button for each key editor, as the field translate buttons of the admin panel. It has the same icon (`translate-icon-32.png`, `teLocIconUrl()`). The literal `rootUrl + 'view/image/translate_expert_client/` gets the OC 4.x path from `build.sh:403`. Verified in the oc4.x package. `teLocTranslateFile` has an optional `onlyKey` argument. The button sends only the text of its key, so the values of other keys stay. The button is disabled while a run is active.
+3. The "Translate all" button is removed from the toolbar next to "Analyze files" in TPL and TWIG. `te_loc_translate_all` is removed from the CTRL template text list (it stays in `te_i18n`).
+
+Findings: 04.01.0189, build green, PHP tests pass, JS 589 passed. A mutation of the `onlyKey` filter made 4 key tests fail. No re-review under auto-approve: the change is small, it reuses the reviewed translate path, and each branch of the key button has a test.

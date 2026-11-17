@@ -266,8 +266,6 @@
 				        <div class="te-loc-totals te-hidden" id="te-loc-totals-catalog"></div>
 				        <div class="te-toolbar">
 				          <button type="button" id="te-begin-localization-analization" class="btn btn-primary te-js-loc-analyze"><?php echo $te_loc_analyze; ?></button>
-				          <span class="te-toolbar__spacer"></span>
-				          <button type="button" id="te-loc-translate-all-catalog" class="btn btn-default te-js-loc-translate-all te-hidden"><?php echo $te_loc_translate_all; ?></button>
 				        </div>
 				      </div>
 				    </div>
@@ -286,8 +284,6 @@
 				        <div class="te-loc-totals te-hidden" id="te-loc-totals-admin"></div>
 				        <div class="te-toolbar">
 				          <button type="button" id="te-begin-admin-localization-analization" class="btn btn-primary te-js-loc-analyze"><?php echo $te_loc_analyze; ?></button>
-				          <span class="te-toolbar__spacer"></span>
-				          <button type="button" id="te-loc-translate-all-admin" class="btn btn-default te-js-loc-translate-all te-hidden"><?php echo $te_loc_translate_all; ?></button>
 				        </div>
 				      </div>
 				    </div>
