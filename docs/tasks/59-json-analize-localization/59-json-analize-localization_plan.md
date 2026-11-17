@@ -265,3 +265,9 @@ The user asked for 3 changes after a store run:
 3. The "Translate all" button is removed from the toolbar next to "Analyze files" in TPL and TWIG. `te_loc_translate_all` is removed from the CTRL template text list (it stays in `te_i18n`).
 
 Findings: 04.01.0189, build green, PHP tests pass, JS 589 passed. A mutation of the `onlyKey` filter made 4 key tests fail. No re-review under auto-approve: the change is small, it reuses the reviewed translate path, and each branch of the key button has a test.
+
+## Update 2026-11-17 (store run feedback, Translate file in the file row)
+
+- The user asked for a "Translate file" button in the file row, before the state badge, under "Translate all" of the total row. The third cell of the row now holds the button and the badge (`teLocBuildFileRow(scope, file, index)`). `teLocRefreshState` finds the badge in `.te-loc-state`.
+- The button uses the `.te-js-loc-translate` handler of the key list. It fills the key editors and does not save. From the file row, the key list opens after the response, so the user sees the values and can save them.
+- Findings: 04.01.0190, build green, PHP tests pass, JS 597 passed. No re-review under auto-approve: the button reuses the reviewed translate handler, and its branches have tests.

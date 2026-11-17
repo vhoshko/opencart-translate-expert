@@ -2123,13 +2123,13 @@ function teLocFindRow(scope, cls, index) {
 
 function teLocRefreshState(scope, index) {
 	var file = teLocState[scope].files[index];
-	var cell = teLocFindRow(scope, 'te-loc-file', index).children('td.te-loc-state');
+	var cell = teLocFindRow(scope, 'te-loc-file', index).find('.te-loc-state');
 	if (file && cell.length) {
 		cell.empty().append(teLocBadge(file));
 	}
 }
 
-function teLocBuildFileRow(file, index) {
+function teLocBuildFileRow(scope, file, index) {
 	var tr = teEl('tr', { 'class': 'te-loc-file', 'data-index': index });
 	var label = teT('te_loc_toggle', { path: teLocFileLabel(file) });
 	var nameCell = teEl('td');
@@ -2137,7 +2137,11 @@ function teLocBuildFileRow(file, index) {
 	nameCell.append(teEl('span', { 'class': 'te-table__name' }, teLocFileLabel(file)));
 	tr.append(nameCell);
 	tr.append(teEl('td', { 'class': 'te-num' }, file.keys.length));
-	tr.append(teEl('td', { 'class': 'te-loc-state' }).append(teLocBadge(file)));
+	// The Translate file button of the row is under "Translate all" of the total row, before the state badge.
+	var stateCell = teEl('td', { 'class': 'te-site-actions' });
+	stateCell.append(teSiteButton('te-js-loc-translate', teT('te_loc_translate_file'), { 'data-index': index, 'disabled': teLocState[scope].running ? 'disabled' : null }));
+	stateCell.append(teEl('span', { 'class': 'te-loc-state' }).append(teLocBadge(file)));
+	tr.append(stateCell);
 	return tr;
 }
 
@@ -2234,7 +2238,7 @@ function teLocAppendFile(scope, index) {
 		}
 		state.lastRoot = root;
 	}
-	tbody.append(teLocBuildFileRow(file, index));
+	tbody.append(teLocBuildFileRow(scope, file, index));
 	tbody.append(teLocBuildDetailRow(scope, file, index));
 }
 
@@ -2548,9 +2552,15 @@ function teLocInit() {
 		if (teLocIsRunning(scope)) {
 			return;
 		}
+		var index = Number(btn.attr('data-index'));
 		btn.prop('disabled', true);
-		teLocTranslateFile(scope, Number(btn.attr('data-index')), function() {
+		teLocTranslateFile(scope, index, function() {
 			btn.prop('disabled', false);
+			// From the file row: open the key list, so the user sees the values and can save them.
+			if (btn.closest('tr').hasClass('te-loc-file')) {
+				btn.closest('tr').find('.te-js-loc-toggle').attr('aria-expanded', 'true');
+				teLocFindRow(scope, 'te-table__detail', index).removeClass('te-hidden');
+			}
 		}, function(response) {
 			btn.prop('disabled', false);
 			teAlerts.fromResponse(teLocIds(scope).alerts, response);
