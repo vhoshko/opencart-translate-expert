@@ -211,6 +211,7 @@ $_['te_loc_root'] = 'Extension: {name}';
 $_['te_loc_expression'] = 'PHP code, copied unchanged';
 $_['te_loc_source_file'] = 'Source file';
 $_['te_loc_translate_file'] = 'Translate file';
+$_['te_loc_translate_save_file'] = 'Translate and save file';
 $_['te_loc_save_file'] = 'Save file';
 $_['te_loc_saved'] = 'Saved: {path}';
 $_['te_loc_nothing_to_save'] = 'Nothing to save: {path}';

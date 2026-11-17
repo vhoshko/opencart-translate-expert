@@ -276,3 +276,9 @@ Findings: 04.01.0189, build green, PHP tests pass, JS 589 passed. A mutation of 
 
 - The user asked to move "Source file", "Translate file" and "Save file" to the top of the key list. The bar is now the first child of `.te-diff` (class `te-diff__bar`, was `te-diff__foot`). The source file block opens under the bar, then the language head and the keys follow.
 - Findings: 04.01.0191, build green, PHP tests pass, JS 599 passed. Layout only, no re-review.
+
+## Update 2026-11-17 (store run feedback, Translate and save file in the file row)
+
+- The user asked to change the button of the file row to "Translate and save file". The button (class `te-js-loc-translate-save`) translates the file and then saves it, as one step of "Translate all". The badge then shows `saved`, and a success alert names the path. The key list stays closed. "Translate file" in the key list is not changed: it only fills the key editors.
+- New language key `te_loc_translate_save_file` in en-gb, ru-ru and uk-ua, and in the CTRL `te_i18n` list.
+- Findings: 04.01.0192, build green, PHP tests pass (key parity included), JS 603 passed. Tests cover success, a failed translation (no save request) and a failed save. No re-review under auto-approve: the button chains the reviewed translate and save functions, as "Translate all" does.

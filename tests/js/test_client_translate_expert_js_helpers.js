@@ -401,7 +401,7 @@ const LOC_I18N = {
 	te_loc_totals_to_translate: 'To translate: {count}', te_loc_totals_values: 'Values: {count}', te_loc_totals_chars: 'Chars: {count}', te_loc_col_file: 'File',
 	te_loc_col_keys: 'Keys', te_loc_col_state: 'State', te_loc_state_missing: 'missing', te_loc_state_partial: 'partial', te_loc_state_saved: 'saved',
 	te_loc_toggle: 'Toggle {path}', te_loc_root: 'Extension: {name}', te_loc_expression: 'PHP code', te_loc_source_file: 'Source file',
-	te_loc_translate_file: 'Translate file', te_loc_save_file: 'Save file', te_loc_saved: 'Saved: {path}', te_loc_nothing_to_save: 'Nothing: {path}',
+	te_loc_translate_file: 'Translate file', te_loc_translate_save_file: 'Translate and save file', te_loc_save_file: 'Save file', te_loc_saved: 'Saved: {path}', te_loc_nothing_to_save: 'Nothing: {path}',
 	te_loc_no_files: 'All translated.', te_loc_translate_all: 'Translate all', te_loc_translate_all_confirm: 'Translate all ({lang})?'
 };
 
@@ -985,7 +985,7 @@ function testLocAnalysis(w) {
 	check('batch 0: totals text and progress counters', () => !w.$('#te-loc-totals-catalog').hasClass('te-hidden') && w.$('#te-loc-totals-catalog').text() === 'Files: 12To translate: 2Values: 5Chars: 1 234'
 		&& w.$('#te-loc-progress-catalog .te-progress__counters').text() === 'Files 10 of 12Request 1');
 	check('batch 0: the second request has nextFileIndex 10 and the same scope', () => calls.get.length === 2 && calls.get[1].data.nextFileIndex === 10 && calls.get[1].data.scope === 'catalog');
-	check('batch 0: the per-file buttons are disabled while the analysis runs', () => w.$('#te-loc-result-catalog .te-js-loc-translate').length === 4 && w.$('#te-loc-result-catalog .te-js-loc-translate, #te-loc-result-catalog .te-js-loc-save').filter(function() { return !this.disabled; }).length === 0);
+	check('batch 0: the per-file buttons are disabled while the analysis runs', () => w.$('#te-loc-result-catalog .te-js-loc-translate').length === 2 && w.$('#te-loc-result-catalog .te-js-loc-translate-save').length === 2 && w.$('#te-loc-result-catalog .te-js-loc-translate, #te-loc-result-catalog .te-js-loc-translate-save, #te-loc-result-catalog .te-js-loc-save').filter(function() { return !this.disabled; }).length === 0);
 	check('batch 0: the per-key translate buttons are disabled while the analysis runs', () => w.$('#te-loc-result-catalog .te-js-loc-key-translate').length > 0 && w.$('#te-loc-result-catalog .te-js-loc-key-translate').filter(function() { return !this.disabled; }).length === 0);
 	check('batch 0: the total row is the second head row, with the keys to translate of the totals and a hidden Translate all', () => w.$('#te-loc-result-catalog thead tr').length === 2
 		&& w.$('#te-loc-result-catalog thead tr').eq(1).hasClass('te-table__total') && w.$('#te-loc-result-catalog thead .te-loc-total').text() === '5'
@@ -1224,23 +1224,39 @@ function testLocTranslateSave(w) {
 	check('key button with success 0: an error alert, the textarea keeps its value, the button works again', () => w.$('#te-loc-alerts-catalog .te-alert--error .te-alert__message').last().text() === 'Key failed'
 		&& krow.find('textarea[data-key="k1"]').val() === 'hand made' && kbtn('k1').prop('disabled') === false);
 
-	// The Translate file button of the file row
-	locLoad(w, calls, [locFile('/account/account.php', [locKey('heading_title', 'My Account')], { targetExists: 0 })]);
+	// The Translate and save file button of the file row
+	locLoad(w, calls, [locFile('/account/account.php', [locKey('heading_title', 'My Account')], { targetExists: 0, contentTo: '' })]);
 	const frow = w.$('#te-loc-result-catalog tr.te-loc-file').eq(0);
-	const fbtn = frow.find('.te-js-loc-translate');
+	const fbtn = frow.find('.te-js-loc-translate-save');
 	const fdetail = w.$('#te-loc-result-catalog tr.te-table__detail').eq(0);
-	check('file row: a Translate file button in the third cell (under Translate all), before the state badge', () => fbtn.length === 1 && fbtn.text() === 'Translate file' && fbtn.attr('data-index') === '0'
-		&& frow.children('td').eq(2).find('.te-js-loc-translate').length === 1 && frow.children('td').eq(2).children().eq(0).is(fbtn) && frow.children('td').eq(2).children().eq(1).find('.te-badge--error').length === 1
-		&& w.$('#te-loc-result-catalog thead .te-table__total td').eq(2).find('.te-js-loc-translate-all').length === 1 && fdetail.hasClass('te-hidden'));
+	check('file row: a Translate and save file button in the third cell (under Translate all), before the state badge, no Translate file button in the row', () => fbtn.length === 1 && fbtn.text() === 'Translate and save file' && fbtn.attr('data-index') === '0'
+		&& frow.children('td').eq(2).children().eq(0).is(fbtn) && frow.children('td').eq(2).children().eq(1).find('.te-badge--error').length === 1 && frow.find('.te-js-loc-translate').length === 0
+		&& w.$('#te-loc-result-catalog thead .te-table__total td').eq(2).find('.te-js-loc-translate-all').length === 1 && fdetail.find('.te-js-loc-translate').text() === 'Translate file');
+	const fposts = calls.post.length;
 	fbtn.trigger('click');
 	const fp = calls.post[calls.post.length - 1];
-	check('file row: the button sends the texts of the file and is disabled until the response', () => fp.data.textArr === JSON.stringify(['My Account']) && fbtn.prop('disabled') === true);
+	check('file row: first the translate request with the texts of the file, the button is disabled', () => calls.post.length === fposts + 1 && /client_translate_expert\/translate&token=/.test(fp.url)
+		&& fp.data.textArr === JSON.stringify(['My Account']) && fbtn.prop('disabled') === true);
 	fp.dfd.resolve({ success: 1, texts: ['Мій акаунт'] });
-	check('file row: the textarea gets the text, the key list opens, the button works again, the badge stays', () => fdetail.find('textarea[data-key="heading_title"]').val() === 'Мій акаунт'
-		&& !fdetail.hasClass('te-hidden') && frow.find('.te-js-loc-toggle').attr('aria-expanded') === 'true' && fbtn.prop('disabled') === false && frow.find('.te-badge--error').length === 1);
-	fdetail.find('.te-js-loc-save').trigger('click');
-	calls.post[calls.post.length - 1].dfd.resolve({ success: 1 });
-	check('file row: after a save the badge in the row is saved and the button stays', () => frow.find('.te-badge--ok').text() === 'saved' && frow.find('.te-js-loc-translate').length === 1);
+	const fs2 = calls.post[calls.post.length - 1];
+	check('file row: then the save request with the translated content, the button is still disabled', () => calls.post.length === fposts + 2 && /client_translate_expert\/saveLocalizationFile&token=/.test(fs2.url)
+		&& fs2.data.fileContent === "<?php\n$_['heading_title'] = 'Мій акаунт';\n" && fs2.data.path === '/account/account.php' && fbtn.prop('disabled') === true);
+	fs2.dfd.resolve({ success: 1 });
+	check('file row: after the save the badge is saved, a success alert names the path, the button works again, the key list stays closed', () => frow.find('.te-badge--ok').text() === 'saved'
+		&& w.$('#te-loc-alerts-catalog .te-alert--success .te-alert__message').last().text() === 'Saved: /account/account.php' && fbtn.prop('disabled') === false && fdetail.hasClass('te-hidden'));
+	locLoad(w, calls, [locFile('/f.php', [locKey('x', 'X')])]);
+	const gbtn = w.$('#te-loc-result-catalog tr.te-loc-file').eq(0).find('.te-js-loc-translate-save');
+	const gposts = calls.post.length;
+	gbtn.trigger('click');
+	calls.post[calls.post.length - 1].dfd.resolve({ success: 0, message: 'Translate failed' });
+	check('file row: a failed translation sends no save, shows an error alert, the button works again, the badge stays', () => calls.post.length === gposts + 1
+		&& w.$('#te-loc-alerts-catalog .te-alert--error .te-alert__message').last().text() === 'Translate failed' && gbtn.prop('disabled') === false
+		&& w.$('#te-loc-result-catalog tr.te-loc-file').eq(0).find('.te-badge--warn').length === 1);
+	gbtn.trigger('click');
+	calls.post[calls.post.length - 1].dfd.resolve({ success: 1, texts: ['Y'] });
+	calls.post[calls.post.length - 1].dfd.resolve({ success: 0, message: 'Save failed' });
+	check('file row: a failed save shows an error alert, the button works again, the badge stays', () => w.$('#te-loc-alerts-catalog .te-alert--error .te-alert__message').last().text() === 'Save failed'
+		&& gbtn.prop('disabled') === false && w.$('#te-loc-result-catalog tr.te-loc-file').eq(0).find('.te-badge--warn').length === 1);
 }
 
 function testLocTranslateAll(w) {

@@ -2137,9 +2137,9 @@ function teLocBuildFileRow(scope, file, index) {
 	nameCell.append(teEl('span', { 'class': 'te-table__name' }, teLocFileLabel(file)));
 	tr.append(nameCell);
 	tr.append(teEl('td', { 'class': 'te-num' }, file.keys.length));
-	// The Translate file button of the row is under "Translate all" of the total row, before the state badge.
+	// The "Translate and save file" button of the row is under "Translate all" of the total row, before the state badge.
 	var stateCell = teEl('td', { 'class': 'te-site-actions' });
-	stateCell.append(teSiteButton('te-js-loc-translate', teT('te_loc_translate_file'), { 'data-index': index, 'disabled': teLocState[scope].running ? 'disabled' : null }));
+	stateCell.append(teSiteButton('te-js-loc-translate-save', teT('te_loc_translate_save_file'), { 'data-index': index, 'disabled': teLocState[scope].running ? 'disabled' : null }));
 	stateCell.append(teEl('span', { 'class': 'te-loc-state' }).append(teLocBadge(file)));
 	tr.append(stateCell);
 	return tr;
@@ -2253,7 +2253,7 @@ function teLocIsRunning(scope) {
 function teLocSetBusy(scope, busy) {
 	var ids = teLocIds(scope);
 	$(ids.analyze + ', ' + ids.translateAll).prop('disabled', busy);
-	$(ids.app).find('.te-js-loc-translate, .te-js-loc-save, .te-js-loc-key-translate').prop('disabled', busy);
+	$(ids.app).find('.te-js-loc-translate, .te-js-loc-translate-save, .te-js-loc-save, .te-js-loc-key-translate').prop('disabled', busy);
 }
 
 function teLocHasKeys(state) {
@@ -2554,19 +2554,35 @@ function teLocInit() {
 		if (teLocIsRunning(scope)) {
 			return;
 		}
-		var index = Number(btn.attr('data-index'));
 		btn.prop('disabled', true);
-		teLocTranslateFile(scope, index, function() {
+		teLocTranslateFile(scope, Number(btn.attr('data-index')), function() {
 			btn.prop('disabled', false);
-			// From the file row: open the key list, so the user sees the values and can save them.
-			if (btn.closest('tr').hasClass('te-loc-file')) {
-				btn.closest('tr').find('.te-js-loc-toggle').attr('aria-expanded', 'true');
-				teLocFindRow(scope, 'te-table__detail', index).removeClass('te-hidden');
-			}
 		}, function(response) {
 			btn.prop('disabled', false);
 			teAlerts.fromResponse(teLocIds(scope).alerts, response);
 		});
+	});
+	// The button of the file row: translate the file, then save it (one step of "Translate all").
+	app.on('click.teLoc', '.te-js-loc-translate-save', function() {
+		var scope = teLocScope(this);
+		var btn = $(this);
+		var index = Number(btn.attr('data-index'));
+		if (teLocIsRunning(scope)) {
+			return;
+		}
+		var fail = function(response) {
+			btn.prop('disabled', false);
+			teAlerts.fromResponse(teLocIds(scope).alerts, response);
+		};
+		btn.prop('disabled', true);
+		teLocTranslateFile(scope, index, function() {
+			teLocSaveFile(scope, index, function(saved, file) {
+				btn.prop('disabled', false);
+				if (saved) {
+					teAlerts.show(teLocIds(scope).alerts, 'success', teT('te_loc_saved', { path: file.pathTo }));
+				}
+			}, fail);
+		}, fail);
 	});
 	app.on('click.teLoc', '.te-js-loc-key-translate', function() {
 		var scope = teLocScope(this);

@@ -212,6 +212,7 @@ $_['te_loc_root'] = 'Розширення: {name}';
 $_['te_loc_expression'] = 'PHP-код, копіюється без змін';
 $_['te_loc_source_file'] = 'Вихідний файл';
 $_['te_loc_translate_file'] = 'Перекласти файл';
+$_['te_loc_translate_save_file'] = 'Перекласти і зберегти файл';
 $_['te_loc_save_file'] = 'Зберегти файл';
 $_['te_loc_saved'] = 'Збережено: {path}';
 $_['te_loc_nothing_to_save'] = 'Нічого зберігати: {path}';
