@@ -91,4 +91,7 @@ Translate Expert — це модуль для адмінки OpenCart. Він в
 <!--
 Головні зображення модуля (1024x1024, однаковий дизайн):
 main-image.uk.png (українська), main-image.en.png (англійська)
+
+Знімки екрана вкладок модуля (OpenCart 4.1.0.4, англійський інтерфейс) у docs/store/screenshots/:
+01-settings.png, 02-website-content.png, 03-catalog-files.png, 04-admin-files.png, 05-debug.png, 06-about.png
 -->

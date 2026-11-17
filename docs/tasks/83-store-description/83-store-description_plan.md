@@ -81,3 +81,6 @@ The 2 files in `docs/store/` describe the module for a store page. The review fo
 
 ## Update 17.11.2026 (images)
 The user chose 2 generated main images (Gemini, 1024x1024, en and uk). They are in `docs/store/main-image.en.png` and `docs/store/main-image.uk.png`. The old `images/` folder (18 files) is removed. No code, build script or README used it. The end comment of both description files now names the 2 new images. This replaces the candidate list in the Assumptions and in the Steps above.
+
+## Update 17.11.2026 (screenshots)
+The user added 6 screenshots of the module tabs (OpenCart 4.1.0.4, English UI, local test store). They are in `docs/store/screenshots/` (`01-settings.png` to `06-about.png`). Known defects for a retake: a broken flag image in "Try a translation" (01), a stray highlight on one cell (03), a cropped side menu (03, 04, 06), a different width in each file and a partial cron secret in the cron link (02).
