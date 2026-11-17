@@ -961,6 +961,8 @@ var teBs = {
 // The container must be inside .te-app: the te-alert and te-hidden rules of the CSS exist only under .te-app.
 var teAlerts = {
 	detailsMaxLength: 2000,
+	// A success alert closes itself after this time (ms). Error and info alerts stay until the user closes them. 0: never.
+	successTimeout: 5000,
 	handlersBound: false,
 
 	// type: 'error', 'info' or 'success'. details (optional): long text for the collapsed "Details" block.
@@ -996,6 +998,13 @@ var teAlerts = {
 		}
 
 		area.append(alertEl);
+		if (type === 'success' && teAlerts.successTimeout > 0) {
+			setTimeout(function() {
+				alertEl.fadeOut(400, function() {
+					alertEl.remove();
+				});
+			}, teAlerts.successTimeout);
+		}
 		return alertEl;
 	},
 

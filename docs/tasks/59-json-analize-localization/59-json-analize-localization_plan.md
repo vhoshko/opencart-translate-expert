@@ -282,3 +282,8 @@ Findings: 04.01.0189, build green, PHP tests pass, JS 589 passed. A mutation of 
 - The user asked to change the button of the file row to "Translate and save file". The button (class `te-js-loc-translate-save`) translates the file and then saves it, as one step of "Translate all". The badge then shows `saved`, and a success alert names the path. The key list stays closed. "Translate file" in the key list is not changed: it only fills the key editors.
 - New language key `te_loc_translate_save_file` in en-gb, ru-ru and uk-ua, and in the CTRL `te_i18n` list.
 - Findings: 04.01.0192, build green, PHP tests pass (key parity included), JS 603 passed. Tests cover success, a failed translation (no save request) and a failed save. No re-review under auto-approve: the button chains the reviewed translate and save functions, as "Translate all" does.
+
+## Update 2026-11-17 (store run feedback, success alerts close themselves)
+
+- The user asked that the green "Saved: <path>" alerts go away after some time. `teAlerts.show` now closes a success alert after `teAlerts.successTimeout` (5000 ms) with a 400 ms fade. Error and info alerts stay until the user closes them. The change is in the shared helper, so it applies to each tab that shows a success alert.
+- Findings: 04.01.0193, build green, PHP tests pass, JS 611 passed. jQuery 3 `fadeOut` also calls `setTimeout`, so the test counts only the 5000 ms timers. No re-review: a small UI change with tests.

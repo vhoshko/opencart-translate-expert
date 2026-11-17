@@ -165,6 +165,30 @@ function testAlerts(w) {
 	check('a missing container gives null', () => w.teAlerts.show('#none', 'error', 'x') === null);
 	check('an unknown type becomes error', () => w.teAlerts.show('#al', 'weird', 'x').hasClass('te-alert--error'));
 	check('an error alert has role alert, an info alert has role status', () => w.teAlerts.show('#al', 'error', 'x').attr('role') === 'alert' && w.teAlerts.show('#al', 'info', 'x').attr('role') === 'status');
+	{
+		// A success alert closes itself after teAlerts.successTimeout. Error and info alerts stay.
+		const timers = [];
+		const realSetTimeout = w.setTimeout;
+		w.setTimeout = function(fn, ms) { timers.push({ fn: fn, ms: ms }); return timers.length; };
+		w.jQuery.fx.off = true;
+		w.$('#al').empty();
+		const ok = w.teAlerts.show('#al', 'success', 'Saved');
+		const err = w.teAlerts.show('#al', 'error', 'Bad');
+		const inf = w.teAlerts.show('#al', 'info', 'Note');
+		check('only a success alert starts a close timer, of teAlerts.successTimeout (5000 ms)', () => timers.length === 1 && timers[0].ms === 5000 && w.teAlerts.successTimeout === 5000);
+		check('the success alert stays until the timer runs', () => w.$('#al .te-alert--success').length === 1);
+		timers[0].fn();
+		check('after the timer the success alert is removed, the error and info alerts stay', () => w.$('#al .te-alert--success').length === 0 && ok.closest('body').length === 0
+			&& err.closest('#al').length === 1 && inf.closest('#al').length === 1);
+		// jQuery 3 fadeOut also uses setTimeout. Count the alert timers (5000 ms) only.
+		w.teAlerts.successTimeout = 0;
+		w.teAlerts.show('#al', 'success', 'Kept');
+		check('successTimeout 0: no timer, the success alert stays', () => timers.filter((t) => t.ms === 5000).length === 1 && w.$('#al .te-alert--success').length === 1);
+		w.teAlerts.successTimeout = 5000;
+		w.jQuery.fx.off = false;
+		w.setTimeout = realSetTimeout;
+		w.$('#al').empty();
+	}
 	check('clear empties the area', () => {
 		w.teAlerts.clear('#al');
 		return w.$('#al').children().length === 0;
