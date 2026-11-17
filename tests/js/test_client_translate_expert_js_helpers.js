@@ -211,16 +211,14 @@ function testCharCountHelpers(w) {
 	check('ok class and value text', () => ok.hasClass('te-header-count') && ok.hasClass('te-header-count--ok')
 		&& ok.find('.te-header-count__value').text() === '300 000 / 500 000 ($0.00)');
 	check('the title is the value text', () => ok.attr('title') === '300 000 / 500 000 ($0.00)');
-	check('two lines: label then value in __text, reset after it', () => {
+	check('two lines: label then value in __text, nothing after it', () => {
 		const lines = ok.children('.te-header-count__text').children();
 		return lines.length === 2 && w.$(lines[0]).hasClass('te-header-count__label') && w.$(lines[1]).hasClass('te-header-count__value')
-			&& ok.children().last().hasClass('te-header-count__reset');
+			&& ok.children().length === 1;
 	});
 	check('a label with HTML stays text', () => ok.find('.te-header-count__label').text() === 'Chars <b>' && ok.find('b').length === 0);
-	check('the reset button', () => {
-		const b = ok.find('button.te-header-count__reset.te-js-reset-char-count');
-		return b.length === 1 && b.attr('type') === 'button' && b.text() === 'Reset';
-	});
+	check('the header item has no reset button', () => ok.find('button').length === 0
+		&& ok.find('.te-header-count__reset').length === 0 && ok.find('.te-js-reset-char-count').length === 0);
 	const over = w.teRenderHeaderCount({ charCount: 600000, monthFreeLimit: 500000, costOverFreeLimit: 2 });
 	check('over class and cost', () => over.hasClass('te-header-count--over') && over.find('.te-header-count__value').text() === '600 000 / 500 000 ($2.00)');
 
@@ -245,7 +243,7 @@ function testCharCountHelpers(w) {
 	w.bindTeResetCharCountHandler();
 	w.bindTeResetCharCountHandler();
 	const host = w.$('<div id="rh"></div>').appendTo('body');
-	host.append(w.teRenderHeaderCount({ charCount: 1, monthFreeLimit: 2, costOverFreeLimit: 0 }));
+	host.append(w.teRenderSummaryCount({ charCount: 1, monthFreeLimit: 2, costOverFreeLimit: 0 }));
 	let resetCalls = 0;
 	let confirmText = null;
 	const origReset = w.resetTranslationCharCount;
@@ -406,7 +404,8 @@ function testShowCharCount(w) {
 	check('OC 1.5 header: the item is a span in #header .div3 with the value text', () => requests === 1
 		&& w.$('#header .div3 > span#te-translated-char-count-info .te-header-count').length === 1
 		&& w.$('#te-translated-char-count-info .te-header-count__value').text() === '300 000 / 500 000 ($0.00)'
-		&& w.$('#te-translated-char-count-info .te-header-count__reset').length === 1);
+		&& w.$('#te-translated-char-count-info .te-header-count__reset').length === 0
+		&& w.$('#te-translated-char-count-info button').length === 0);
 	w.showTranslatedCharCount();
 	check('OC 1.5 header: the second call reuses the item', () => w.$('#te-translated-char-count-info').length === 1);
 
