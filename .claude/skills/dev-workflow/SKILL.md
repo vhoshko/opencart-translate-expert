@@ -345,6 +345,7 @@ Do this phase when every review finding has a decision, from the user or from yo
 **Apply fixes:**
 - For small fixes (1–3 findings, under 20 lines), apply them directly in the main context.
 - For larger fix sets, dispatch `ote-implementer`. Give it the specific findings to fix (numbered, with the review text) and the current code state. Tell it to apply fixes only, without a build or tests.
+- If a form posts text with quotes (for example JSON), name a test that posts the value escaped with `htmlspecialchars`. `Request::clean()` does this for each POST value, and a raw-value test does not find a parse failure (task 79).
 - If a fix adds an input guard, name each input form that the guard must handle: a string, an array and a missing value. A guard for one form only leaves a gap (task 35-multi-value-analysis-filters: the string guard did not cover `table[]=x`).
 - Before the verify loop, check each fix that the implementer reports as done with one grep or file read in the main context. A report has claimed a fix that was not in the file (task 4-cron-translation).
 

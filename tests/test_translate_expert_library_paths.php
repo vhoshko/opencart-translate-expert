@@ -47,6 +47,7 @@ $expected = array(
 	'translate_expert_localization.php',
 	'translate_expert_cron_helper.php',
 	'translate_expert_i18n.php',
+	'translate_expert_language_code_map.php',
 	'translate_expert_route_filter.php',
 	'translate_expert_google_client.php',
 );
@@ -94,7 +95,7 @@ $expectedCounts = array(
 	'upload/admin/controller/extension/module/client_translate_expert.php' => 2,
 	'upload/catalog/controller/extension/module/client_translate_expert_cron.php' => 2,
 	'upload/system/library/translate_expert/translate_expert.php' => 4,
-	'upload/system/library/translate_expert/translate_expert_core.php' => 2,
+	'upload/system/library/translate_expert/translate_expert_core.php' => 4,
 	'upload/system/library/translate_expert/translate_expert_localization.php' => 2,
 	'upload/system/OpenCartTranslateExpertClient.ocmod.xml' => 2,
 );

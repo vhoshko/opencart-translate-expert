@@ -144,6 +144,9 @@
 .te-app .te-field__control {
   min-width: 0;
 }
+.te-app .te-field__error {
+  grid-column: 2;
+}
 .te-app .te-field__help {
   grid-column: 2;
   color: var(--te-muted);
@@ -153,6 +156,7 @@
   .te-app .te-field {
     grid-template-columns: 1fr;
   }
+  .te-app .te-field__error,
   .te-app .te-field__help {
     grid-column: 1;
   }
@@ -698,4 +702,34 @@
 }
 .te-header-count--over .te-header-count__value {
   color: var(--te-error);
+}
+
+/* te-lcm: language code map rows */
+.te-app .te-lcm-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.te-app .te-lcm-row .form-control {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.te-app .te-lcm-head {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.te-app .te-lcm-head span {
+  flex: 1 1 0;
+}
+.te-app .te-lcm-head .te-lcm-head__gap {
+  flex: 0 0 40px;
+}
+.te-app .te-lcm-row input.te-lcm-invalid,
+.te-app .te-lcm-row input.te-lcm-invalid:focus {
+  border-color: var(--te-error);
+}
+.te-app .te-lcm-actions {
+  margin-top: 8px;
 }

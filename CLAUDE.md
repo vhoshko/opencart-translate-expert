@@ -81,7 +81,7 @@ php tests/test_translate_expert_google_client.php
 # Unit + integration tests
 php tests/test_translate_expert_google_client.php YOUR_GOOGLE_API_KEY
 
-# Core translate tests: language code mapping and format parameter fix in TranslateExpertCore (stub Google client, no DB, no API key)
+# Core translate tests: configured language code map and format parameter fix in TranslateExpertCore (stub Google client, no DB, no API key)
 php tests/test_translate_expert_core_translate.php
 
 # Library path tests: each translate_expert/ path in sources/ exists, and no old library file or class name remains (static)
@@ -104,6 +104,15 @@ php tests/test_client_translate_expert_version_rules.php
 
 # OC4 Twig name check: filters, tests, functions, tags (static, no Twig needed)
 php tests/test_oc4_twig_filters.php
+
+# Language code map helper tests: default JSON, parse, lookup, normalize and its error codes (no OpenCart, no DB, no API key)
+php tests/test_translate_expert_language_code_map.php
+
+# Default map write tests: ensureLanguageCodeMapDefault and install() for each OC version (stub DB, no API key)
+php tests/test_translate_expert_language_code_map_default.php
+
+# Language code map controller tests: default write in index(), save guard, kept value, template data (stubs, no DB, no API key)
+php tests/test_client_translate_expert_language_code_map_save.php
 
 # Localization scope tests: catalog and admin language folders, OC4 extension roots, save guard, JSON analysis, batching, errors (temp folders, no DB, no API key)
 php tests/test_client_translate_expert_localization.php
@@ -144,7 +153,8 @@ Model: sources/upload/admin/model/extension/module/client_translate_expert.php
     → database queries for table/column analysis
 Libraries (sources/upload/system/library/translate_expert/):
     translate_expert.php                → TranslateExpert: thin wrapper delegating to core
-    translate_expert_core.php           → TranslateExpertCore: main translation logic, table analysis, batch processing, language code mapping, format parameter fix
+    translate_expert_core.php           → TranslateExpertCore: main translation logic, table analysis, batch processing, language code mapping (reads the setting), format parameter fix
+    translate_expert_language_code_map.php → TranslateExpertLanguageCodeMap: default map JSON, parse, lookup and validation of the language code map (no OpenCart dependencies)
     translate_expert_localization.php   → TranslateExpertLocalization: OpenCart language file parsing/writing
     translate_expert_google_client.php  → TranslateExpertGoogleClient: Google Translate API wrapper
     translate_expert_route_filter.php   → TranslateExpertRouteFilter: excluded-routes check (OCMOD header op and OC4 header events)

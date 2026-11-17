@@ -40,7 +40,7 @@ check_package() {
     local listing
     listing=$(unzip -Z1 "$zipfile")
     local name
-    for name in translate_expert translate_expert_core translate_expert_localization translate_expert_cron_helper translate_expert_i18n translate_expert_route_filter translate_expert_google_client; do
+    for name in translate_expert translate_expert_core translate_expert_localization translate_expert_cron_helper translate_expert_i18n translate_expert_language_code_map translate_expert_route_filter translate_expert_google_client; do
         if ! grep -qxF "${libpath}/translate_expert/${name}.php" <<< "$listing"; then
             echo "ERROR: ${libpath}/translate_expert/${name}.php is missing in $(basename "$zipfile")" >&2
             exit 1
@@ -261,6 +261,7 @@ OC4_LIB_GOOGLE="$EXT_DIR/system/library/translate_expert/translate_expert_google
 OC4_LIB_ROUTE_FILTER="$EXT_DIR/system/library/translate_expert/translate_expert_route_filter.php"
 OC4_LIB_CRON_HELPER="$EXT_DIR/system/library/translate_expert/translate_expert_cron_helper.php"
 OC4_LIB_I18N="$EXT_DIR/system/library/translate_expert/translate_expert_i18n.php"
+OC4_LIB_LANGUAGE_CODE_MAP="$EXT_DIR/system/library/translate_expert/translate_expert_language_code_map.php"
 OC4_CATALOG_CRON="$EXT_DIR/catalog/controller/module/client_translate_expert_cron.php"
 
 # --- Add namespace declarations (insert after <?php on line 1) ---
@@ -285,6 +286,7 @@ add_namespace "$OC4_LIB_GOOGLE" 'Opencart\\Extension\\ClientTranslateExpert\\Sys
 add_namespace "$OC4_LIB_ROUTE_FILTER" 'Opencart\\Extension\\ClientTranslateExpert\\System\\Library'
 add_namespace "$OC4_LIB_CRON_HELPER" 'Opencart\\Extension\\ClientTranslateExpert\\System\\Library'
 add_namespace "$OC4_LIB_I18N" 'Opencart\\Extension\\ClientTranslateExpert\\System\\Library'
+add_namespace "$OC4_LIB_LANGUAGE_CODE_MAP" 'Opencart\\Extension\\ClientTranslateExpert\\System\\Library'
 add_namespace "$OC4_CATALOG_CRON" 'Opencart\\Catalog\\Controller\\Extension\\ClientTranslateExpert\\Module'
 
 # --- Update class extends for OC4 fully-qualified base classes ---

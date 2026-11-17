@@ -1,5 +1,11 @@
 <?php
 
+if (defined('DIR_EXTENSION') && version_compare(VERSION, '4.0', '>=')) {
+	include_once(DIR_EXTENSION . 'client_translate_expert/system/library/translate_expert/translate_expert_language_code_map.php');
+} else {
+	include_once(DIR_SYSTEM . 'library/translate_expert/translate_expert_language_code_map.php');
+}
+
 class TranslateExpertCore
 {
 	const TRANSLATE_EXPERT_SAME_TRANSLATIONS = "translate_expert_same_translations";
@@ -16,6 +22,8 @@ class TranslateExpertCore
 	protected $_resetMonthKey = 'client_translate_expert_last_reset_char_month';
 	protected $_counterGroup = 'client_translate_expert_usage';
 	protected $_settingGroupColumn = null;
+	protected $_languageCodeMapKey = 'client_translate_expert_language_code_map';
+	protected $_settingGroup = 'client_translate_expert';
 
 	public function __construct($model, $debug = true)
 	{
@@ -35,6 +43,8 @@ class TranslateExpertCore
 			$this->_keyParamName = 'module_client_translate_expert_key';
 			$this->_charCountKey = 'module_client_translate_expert_char_count';
 			$this->_resetMonthKey = 'module_client_translate_expert_last_reset_char_month';
+			$this->_languageCodeMapKey = 'module_client_translate_expert_language_code_map';
+			$this->_settingGroup = 'module_client_translate_expert';
 		}
 
 		$this->_debug = $debug;
@@ -459,12 +469,13 @@ INNER JOIN (
 		return new TranslateExpertGoogleClient($googleApiKey);
 	}
 
-	protected static function mapGoogleLanguageCode($code) {
-		if ($code == 'ua') return 'uk';
-		if ($code == 'rs') return 'sr';
-		if ($code == 'ge') return 'ka';
-		if ($code == 'cz') return 'cs';
-		return $code;
+	protected function mapLanguageCode($code) {
+		$config = $this->_model->config;
+		$map = array();
+		if ($config->has($this->_languageCodeMapKey)) {
+			$map = TranslateExpertLanguageCodeMap::parse($config->get($this->_languageCodeMapKey));
+		}
+		return TranslateExpertLanguageCodeMap::lookup($map, $code);
 	}
 
 	protected function fixFormatParameters($text, $translatedText)
@@ -515,8 +526,8 @@ INNER JOIN (
 			$this->gebugLog('translateInternal TranslateExpertGoogleClient creation before');
 			$translator = $this->createGoogleClient($googleApiKey);
 			$this->gebugLog('translateInternal TranslateExpertGoogleClient creation after');
-			$source = self::mapGoogleLanguageCode($source);
-			$target = self::mapGoogleLanguageCode($target);
+			$source = $this->mapLanguageCode($source);
+			$target = $this->mapLanguageCode($target);
 			if (is_array($text)) {
 				$textOriginal = array_values($text);
 				$res = $translator->translateBatch($textOriginal, $source, $target, $format);
@@ -930,6 +941,32 @@ INNER JOIN (
 		$db->query("DELETE FROM `" . DB_PREFIX . "setting` WHERE `store_id` = '0' AND `key` IN ('" . $db->escape($this->_charCountKey) . "', '" . $db->escape($this->_resetMonthKey) . "')");
 	}
 
+	public function getLanguageCodeMapDefault()
+	{
+		return TranslateExpertLanguageCodeMap::DEFAULT_JSON;
+	}
+
+	public function normalizeLanguageCodeMap($json)
+	{
+		return TranslateExpertLanguageCodeMap::normalize($json);
+	}
+
+	// Writes the default map when the setting is missing or null. An empty string is a valid empty map.
+	public function ensureLanguageCodeMapDefault()
+	{
+		$config = $this->_model->config;
+		if ($config->has($this->_languageCodeMapKey))
+		{
+			return;
+		}
+		$db = $this->_model->db;
+		$key = $this->_languageCodeMapKey;
+		$default = TranslateExpertLanguageCodeMap::DEFAULT_JSON;
+		$db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = '0', `" . $this->settingGroupColumn() . "` = '" . $db->escape($this->_settingGroup) . "', `key` = '" . $db->escape($key) . "', `value` = '" . $db->escape($default) . "', `serialized` = '0'");
+		$db->query("DELETE `s` FROM `" . DB_PREFIX . "setting` `s` JOIN (SELECT MIN(`setting_id`) AS `keep_id` FROM `" . DB_PREFIX . "setting` WHERE `store_id` = '0' AND `key` = '" . $db->escape($key) . "') `k` WHERE `s`.`store_id` = '0' AND `s`.`key` = '" . $db->escape($key) . "' AND `s`.`setting_id` > `k`.`keep_id`");
+		$config->set($key, $default);
+	}
+
 	// installation
 	public function install()
 	{
@@ -941,7 +978,9 @@ INNER JOIN (
 		  PRIMARY KEY(`language_id_from`,`language_id_to`,`text_hash_sum`)
 		) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT
 		";
-		return $this->_model->db->query($sql);
+		$res = $this->_model->db->query($sql);
+		$this->ensureLanguageCodeMapDefault();
+		return $res;
 	}
 
 	public function uninstall()

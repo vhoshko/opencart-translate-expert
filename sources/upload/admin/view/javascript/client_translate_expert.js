@@ -701,7 +701,148 @@ function initModule()
 
 	teLocInit();
 
+	teLcmInit();
+
 	showTranslatedCharCount();
+}
+
+// Language code map card: the rows are client-side. On submit, the valid rows go as JSON into the hidden input.
+var teLcmMaxLength = 20;
+var teLcmMaxPairs = 100;
+
+function teLcmParse(json) {
+	var pairs = [];
+	var data;
+	try {
+		data = JSON.parse(String(json));
+	} catch (e) {
+		return pairs;
+	}
+	if (!data || typeof data !== 'object' || Object.prototype.toString.call(data) === '[object Array]') {
+		return pairs;
+	}
+	for (var key in data) {
+		if (Object.prototype.hasOwnProperty.call(data, key) && typeof data[key] === 'string') {
+			pairs.push([key, data[key]]);
+		}
+	}
+	return pairs;
+}
+
+function teLcmAddRow(key, value) {
+	var rows = $('#te-lcm-rows');
+	var label = teT('te_lcm_row_label');
+	var row = teEl('div', { 'class': 'te-lcm-row' });
+	row.append(teEl('input', { 'type': 'text', 'class': 'form-control te-lcm-key', 'autocomplete': 'off', 'spellcheck': 'false', 'maxlength': 64, 'aria-label': label + ' (' + teT('te_lcm_col_key') + ')' }).val(key));
+	row.append(teEl('input', { 'type': 'text', 'class': 'form-control te-lcm-value', 'autocomplete': 'off', 'spellcheck': 'false', 'maxlength': 64, 'aria-label': label + ' (' + teT('te_lcm_col_value') + ')' }).val(value));
+	var del = teEl('button', { 'type': 'button', 'class': 'btn ' + (teIsBs5() ? 'btn-outline-secondary' : 'btn-default') + ' te-js-lcm-delete', 'title': rows.attr('data-te-delete') || '', 'aria-label': rows.attr('data-te-delete') || '' });
+	del.append(teIconEl('trash'));
+	row.append(del);
+	rows.append(row);
+	teLcmToggleEmpty();
+	return row;
+}
+
+function teLcmRender(json) {
+	$('#te-lcm-rows').empty();
+	var pairs = teLcmParse(json);
+	for (var i = 0; i < pairs.length; i++) {
+		teLcmAddRow(pairs[i][0], pairs[i][1]);
+	}
+	teLcmToggleEmpty();
+}
+
+function teLcmToggleEmpty() {
+	$('#te-lcm-empty').toggleClass('te-hidden', $('#te-lcm-rows .te-lcm-row').length > 0);
+}
+
+// Returns { json: string, errors: [text, ...] } and marks the bad inputs.
+function teLcmCollect() {
+	var errors = [];
+	var seen = {};
+	var map = [];
+	var rows = $('#te-lcm-rows .te-lcm-row');
+	var add = function(text) {
+		for (var i = 0; i < errors.length; i++) {
+			if (errors[i] === text) {
+				return;
+			}
+		}
+		errors.push(text);
+	};
+	rows.find('input').removeClass('te-lcm-invalid').removeAttr('aria-invalid');
+	var bad = function(input, text) {
+		input.addClass('te-lcm-invalid').attr('aria-invalid', 'true');
+		add(text);
+	};
+	if (rows.length > teLcmMaxPairs) {
+		add(teT('te_lcm_err_count'));
+	}
+	rows.each(function() {
+		var keyInput = $(this).find('.te-lcm-key');
+		var valueInput = $(this).find('.te-lcm-value');
+		var key = $.trim(keyInput.val()).toLowerCase();
+		var value = $.trim(valueInput.val());
+		var parts = [[keyInput, key], [valueInput, value]];
+		if (key === '') {
+			bad(keyInput, teT('te_lcm_err_empty_key'));
+		}
+		if (value === '') {
+			bad(valueInput, teT('te_lcm_err_empty_value'));
+		}
+		for (var i = 0; i < parts.length; i++) {
+			if (parts[i][1] === '') {
+				continue;
+			}
+			if (!/^[A-Za-z0-9_-]+$/.test(parts[i][1])) {
+				bad(parts[i][0], teT('te_lcm_err_chars'));
+			}
+			if (parts[i][1].length > teLcmMaxLength) {
+				bad(parts[i][0], teT('te_lcm_err_length'));
+			}
+		}
+		if (key !== '') {
+			if (Object.prototype.hasOwnProperty.call(seen, key)) {
+				bad(keyInput, teT('te_lcm_err_duplicate'));
+			}
+			seen[key] = true;
+		}
+		map.push(JSON.stringify(key) + ':' + JSON.stringify(value));
+	});
+	return { json: map.length ? '{' + map.join(',') + '}' : '', errors: errors };
+}
+
+function teLcmInit() {
+	var input = $('#input-client_translate_expert_language_code_map');
+	if (!input.length || !$('#te-lcm-rows').length) {
+		return;
+	}
+	teLcmRender(input.val());
+	$('#te-lcm-add').off('click.teLcm').on('click.teLcm', function() {
+		teLcmAddRow('', '').find('.te-lcm-key').focus();
+	});
+	$('#te-lcm-reset').off('click.teLcm').on('click.teLcm', function() {
+		if (confirm(teT('te_lcm_reset_confirm'))) {
+			teAlerts.clear('#te-lcm-alerts');
+			teLcmRender(input.attr('data-te-default'));
+		}
+	});
+	$('#te-lcm-rows').off('click.teLcm').on('click.teLcm', '.te-js-lcm-delete', function() {
+		$(this).closest('.te-lcm-row').remove();
+		teLcmToggleEmpty();
+	});
+	input.closest('form').off('submit.teLcm').on('submit.teLcm', function(event) {
+		teAlerts.clear('#te-lcm-alerts');
+		var result = teLcmCollect();
+		if (result.errors.length) {
+			for (var i = 0; i < result.errors.length; i++) {
+				teAlerts.show('#te-lcm-alerts', 'error', result.errors[i]);
+			}
+			event.preventDefault();
+			return false;
+		}
+		input.val(result.json);
+	});
 }
 
 // "Select all" and "Clear selection" buttons of the analysis multi-select filters.

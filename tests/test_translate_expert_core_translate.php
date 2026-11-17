@@ -23,6 +23,7 @@ class Log
 
 require_once DIR_SYSTEM . 'library/translate_expert/translate_expert_core.php';
 require_once DIR_SYSTEM . 'library/translate_expert/translate_expert_google_client.php';
+require_once DIR_SYSTEM . 'library/translate_expert/translate_expert.php';
 
 $warnings = array();
 set_error_handler(function ($no, $str, $file, $line) use (&$warnings) {
@@ -57,14 +58,65 @@ class StubGoogleClient extends TranslateExpertGoogleClient
 	}
 }
 
+class StubConfig
+{
+	public $data = array();
+
+	public function __construct($data)
+	{
+		$this->data = $data;
+	}
+
+	public function has($key)
+	{
+		return isset($this->data[$key]);
+	}
+
+	public function get($key)
+	{
+		return isset($this->data[$key]) ? $this->data[$key] : null;
+	}
+
+	public function set($key, $value)
+	{
+		$this->data[$key] = $value;
+	}
+}
+
+class StubModel
+{
+	public $config;
+
+	public function __construct($config)
+	{
+		$this->config = $config;
+	}
+}
+
 class StubCore extends TranslateExpertCore
 {
 	public $client;
 
-	public function __construct()
+	public function __construct($mapValue = false)
 	{
-		$this->_debug = false;
 		$this->client = new StubGoogleClient('key');
+		$data = array();
+		if ($mapValue === false) {
+			$data['module_client_translate_expert_language_code_map'] = TranslateExpertLanguageCodeMap::DEFAULT_JSON;
+		} elseif ($mapValue !== null) {
+			$data['module_client_translate_expert_language_code_map'] = $mapValue;
+		}
+		parent::__construct(new StubModel(new StubConfig($data)), false);
+	}
+
+	public function key()
+	{
+		return $this->_languageCodeMapKey;
+	}
+
+	public function group()
+	{
+		return $this->_settingGroup;
 	}
 
 	protected function createGoogleClient($googleApiKey)
@@ -75,6 +127,22 @@ class StubCore extends TranslateExpertCore
 	public function run($key, $text, $source, $target)
 	{
 		return $this->translateInternal($key, $text, $source, $target, 'text');
+	}
+}
+
+class StubExpert extends TranslateExpert
+{
+	public $client;
+
+	public function __construct($model)
+	{
+		parent::__construct($model, false);
+		$this->client = new StubGoogleClient('key');
+	}
+
+	protected function createGoogleClient($googleApiKey)
+	{
+		return $this->client;
 	}
 }
 
@@ -148,6 +216,37 @@ check(array_keys($res->texts) === array(0, 1, 2) && $res->texts[0] === 'прив
 $core = new StubCore();
 $res = $core->run('', 'hello', 'en', 'uk');
 check($res->success === 0 && $res->error_code === 1004, 'empty key gives error 1004');
+
+$core = new StubCore();
+check($core->key() === 'module_client_translate_expert_language_code_map' && $core->group() === 'module_client_translate_expert', 'OC 3.0 map key and group have the module_ prefix');
+
+$core = new StubCore(null);
+$core->run('key', 'hello', 'ua', 'cz');
+check($core->client->options['source'] === 'ua' && $core->client->options['target'] === 'cz', 'missing setting uses an empty map');
+
+$core = new StubCore('');
+$core->run('key', 'hello', 'ua', 'cz');
+check($core->client->options['source'] === 'ua' && $core->client->options['target'] === 'cz', 'empty string setting uses an empty map');
+
+$core = new StubCore('{not json');
+$core->run('key', 'hello', 'ua', 'en');
+check($core->client->options['source'] === 'ua', 'invalid JSON setting uses an empty map');
+
+$core = new StubCore('{"xx":"yy","UA":"ukr"}');
+$core->run('key', 'hello', 'xx', 'ua');
+check($core->client->options['source'] === 'yy' && $core->client->options['target'] === 'ukr', 'custom map maps source and target, keys are case-insensitive');
+$core->run('key', array('hello'), 'ua', 'xx');
+check($core->client->options['source'] === 'ukr' && $core->client->options['target'] === 'yy', 'custom map works for a batch');
+$core->run('key', 'hello', 'cz', 'en');
+check($core->client->options['source'] === 'cz', 'custom map has no default pairs');
+
+$core = new StubCore(TranslateExpertLanguageCodeMap::DEFAULT_JSON);
+$core->run('key', 'hello', 'ua', 'en');
+check($core->client->options['source'] === 'uk', 'default map value maps ua to uk');
+
+$expert = new StubExpert(new StubModel(new StubConfig(array('module_client_translate_expert_key' => 'key', 'module_client_translate_expert_language_code_map' => '{"xx":"yy"}'))));
+$expert->translate('hello', 'xx-XX', 'ua-UA', 'text');
+check($expert->client->options['source'] === 'yy' && $expert->client->options['target'] === 'ua', 'cron path: TranslateExpert::translate maps the code with the custom map');
 
 check(count($warnings) === 0, 'no PHP warnings' . (count($warnings) ? ': ' . implode('; ', $warnings) : ''));
 

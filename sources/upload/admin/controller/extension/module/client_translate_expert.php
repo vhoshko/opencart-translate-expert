@@ -100,13 +100,20 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 		// $this->load->model('extension/module');
 		$this->load->model('setting/setting');
+		$this->load->model('extension/module/client_translate_expert');
+		$this->model_extension_module_client_translate_expert->ensureLanguageCodeMapDefault();
 
-		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
+		// OpenCart escapes the POST values with htmlspecialchars(). Decode the JSON one time here.
+		if (isset($this->request->post['client_translate_expert_language_code_map']) && is_string($this->request->post['client_translate_expert_language_code_map']))
+		{
+			$this->request->post['client_translate_expert_language_code_map'] = html_entity_decode($this->request->post['client_translate_expert_language_code_map'], ENT_QUOTES, 'UTF-8');
+		}
+
+		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate() && $this->validateLanguageCodeMap()) {
 			// The character counter and its reset month live in their own setting group.
 			// Move them there before editSetting(), so that a settings save does not reset the count.
 			unset($this->request->post['client_translate_expert_char_count']);
 			unset($this->request->post['client_translate_expert_last_reset_char_month']);
-			$this->load->model('extension/module/client_translate_expert');
 			$this->model_extension_module_client_translate_expert->prepareCounterSettings();
 			if (isset($this->request->post['client_translate_expert_cron_secret']))
 			{
@@ -123,6 +130,15 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			if (!isset($this->request->post['client_translate_expert_show_char_count_globally']))
 			{
 				$this->request->post['client_translate_expert_show_char_count_globally'] = 0;
+			}
+			if (isset($this->request->post['client_translate_expert_language_code_map']))
+			{
+				$language_code_map = $this->model_extension_module_client_translate_expert->normalizeLanguageCodeMap($this->request->post['client_translate_expert_language_code_map']);
+				$this->request->post['client_translate_expert_language_code_map'] = $language_code_map['json'];
+			}
+			else
+			{
+				$this->request->post['client_translate_expert_language_code_map'] = (string)$this->config->get(self::settingKey('client_translate_expert_language_code_map', VERSION));
 			}
 			$this->model_setting_setting->editSetting(self::settingKey('client_translate_expert', VERSION), self::prefixSettingKeys($this->request->post, VERSION));
 
@@ -244,10 +260,10 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		// Front-end strings of the new admin design: the template writes them as document.te_i18n (read with teT() in the JS).
 		$te_i18n = array();
 		foreach (array('te_alert_details', 'te_alert_close', 'te_alert_not_json', 'te_summary_month', 'te_summary_cost', 'te_remove_completed', 'te_remove_start', 'te_remove_table', 'te_remove_column', 'te_remove_finish', 'te_time_in_sec',
-			'te_site_stop', 'te_site_log', 'te_site_analyzing', 'te_site_translating', 'te_site_col_table', 'te_site_col_chars', 'te_site_col_chars_lang', 'te_site_col_actions', 'te_site_total', 'te_site_translate', 'te_site_translate_all', 'te_site_details', 'te_site_not_supported', 'te_site_done', 'te_site_toggle', 'te_site_cnt_current', 'te_site_cnt_table', 'te_site_cnt_request', 'te_site_cnt_chars', 'te_site_cnt_time', 'te_site_cnt_translated', 'te_site_translate_confirm', 'te_site_translate_all_confirm', 'te_site_log_table_done', 'te_site_detail_loading', 'te_site_detail_source', 'te_site_detail_target', 'te_site_empty', 'te_site_identical', 'te_site_detail_none', 'te_site_detail_more', 'te_site_state_done', 'te_site_state_stopped', 'te_site_state_error', 'te_loc_analyzing', 'te_loc_translating', 'te_loc_cnt_files', 'te_loc_totals_files', 'te_loc_totals_to_translate', 'te_loc_totals_values', 'te_loc_totals_chars', 'te_loc_col_file', 'te_loc_col_keys', 'te_loc_col_chars', 'te_loc_col_state', 'te_loc_state_missing', 'te_loc_state_partial', 'te_loc_state_saved', 'te_loc_toggle', 'te_loc_root', 'te_loc_expression', 'te_loc_source_file', 'te_loc_translate_file', 'te_loc_translate_save_file', 'te_loc_save_file', 'te_loc_saved', 'te_loc_nothing_to_save', 'te_loc_no_files', 'te_loc_translate_all_confirm', 'te_loc_translate_all', 'te_cache_reset_done', 'te_cache_reset_confirm', 'value_analization_mode_both', 'value_analization_mode_only_empty', 'value_analization_mode_same_value') as $te_i18n_key) {
+			'te_site_stop', 'te_site_log', 'te_site_analyzing', 'te_site_translating', 'te_site_col_table', 'te_site_col_chars', 'te_site_col_chars_lang', 'te_site_col_actions', 'te_site_total', 'te_site_translate', 'te_site_translate_all', 'te_site_details', 'te_site_not_supported', 'te_site_done', 'te_site_toggle', 'te_site_cnt_current', 'te_site_cnt_table', 'te_site_cnt_request', 'te_site_cnt_chars', 'te_site_cnt_time', 'te_site_cnt_translated', 'te_site_translate_confirm', 'te_site_translate_all_confirm', 'te_site_log_table_done', 'te_site_detail_loading', 'te_site_detail_source', 'te_site_detail_target', 'te_site_empty', 'te_site_identical', 'te_site_detail_none', 'te_site_detail_more', 'te_site_state_done', 'te_site_state_stopped', 'te_site_state_error', 'te_loc_analyzing', 'te_loc_translating', 'te_loc_cnt_files', 'te_loc_totals_files', 'te_loc_totals_to_translate', 'te_loc_totals_values', 'te_loc_totals_chars', 'te_loc_col_file', 'te_loc_col_keys', 'te_loc_col_chars', 'te_loc_col_state', 'te_loc_state_missing', 'te_loc_state_partial', 'te_loc_state_saved', 'te_loc_toggle', 'te_loc_root', 'te_loc_expression', 'te_loc_source_file', 'te_loc_translate_file', 'te_loc_translate_save_file', 'te_loc_save_file', 'te_loc_saved', 'te_loc_nothing_to_save', 'te_loc_no_files', 'te_loc_translate_all_confirm', 'te_loc_translate_all', 'te_cache_reset_done', 'te_cache_reset_confirm', 'te_lcm_reset_confirm', 'te_lcm_err_empty_key', 'te_lcm_err_empty_value', 'te_lcm_err_duplicate', 'te_lcm_err_chars', 'te_lcm_err_length', 'te_lcm_err_count', 'te_lcm_row_label', 'te_lcm_col_key', 'te_lcm_col_value', 'value_analization_mode_both', 'value_analization_mode_only_empty', 'value_analization_mode_same_value') as $te_i18n_key) {
 			$te_i18n[$te_i18n_key] = $this->language->get($te_i18n_key);
 		}
-		foreach (array('te_site_lang_from', 'te_site_lang_to', 'te_site_lang_swap', 'te_site_card_what', 'te_site_more_filters', 'te_loc_card_files', 'te_loc_analyze', 'te_summary_status', 'te_summary_enabled', 'te_summary_disabled', 'te_summary_api_key', 'te_summary_key_set', 'te_summary_key_not_set', 'te_settings_card_connection', 'te_settings_card_usage', 'te_settings_card_cron', 'te_settings_card_routes', 'te_settings_card_try', 'te_debug_card_versions', 'te_debug_card_cache', 'te_about_card') as $te_text_key) {
+		foreach (array('te_site_lang_from', 'te_site_lang_to', 'te_site_lang_swap', 'te_site_card_what', 'te_site_more_filters', 'te_loc_card_files', 'te_loc_analyze', 'te_summary_status', 'te_summary_enabled', 'te_summary_disabled', 'te_summary_api_key', 'te_summary_key_set', 'te_summary_key_not_set', 'te_settings_card_connection', 'te_settings_card_usage', 'te_settings_card_cron', 'te_settings_card_routes', 'te_settings_card_language_codes', 'te_lcm_add', 'te_lcm_reset', 'te_lcm_col_key', 'te_lcm_col_value', 'te_lcm_empty', 'te_lcm_delete', 'entry_language_code_map', 'help_language_code_map', 'te_settings_card_try', 'te_debug_card_versions', 'te_debug_card_cache', 'te_about_card') as $te_text_key) {
 			$data[$te_text_key] = $this->language->get($te_text_key);
 		}
 		$data['te_summary_status_on'] = $this->config->get(self::settingKey('client_translate_expert_status', VERSION)) ? 1 : 0;
@@ -261,6 +277,8 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		} else {
 			$data['error_warning'] = '';
 		}
+
+		$data['error_language_code_map'] = isset($this->error['language_code_map']) ? $this->error['language_code_map'] : '';
 
 		if (isset($this->error['width'])) {
 			$data['error_width'] = $this->error['width'];
@@ -346,6 +364,13 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		} else {
 			$data['client_translate_expert_excluded_routes'] = (string)$this->config->get(self::settingKey('client_translate_expert_excluded_routes', VERSION));
 		}
+
+		if (isset($this->request->post['client_translate_expert_language_code_map'])) {
+			$data['client_translate_expert_language_code_map'] = $this->request->post['client_translate_expert_language_code_map'];
+		} else {
+			$data['client_translate_expert_language_code_map'] = (string)$this->config->get(self::settingKey('client_translate_expert_language_code_map', VERSION));
+		}
+		$data['te_language_code_map_default'] = $this->model_extension_module_client_translate_expert->getLanguageCodeMapDefault();
 
 		$data['client_translate_expert_char_count'] = number_format((float)$this->config->get(self::settingKey('client_translate_expert_char_count', VERSION)), 0, '.', '`');
 
@@ -910,6 +935,26 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		}
 
 		return !$this->error;
+	}
+
+	protected function validateLanguageCodeMap() {
+		if (!isset($this->request->post['client_translate_expert_language_code_map'])) {
+			return true;
+		}
+
+		$language_code_map = $this->model_extension_module_client_translate_expert->normalizeLanguageCodeMap($this->request->post['client_translate_expert_language_code_map']);
+		$messages = array();
+		foreach ($language_code_map['errors'] as $language_code_error) {
+			$code = $language_code_error['code'] == 'format' ? 'chars' : $language_code_error['code'];
+			$message = $this->language->get('te_lcm_err_' . $code);
+			$messages[] = $language_code_error['index'] > 0 ? $language_code_error['index'] . ': ' . $message : $message;
+		}
+		if ($messages) {
+			$this->error['language_code_map'] = implode(' ', $messages);
+			$this->error['warning'] = $this->language->get('error_language_code_map') . ' ' . $this->error['language_code_map'];
+		}
+
+		return !$messages;
 	}
 
 	protected function getInfo() {

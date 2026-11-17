@@ -136,6 +136,21 @@ class ModelExtensionModuleClientTranslateExpert extends Model
 		$this->getLibrary()->prepareCounterSettings();
 	}
 
+	public function ensureLanguageCodeMapDefault()
+	{
+		$this->getLibrary()->ensureLanguageCodeMapDefault();
+	}
+
+	public function normalizeLanguageCodeMap($json)
+	{
+		return $this->getLibrary()->normalizeLanguageCodeMap($json);
+	}
+
+	public function getLanguageCodeMapDefault()
+	{
+		return $this->getLibrary()->getLanguageCodeMapDefault();
+	}
+
 	public function getCharCount()
 	{
 		return $this->getLibrary()->getCharCount();

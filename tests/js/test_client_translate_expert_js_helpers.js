@@ -1484,6 +1484,116 @@ function testLocStatic() {
 	check('the CSS has no old localization rule', () => fs.readFileSync(path.join(base, 'view/stylesheet/client_translate_expert.css'), 'utf8').indexOf('localization-analize') === -1);
 }
 
+const LCM_I18N = {
+	te_lcm_reset_confirm: 'Reset?', te_lcm_err_empty_key: 'E-key', te_lcm_err_empty_value: 'E-value', te_lcm_err_duplicate: 'E-dup',
+	te_lcm_err_chars: 'E-chars', te_lcm_err_length: 'E-length', te_lcm_err_count: 'E-count', te_lcm_row_label: 'Pair', te_lcm_col_key: 'K', te_lcm_col_value: 'V'
+};
+const LCM_DEFAULT = '{"ua":"uk","rs":"sr","ge":"ka","cz":"cs"}';
+
+function lcmHtml(value) {
+	return '<form id="form-bestseller"><div class="te-app"><div class="te-alerts" id="te-lcm-alerts"></div>'
+		+ '<input type="hidden" name="client_translate_expert_language_code_map" id="input-client_translate_expert_language_code_map" value=\'' + value.replace(/'/g, '&#39;') + '\' data-te-default=\'' + LCM_DEFAULT + '\'>'
+		+ '<div id="te-lcm-rows" data-te-delete="Delete"></div><div class="te-hidden" id="te-lcm-empty">none</div>'
+		+ '<button type="button" id="te-lcm-add">add</button><button type="button" id="te-lcm-reset">reset</button></div></form>';
+}
+
+function makeLcmWindow(jqueryFile, value, withBs5) {
+	const w = makeWindow(jqueryFile, withBs5, lcmHtml(value));
+	w.document.te_i18n = Object.assign({}, LCM_I18N);
+	w.teLcmInit();
+	return w;
+}
+
+function lcmRows(w) {
+	return w.$('#te-lcm-rows .te-lcm-row').map(function() { return [[w.$(this).find('.te-lcm-key').val(), w.$(this).find('.te-lcm-value').val()]]; }).get();
+}
+
+function lcmSetRows(w, pairs) {
+	w.$('#te-lcm-rows').empty();
+	pairs.forEach((p) => { const r = w.teLcmAddRow(p[0], p[1]); });
+}
+
+function lcmSubmit(w) {
+	const event = new w.Event('submit', { bubbles: true, cancelable: true });
+	w.document.getElementById('form-bestseller').dispatchEvent(event);
+	return event;
+}
+
+function lcmAlerts(w) {
+	return w.$('#te-lcm-alerts .te-alert__message').map(function() { return w.$(this).text(); }).get();
+}
+
+function testLcm(jqueryFile) {
+	console.log('\nLanguage code map card:');
+	let w = makeLcmWindow(jqueryFile, LCM_DEFAULT, false);
+	check('renders one row for each pair in order', () => JSON.stringify(lcmRows(w)) === '[["ua","uk"],["rs","sr"],["ge","ka"],["cz","cs"]]');
+	check('a row has 2 inputs without a name and a delete button', () => w.$('#te-lcm-rows .te-lcm-row:first input').length === 2
+		&& w.$('#te-lcm-rows input').filter(function() { return !!w.$(this).attr('name'); }).length === 0 && w.$('#te-lcm-rows .te-js-lcm-delete').length === 4);
+	check('the empty text stays hidden when rows exist', () => w.$('#te-lcm-empty').hasClass('te-hidden'));
+	['', 'not json', '[1,2]', '"x"', 'null', '{"a":1}'].forEach((v) => {
+		const x = makeLcmWindow(jqueryFile, v, false);
+		check('value ' + JSON.stringify(v) + ' renders no rows and shows the empty text', () => x.$('#te-lcm-rows .te-lcm-row').length === 0 && !x.$('#te-lcm-empty').hasClass('te-hidden'));
+	});
+	w.$('#te-lcm-add').click();
+	check('Add pair appends an empty row', () => lcmRows(w).length === 5 && JSON.stringify(lcmRows(w)[4]) === '["",""]');
+	w.$('#te-lcm-rows .te-js-lcm-delete').eq(0).click();
+	check('delete removes that row', () => lcmRows(w).length === 4 && lcmRows(w)[0][0] === 'rs');
+	lcmSetRows(w, [['xx', 'yy']]);
+	let asked = null;
+	w.confirm = (m) => { asked = m; return false; };
+	w.$('#te-lcm-reset').click();
+	check('reset with confirm false keeps the rows and asks with the string', () => asked === 'Reset?' && JSON.stringify(lcmRows(w)) === '[["xx","yy"]]');
+	w.confirm = () => true;
+	w.$('#te-lcm-reset').click();
+	check('reset with confirm true restores the default', () => JSON.stringify(lcmRows(w)) === '[["ua","uk"],["rs","sr"],["ge","ka"],["cz","cs"]]');
+
+	const cases = [
+		['empty key', [['', 'uk']], 'E-key'],
+		['empty value', [['ua', '  ']], 'E-value'],
+		['duplicate key (case and trim)', [['ua', 'uk'], [' UA ', 'sr']], 'E-dup'],
+		['bad characters in a key', [['u a', 'uk']], 'E-chars'],
+		['bad characters in a value', [['ua', 'u/k']], 'E-chars'],
+		['key longer than 20', [['a'.repeat(21), 'uk']], 'E-length'],
+		['value longer than 20', [['ua', 'a'.repeat(21)]], 'E-length'],
+		['more than 100 pairs', Array.from({ length: 101 }, (v, i) => ['k' + i, 'v']), 'E-count']
+	];
+	cases.forEach((c) => {
+		const x = makeLcmWindow(jqueryFile, '', false);
+		lcmSetRows(x, c[1]);
+		const event = lcmSubmit(x);
+		check(c[0] + ': submit stops and shows ' + c[2], () => event.defaultPrevented === true && lcmAlerts(x).indexOf(c[2]) >= 0
+			&& x.$('#input-client_translate_expert_language_code_map').val() === '' && (c[2] === 'E-count' || x.$('#te-lcm-rows .te-lcm-invalid').length >= 1));
+	});
+	check('exact length 20 and 100 pairs are valid', () => {
+		const x = makeLcmWindow(jqueryFile, '', false);
+		lcmSetRows(x, Array.from({ length: 100 }, (v, i) => ['k' + i, 'a'.repeat(20)]));
+		return lcmSubmit(x).defaultPrevented === false;
+	});
+
+	w = makeLcmWindow(jqueryFile, LCM_DEFAULT, false);
+	lcmSetRows(w, [[' UA ', ' uk '], ['b-1_x', 'Sr']]);
+	let ev = lcmSubmit(w);
+	check('valid submit is not stopped and writes the JSON (trim, lower-case keys, order kept)', () => ev.defaultPrevented === false
+		&& w.$('#input-client_translate_expert_language_code_map').val() === '{"ua":"uk","b-1_x":"Sr"}' && lcmAlerts(w).length === 0);
+	lcmSetRows(w, []);
+	lcmSubmit(w);
+	check('an empty map is written as an empty string', () => w.$('#input-client_translate_expert_language_code_map').val() === '');
+	lcmSetRows(w, [['', 'x']]);
+	lcmSubmit(w);
+	lcmSetRows(w, [['a', 'b']]);
+	lcmSubmit(w);
+	check('the old errors and marks go away on the next submit', () => lcmAlerts(w).length === 0 && w.$('.te-lcm-invalid').length === 0);
+
+	const x = makeLcmWindow(jqueryFile, '{"<img src=x onerror=window.pwn=1>":"<b>v</b>"}', false);
+	check('a value with HTML is text, not markup', () => x.$('#te-lcm-rows img, #te-lcm-rows b').length === 0 && lcmRows(x)[0][1] === '<b>v</b>' && typeof x.pwn === 'undefined');
+	lcmSubmit(x);
+	check('the HTML key gives the chars error as text only', () => lcmAlerts(x).indexOf('E-chars') >= 0 && x.$('#te-lcm-alerts img').length === 0);
+
+	const b = makeLcmWindow(jqueryFile, LCM_DEFAULT, true);
+	check('BS5 delete button uses the FA 6 icon and outline class', () => b.$('.te-js-lcm-delete:first i').hasClass('fa-solid') && b.$('.te-js-lcm-delete:first').hasClass('btn-outline-secondary'));
+	check('init without the card does nothing', () => { const y = makeWindow(jqueryFile, false); y.teLcmInit(); return true; });
+}
+
 console.log('=== client_translate_expert.js helper tests ===');
 for (const version of JQUERY_VERSIONS) {
 	console.log('\n--- ' + version.label + ' ---');
@@ -1526,6 +1636,7 @@ for (const version of JQUERY_VERSIONS) {
 	testSiteBs5(w);
 	w = makeSiteWindow(version.file, true);
 	testLocBs5(w);
+	testLcm(version.file);
 }
 testLocStatic();
 
@@ -1533,7 +1644,13 @@ console.log('\nTemplates (static):');
 for (const tpl of ['client_translate_expert.tpl', 'client_translate_expert.oc4.twig']) {
 	const text = fs.readFileSync(path.join(__dirname, '../../sources/upload/admin/view/template/extension/module', tpl), 'utf8');
 	const radios = text.match(/<input[^>]*name="te-analization-mode"[^>]*>/g) || [];
+	check(tpl + ': the language code map card has the hidden input, the default and no named row inputs', () => /name="client_translate_expert_language_code_map"/.test(text) && /id="input-client_translate_expert_language_code_map"/.test(text) && /data-te-default=/.test(text) && /id="te-lcm-rows"/.test(text) && /id="te-lcm-alerts"/.test(text));
+	check(tpl + ': the map label is not a label for the Add button, and the rows group uses aria-labelledby', () => text.indexOf('for="te-lcm-add"') === -1 && /id="te-lcm-label"/.test(text) && /id="te-lcm-rows" role="group" aria-labelledby="te-lcm-label"/.test(text));
+	check(tpl + ': the server error line has the te-field__error class', () => /class="text-danger te-field__error"/.test(text));
 	check(tpl + ': the 3 mode radios are outside the settings form (form="te-no-form")', () => radios.length === 3 && radios.every((r) => r.indexOf('form="te-no-form"') >= 0));
 }
+const cssText = fs.readFileSync(path.join(__dirname, '../../sources/upload/admin/view/stylesheet/client_translate_expert.css'), 'utf8');
+check('the CSS places .te-field__error in column 2', () => /\.te-app \.te-field__error \{\s*grid-column: 2;/.test(cssText));
+check('the invalid border uses var(--te-error), also with focus, and no hard-coded color', () => /te-lcm-invalid:focus \{\s*border-color: var\(--te-error\);/.test(cssText) && cssText.indexOf('#d9534f') === -1);
 console.log('\n=== Results: ' + passed + ' passed, ' + failed + ' failed, 0 skipped ===');
 process.exit(failed === 0 ? 0 : 1);
