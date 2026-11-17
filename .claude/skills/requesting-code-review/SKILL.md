@@ -40,10 +40,10 @@ the information that is specific to this review:
 - The path for the review: `docs/tasks/<slug>/<slug>-review.md` inside a dev-workflow task, otherwise a scratchpad path
 - Anything that an earlier pass already settled, so that the reviewer does not discuss it again
 
-**3. Act on feedback.** Use the same adjudication rule as `dev-workflow` Phase 4. Ask the user about each finding. Do not ask if the user gave standing auto-approve, in this conversation or in the `## Settings` block of the plan.
+**3. Act on feedback.** Use the same adjudication rule as `dev-workflow` Phase 4. Fix every finding by default. Skip a finding only with a verified reason, and report it.
 - Fix Critical issues first
 - Fix Important issues before you continue
-- Note Minor issues for later
+- Fix Minor issues too, unless a verified reason applies
 - If the reviewer is wrong, push back and give your reasons
 
 Agent definition: `.claude/agents/ote-code-reviewer.md`

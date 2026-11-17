@@ -17,10 +17,10 @@ For a trivial task (a single file, under 20 lines, no schema or build-script imp
 
 The stripped-down flow has these steps:
 
-1. Ask for the planning and review models (Phase 0).
+1. State the default models (Phase 0).
 2. Create the branch and the task folder (Phase 0). Do not dispatch the Explore agent or the sanity check.
 3. Write a short plan with Settings, Context, Approach, Assumptions and Steps (Phase 1).
-4. Implement the change in the main context (Phase 2).
+4. Implement the change with the implementation model (Phase 2).
 5. Dispatch `ote-build-test` in full mode (Phase 3).
 6. Dispatch one independent review (Phase 4). If fixes follow, do Phase 5 as usual.
 7. Write the improvements file and fill the Done block (Phases 6 and 7).
@@ -58,24 +58,22 @@ Parse the input. Then create the branch and the task folder.
 
 ### Model selection
 
-Ask this first, before anything else. Do not ask if one of these is true:
-- The user already answered in this conversation.
-- An earlier session on the same task recorded the answer in the `## Settings` block of the plan.
+Use these default models. Do not ask the user for models. State the defaults in chat when the task starts. The user can change a model in the conversation.
 
-Ask the user for two models:
+1. **Planning model (Phase 1): Opus.**
+2. **Implementation model (Phase 2 and Phase 5 fixes): Sonnet.** `ote-implementer` pins Sonnet.
+3. **Review model (Phase 4 and each re-review in Phase 5): Opus.** `ote-code-reviewer` pins Opus.
 
-1. **Model for planning (Phase 1).** Default: the current session model. With this default, you write the plan inline in the main conversation, with no subagent.
-2. **Model for independent review (Phase 4, and any re-review passes in Phase 5).** Default: a different model from the planning model. The review is then an independent perspective, and the same model does not check its own work.
+If an earlier session recorded other models in the `## Settings` block of the plan, use those models.
 
-   When you ask the question, name the default as "a model that differs from the planning model". Do not name one model as the default. If the user picks the planning model for the review, say that the review is then not independent. Ask the user to confirm (task 71).
+Write the models into the `## Settings` block of the plan when Phase 1 creates the file. They apply for the rest of the task, across sessions, unless the user changes them.
 
-   `ote-code-reviewer` pins Opus. Opus is the default when planning used another model. If planning also used Opus, pick a different review model and pass it explicitly.
+If you do not know the session model, assume that it is neither the planning model nor the implementation model. Then dispatch the planning subagent and `ote-implementer`. Do not ask the user.
 
-Keep both choices through Phase 0. Write them into the `## Settings` block of the plan when Phase 1 creates the file. The choices apply for the rest of the task, across sessions, unless the user changes them.
-
-**To apply the choice:**
-- **Planning:** If the planning model is the current session model, write the plan inline as usual. If the user chose a different model, dispatch it with `Agent` (`subagent_type: general-purpose`, `model: <chosen>`). Tell it to write the plan file `docs/tasks/<slug>/<slug>_plan.md` itself and to edit no other file. Do not use `subagent_type: Plan`, because it has no Write tool. The main context must then write the whole plan again, and this costs much context (task 59). Read the plan file for the Phase 1 checkpoint. Planning subagents do not talk to the user directly. If a design decision is open, ask the user before you dispatch the planning subagent. Put each answer in the brief as a settled decision (task 77).
-- **Independent review:** `ote-code-reviewer` pins Opus. Pass `model: <chosen>` on Phase 4 and Phase 5 re-review dispatches only when the chosen model differs from that pin.
+**To apply the models:**
+- **Planning:** If the session model is the planning model, write the plan inline. If not, dispatch `Agent` (`subagent_type: general-purpose`, `model: <planning model>`). Tell it to write the plan file `docs/tasks/<slug>/<slug>_plan.md` itself and to edit no other file. Do not use `subagent_type: Plan`, because it has no Write tool. The main context must then write the whole plan again, and this costs much context (task 59). Read the plan file for the Phase 1 checkpoint. Planning subagents do not talk to the user directly. If a design decision is open, ask the user before you dispatch the planning subagent. Put each answer in the brief as a settled decision (task 77).
+- **Implementation:** If the session model is the implementation model and the change is small (see Phase 2), implement in the main context. Otherwise dispatch `ote-implementer`. If the implementation model is not Sonnet, pass `model: <implementation model>`.
+- **Independent review:** Dispatch `ote-code-reviewer` with no `model:`. Pass `model: <review model>` only if the review model is not Opus.
 
 ### Input parsing
 
@@ -180,7 +178,7 @@ In checks-only mode, the agent runs `php -l` and the unit tests. It does not bum
 
 ## Phase 1 — Plan
 
-Use the planning model from Phase 0. If it matches the session model, plan inline in the main context. Otherwise use a `general-purpose` subagent that writes the plan file (see Phase 0). Write the plan to `docs/tasks/<slug>/<slug>_plan.md`.
+Use the planning model from Phase 0. If the session model is the planning model, plan inline in the main context. If not, use a `general-purpose` subagent with `model: <planning model>` that writes the plan file (see Phase 0). Write the plan to `docs/tasks/<slug>/<slug>_plan.md`.
 
 Write the plan in ASD-STE100 Simplified Technical English. See **Writing style (ASD-STE100)** in `CLAUDE.md`.
 
@@ -188,8 +186,7 @@ Write the plan in ASD-STE100 Simplified Technical English. See **Writing style (
 # <slug>
 
 ## Settings
-<planning model · review model · build, tests, commit, push, PR, as agreed with the user,
- and whether the user granted standing auto-approve for review findings.
+<planning model · implementation model · review model · review findings rule (fix all, skip only with a verified reason) · build, tests, commit, push, PR, as agreed with the user · standing auto-approve, if the user granted it (an unattended run: the user asked you to continue without questions).
  Record this here. A later session that picks up this task then does not have to ask again.>
 
 ## Context
@@ -210,7 +207,7 @@ Write the plan in ASD-STE100 Simplified Technical English. See **Writing style (
 - [ ] Language strings: en-gb, ru-ru, uk-ua (drop if no new strings)
 - [ ] Bump version + build + test
 - [ ] Independent review → <slug>-review.md
-- [ ] Address review findings (the user picks which to fix or skip)
+- [ ] Address review findings (fix all. Skip only with a verified reason, and write it in Findings)
 - [ ] Bump version + build + tests (verify loop)
 - [ ] Re-review? (unreviewed fixes exist. Ask the user. If yes, repeat from the review step → -review-v2.md, v3, …)
 - [ ] Improvements pass → <slug>-improvements.md
@@ -223,7 +220,7 @@ Adapt the template. Drop the steps that do not apply. If you skip a standard ste
 
 **Plan review checkpoint:** Paste Context, Approach, Assumptions and Steps in chat. Ask the user to approve. Do not start Phase 2 until the user acknowledges the plan.
 
-If the `## Settings` block records standing auto-approve, paste the plan summary and continue to Phase 2. Do not wait for an answer.
+If the `## Settings` block records standing auto-approve (an unattended run), paste the plan summary and continue to Phase 2. Do not wait for an answer.
 
 **Do not ask for approval of a plan that has unverified load-bearing assumptions.** Verify the assumptions first. Or say plainly which assumptions are unverified and what fails if one is wrong. The user then approves a known risk and not an unknown risk. "Approved" does not make an assumption true.
 
@@ -246,9 +243,13 @@ The non-negotiables for this repo:
 - A new AJAX method, library class or `client_translate_expert_*` setting key also needs an entry in the fixed OC 3.0/4.0 rewrite lists of `build.sh` (see `project-workflows.md`).
 - Put UI changes in both the `.tpl` (PHP template, OC 1.5–3.0) and the `.oc4.twig` (Twig, OC 4.0). Put new strings in all three language files.
 
-**For small changes (1–3 files, under 50 lines):** Implement directly in the main context. A subagent dispatch costs more than it saves.
+Implement with the implementation model (see Phase 0).
 
-**For larger changes:** You can dispatch `ote-implementer`. Give it these items:
+If the session model is the implementation model and the change is small (1–3 files, under 50 lines), implement directly in the main context.
+
+If the session model is not the implementation model, dispatch `ote-implementer` for each change, also a small change.
+
+For a larger change, dispatch `ote-implementer`. Give it these items:
 - The approved plan
 - The investigation summary
 - An instruction to make the changes and report what it did
@@ -306,7 +307,7 @@ This applies only where a test exists. The test scripts are in `tests/`. The **T
 
 ## Phase 4 — Independent review (subagent)
 
-Dispatch `ote-code-reviewer` (`subagent_type: ote-code-reviewer`). The agent pins Opus. Pass `model: <review model chosen in Phase 0>` only when Phase 0 chose another model. Give the agent these items:
+Dispatch `ote-code-reviewer` (`subagent_type: ote-code-reviewer`). The agent pins Opus, which is the default review model. Pass `model: <review model>` only if the review model is not Opus. Give the agent these items:
 - The task description
 - The diff (`git diff origin/main...HEAD` plus untracked files, or `git diff HEAD` if nothing is committed)
 - The full path to write the review to: `docs/tasks/<slug>/<slug>-review.md`
@@ -324,26 +325,29 @@ If the diff changes `.claude/**`, tell the reviewer to read the full diff of eac
 When the agent returns, do these steps:
 1. Read the review file.
 2. Synthesize the findings for the user. Give a **fix-cost estimate** for each finding.
-3. Decide each finding: **fix or skip**.
-   - Default: ask the user for each finding. Do not auto-apply anything.
-   - Decide the findings yourself only when the user said to decide review findings without a question to the user. The user can say this in this conversation. Or an earlier session on the same task can record it in the `## Settings` block of the plan. Report each decision with its reasoning. This is the only standing auto-approve rule. Always go back to the user for anything that changes the agreed approach, touches an external system or expands scope.
-   - **Under auto-approve, prefer to fix a finding.** Fix a finding that is technically correct and cheap to apply. Skip a finding only for an actual reason:
-     - Real cost disproportionate to the fix
-     - Genuine scope creep
-     - An external-system risk
-     - A design trade-off that only the user can pick
-
-     "It needs another verify cycle" is not a reason by itself. A verify cycle runs after Phase 5 regardless, so a cheap local fix adds no cost.
-4. Proceed to Phase 5 with those decisions.
+3. Decide each finding. **Default: fix every finding.** Do not ask the user for each finding.
+   - Skip a finding only with a correct and verified reason. Verified means a command output, a file reference or an issue number that the user can check.
+   - Valid reasons:
+     - The fix belongs in another issue. Search for an existing issue first with `gh issue list --search`. If none exists, create it with `gh issue create`. Write the issue number in the plan.
+     - The finding is factually wrong. Give the evidence.
+     - The fix has a real risk for an external system. Ask the user before you act.
+     - The fix is a design trade-off that only the user can pick. Ask the user.
+     - The reviewer marks the finding "no action necessary".
+     - Another reason that you document with evidence.
+   - "It needs another verify cycle" is not a reason. The verify loop of Phase 5 covers each fix.
+   - Write each skip, its reason and its evidence in the `Findings:` note of the plan and in the report to the user.
+   - If a finding changes the agreed approach, expands scope or touches an external system, go back to the user before you fix it. The `gh issue create` call for a skip reason is not such a case.
+   - The user can change any fix or skip decision in the conversation.
+4. Report the decisions to the user. Do not wait for an answer, unless a finding goes back to the user. Proceed to Phase 5 with those decisions.
 
 **Scope expansion:** Update the plan with `## Update <date>`. Dispatch a targeted second review that writes to `<slug>-review-v2.md`. Tell the agent to skip the sections that are already approved.
 
 ## Phase 5 — Post-review fixes + verify loop
 
-Do this phase when every review finding has a decision, from the user or from you under auto-approve.
+Do this phase when every review finding has a decision (see Phase 4 step 3).
 
 **Apply fixes:**
-- For small fixes (1–3 findings, under 20 lines), apply them directly in the main context.
+- For small fixes (1–3 findings, under 20 lines): if the session model is the implementation model, apply them in the main context. If not, dispatch `ote-implementer`.
 - For larger fix sets, dispatch `ote-implementer`. Give it the specific findings to fix (numbered, with the review text) and the current code state. Tell it to apply fixes only, without a build or tests.
 - If a form posts text with quotes (for example JSON), name a test that posts the value escaped with `htmlspecialchars`. `Request::clean()` does this for each POST value, and a raw-value test does not find a parse failure (task 79).
 - If a fix adds an input guard, name each input form that the guard must handle: a string, an array and a missing value. A guard for one form only leaves a gap (task 35-multi-value-analysis-filters: the string guard did not cover `table[]=x`).
@@ -373,7 +377,7 @@ Do not restate the rest. `ote-code-reviewer.md` holds these standing instruction
 
 **Stop when the passes find nothing important.** Track what each pass returns. If the findings drop to wording and none touch correctness, another pass only polishes phrasing. Say so and recommend that the user stops. Do not loop by reflex.
 
-If a re-review gives only Minor findings that the reviewer marks "no action necessary", do not ask a fix-or-skip question for each one. Record the findings in the plan. Then recommend a stop. The user can still ask for a fix.
+If a re-review gives only Minor findings that the reviewer marks "no action necessary", do not fix them. This is the skip reason "no action necessary" of Phase 4 step 3. Record the findings in the plan. Then recommend a stop. The user can still ask for a fix.
 
 **A fix can introduce a regression.** This is the reason for the gate: a fix that closes one finding was never reviewed itself. Treat a fix pass exactly like the original change. Do not rubber-stamp it.
 
@@ -416,11 +420,11 @@ Surface a summary of 3–5 bullets in chat. Do not edit skills without the go-ah
 | 0 — Investigation | Yes (Explore) | Foreground | Source files stay out of the main context |
 | 0 — Sanity check | Yes | Background · `ote-build-test` (checks only) | Test output is noise. This step does not build, so it does not use a version number |
 | 0 — Verify external assumptions | No | Inline | You must judge what to probe and how to read the answer. The result shapes the plan |
-| 1 — Plan | Only if the user chose a non-default planning model | Foreground (`general-purpose`, writes the plan file) | Otherwise you need the user, so you write the plan inline |
-| 2 — Implement | Sometimes | Foreground · `ote-implementer` | Use it only for large changes (more than 3 files or 50 lines) |
+| 1 — Plan | If the session model is not the planning model | Foreground (`general-purpose`, writes the plan file) | The planning model (Opus) writes the plan. If the session model is the planning model, write the plan inline |
+| 2 — Implement | If the session model is not the implementation model, or for a large change | Foreground · `ote-implementer` | The implementation model (Sonnet) implements. `ote-implementer` pins Sonnet |
 | 3 — Build+Test | Yes | Foreground · `ote-build-test` | Build and test logs are the biggest context waste |
 | 4 — Independent review | Yes | Foreground · `ote-code-reviewer` | Fresh eyes, no reasoning context |
-| 5 — Apply fixes | Sometimes | Foreground · `ote-implementer` | Use it only for large fix sets |
+| 5 — Apply fixes | If the session model is not the implementation model, or for a large fix set | Foreground · `ote-implementer` | Same rule as Phase 2 |
 | 5 — Verify loop | Always | Foreground · `ote-build-test` | Same as Phase 3. Run it after every fix pass |
 | 5 — Re-review (if the user says yes) | Yes | Foreground · `ote-code-reviewer` | Fresh eyes on the post-fix diff. This pass goes back to Phase 4 |
 

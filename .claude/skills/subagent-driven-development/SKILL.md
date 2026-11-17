@@ -40,7 +40,8 @@ After all tasks:
   → Dispatch ote-build-test (full mode: bump version + release build)
   → Dispatch ote-code-reviewer for the entire implementation
       → writes docs/tasks/<slug>/<slug>-review.md
-  → Present its findings to the user per dev-workflow Phase 4 (ask per finding)
+  → Decide its findings per dev-workflow Phase 4 (fix all by default)
+  → Fix, dispatch ote-build-test (verify loop), then ask for a re-review
   → Stop: report to the user (never commit or push without being asked)
 ```
 
@@ -56,7 +57,7 @@ Each agent pins the least powerful model that can handle its role. The pin is in
 | Final review of the whole change | `ote-code-reviewer` | Opus |
 | Syntax check, tests, version bump, release build | `ote-build-test` | Haiku |
 
-Override downward for a genuinely mechanical task. Override upward for a hard architectural task. When you override, say why.
+Override downward for a genuinely mechanical task. Override upward for a hard architectural task, but not for `ote-implementer`. Only the user can change the implementation model. When you override, say why.
 
 ## Handling Implementer Status
 
@@ -105,4 +106,4 @@ Each agent carries its own standing instructions. The dispatch prompt needs only
 
 **If a per-task reviewer (spec or quality) finds issues:** The implementer fixes the issues. The reviewer reviews again. Repeat until the reviewer approves. Do not ask the user here. These loops keep the task inside its approved spec.
 
-**If the final `ote-code-reviewer` finds issues:** Do not auto-fix. Ask the user for each finding, as in `dev-workflow` Phase 4, unless the user granted standing auto-approve.
+**If the final `ote-code-reviewer` finds issues:** Use the fix-by-default rule of `dev-workflow` Phase 4. Skip a finding only with a verified reason.
