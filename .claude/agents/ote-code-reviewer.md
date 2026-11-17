@@ -48,12 +48,9 @@ The brief can also name design decisions that are already settled. Do not argue 
 
 **Multi-version compatibility.** This module ships one source tree as packages for OC 1.5, 2.0–2.3, 3.0 and 4.0 on PHP 5.6 through 8.x:
 - PHP 7+ syntax (type hints, `??`, nullable types, arrow functions, typed properties) is allowed only between `// OC4_EVENT_START` and `// OC4_EVENT_END` **in the admin controller** (`admin/controller/extension/module/client_translate_expert.php`). `build.sh` strips those blocks from that file only. In any other file, PHP 7+ syntax ships to PHP 5.6 stores, even inside markers. Flag it there. Expect the code to gate OC4-only behavior at runtime with `version_compare(VERSION, '4.0', '>=')`.
-- New routes and class names must survive the `sed` rewrites in `build.sh`. For OC 1.5–2.2, the rewrites are generic (`extension/module/` → `module/`, `ControllerExtensionModule` → `ControllerModule`). For 3.0 and 4.0, the rewrites are **fixed lists**:
-  - The AJAX method `/` → `.` separator for 4.0, in the controller and JS sections
-  - The `new X(` namespace of library classes for 4.0
-  - The `module_` prefix on seven named setting keys, for 3.0 and 4.0
-
-  A new AJAX method, library class or setting key without a matching `build.sh` entry builds without error. It breaks only on 3.0 or 4.0.
+- New routes and class names must survive the `sed` rewrites in `build.sh`. For OC 1.5–2.2, the rewrites are generic (`extension/module/` → `module/`, `ControllerExtensionModule` → `ControllerModule`). For 4.0, the `new X(` namespace rewrite of library classes is a **fixed list**.
+  A new library class without a matching `build.sh` entry builds without error. It breaks only on 4.0.
+- The token name, the setting key prefix, the extension list route, the method separator and the `template_engine` setting are runtime rules (`tokenName()`, `settingKey()`, `extensionListRoute()`, `routeMethodSeparator()`, `needsPhpTemplateEngine()`, `teRoute()`). Check that new code uses them and does not hard-code one version form.
 - OC 1.5–3.0 all render the `.tpl` as a PHP template. Only OC 4.0 uses Twig. A UI change must appear in both `client_translate_expert.tpl` and `client_translate_expert.oc4.twig`, each in its own syntax.
 
 **Security.** Check these items:

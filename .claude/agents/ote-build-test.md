@@ -76,6 +76,7 @@ php tests/test_client_translate_expert_route_filter.php
 php tests/test_client_translate_expert_cron_helper.php
 php tests/test_client_translate_expert_translate_loop.php
 php tests/test_client_translate_expert_ajax_guard.php
+php tests/test_client_translate_expert_version_rules.php
 php tests/test_oc4_twig_filters.php
 (cd tests/js && npm ci --silent && node test_client_translate_expert_js_helpers.js)
 ```
@@ -101,10 +102,10 @@ Every build needs a new patch version. Never build twice with the same version. 
 1. Run `./build.release.sh`. It calls `build.sh release` and bundles everything into `releases/v<version>/`.
 2. Confirm that `releases/v<version>/OpenCartTranslateExpertClient-v<version>-<date>.full.zip` exists. List its contents (`unzip -l`). The zip must contain one `.ocmod.zip` for each OpenCart version (1.5, 2.0, 2.1, 2.2, 2.3, 3.0) and the `oc4.x` folder.
 3. **If the diff adds any of the items below, check the per-version rewrites.** The dispatch prompt lists the items. Also read the diff yourself.
-   - **A new controller method called by route (AJAX action):** For OC 4.0, `build.sh` converts `client_translate_expert/<method>` to `client_translate_expert.<method>`. It does this only for a fixed list of methods, in the controller section and in the JS section. Unzip the full zip to a temp dir. Search the controller and the JS of the oc4.x folder for `client_translate_expert/<method>`. If the `/` form remains, report a failure.
+   - **A new controller method called by route (AJAX action):** The JS builds each route with `teRoute('<method>')`. The header emits the prefix and the method separator at runtime. Search the JS for a route string that does not use `teRoute()`. If you find one, report a failure.
    - **A new library class instantiated with `new`:** OC 4.0 needs a namespace for the class. `build.sh` rewrites only the listed `new X(` calls. Search the oc4.x folder for the `new <Class>(` call without a namespace.
-   - **A new setting key `client_translate_expert_*`:** `build.sh` adds the `module_` prefix for only seven listed keys. It does this on 3.0 (controller, model, `.tpl`, OCMOD XML) and on 4.0 (twig). Search the oc3.0 and oc4.x packages for the bare key.
-   - **A new element id or JS selector that contains a listed setting key** (for example `button-client_translate_expert_key_toggle`): The `module_` rewrite is a global text replacement. It also changes every id and selector that contains the key. In the oc3.0 `.tpl` and the oc4.x twig, make sure that each id and each selector or `getElementById` call that refers to it has the same `module_` form.
+   - **A new setting key `client_translate_expert_*`:** The admin controller and the model select the `module_` prefix at runtime with `settingKey()`. The templates keep the bare name. Search the new code for a `config->get('client_translate_expert_...')` call that does not use `settingKey()`. If you find one, report a failure.
+   - **A new element id or JS selector that contains a setting key:** The templates keep the bare names, so ids and selectors need no rewrite. Check that an id in the template and a selector in the inline script use the same bare name.
    - **A new route or class name in general:** Search the oc2.2 and oc1.5 packages for the OC 2.3 form (`extension/module/`, `ControllerExtensionModule`). The build should rewrite this form.
 
    `releases/v<version>/` holds only the `.full.zip`. The per-version `.ocmod.zip` files are inside it. Unzip the `.full.zip` first. Then unzip the per-version packages from it.
@@ -120,7 +121,7 @@ If the build fails, report the failing command and the relevant error lines. Do 
 ## Known traps
 
 - `sed -i` takes different arguments on BSD (macOS) and GNU. `build.sh` uses a branch on `$OSTYPE` for this reason. A new `sed -i` call without the branch breaks on one platform.
-- OC 1.5–3.0 all load the `.tpl` as a PHP template. OC 3.0 forces `template_engine = template` in the controller. Only OC 4.0 uses Twig, through the separate `client_translate_expert.oc4.twig`. The `.tpl` → `.twig` rewrite in `build.sh` changes only the header paths in the OCMOD XML.
+- OC 1.5–3.0 all load the `.tpl` as a PHP template. The controller forces `template_engine = template` for OC 3.0 at runtime. Only OC 4.0 uses Twig, through the separate `client_translate_expert.oc4.twig`. The `.tpl` → `.twig` rewrite in `build.sh` changes only the header paths in the OCMOD XML.
 - In zsh, put quotes around every glob (`--include="*.php"`). If an unquoted glob matches nothing, zsh aborts the command. The empty result looks like "not found".
 
 ## Report
