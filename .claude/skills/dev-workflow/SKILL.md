@@ -67,6 +67,8 @@ Ask the user for two models:
 1. **Model for planning (Phase 1).** Default: the current session model. With this default, you write the plan inline in the main conversation, with no subagent.
 2. **Model for independent review (Phase 4, and any re-review passes in Phase 5).** Default: a different model from the planning model. The review is then an independent perspective, and the same model does not check its own work.
 
+   When you ask the question, name the default as "a model that differs from the planning model". Do not name one model as the default. If the user picks the planning model for the review, say that the review is then not independent. Ask the user to confirm (task 71).
+
    `ote-code-reviewer` pins Opus. Opus is the default when planning used another model. If planning also used Opus, pick a different review model and pass it explicitly.
 
 Keep both choices through Phase 0. Write them into the `## Settings` block of the plan when Phase 1 creates the file. The choices apply for the rest of the task, across sessions, unless the user changes them.
@@ -300,6 +302,7 @@ Dispatch `ote-code-reviewer` (`subagent_type: ote-code-reviewer`). The agent pin
 - The diff (`git diff origin/main...HEAD` plus untracked files, or `git diff HEAD` if nothing is committed)
 - The full path to write the review to: `docs/tasks/<slug>/<slug>-review.md`
 - Repo access: the agent inspects the repo and writes that one file, plus probe scripts under `docs/tasks/<slug>/tmp/` only
+- If the diff changes CSS for one OpenCart version, an instruction to check the colors against the real admin CSS of that version. Tests cannot find a contrast problem (task 71: the OC 1.5 header is dark blue)
 - Which guards in the diff are safety nets for cases nobody has observed. The reviewer gives them proportionate attention, not worst-case scenario after scenario
 - If the diff changes SQL, an instruction to run the real query on a throwaway MariaDB instance (see Phase 0)
 - If the front end builds content that the server parses or writes (for example a PHP language file), an instruction to run a round-trip probe. The probe runs the real JS helpers in jsdom and sends the result through the real server code. Task 59: such a probe found 2 Important findings that the unit tests did not find
