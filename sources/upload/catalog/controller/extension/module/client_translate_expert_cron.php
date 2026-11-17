@@ -1,9 +1,9 @@
 <?php
 
 if (defined('DIR_EXTENSION') && version_compare(VERSION, '4.0', '>=')) {
-	require_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert.php');
+	require_once(DIR_EXTENSION . 'client_translate_expert/system/library/translate_expert/translate_expert.php');
 } else {
-	require_once(DIR_SYSTEM . 'library/client_translate_expert.php');
+	require_once(DIR_SYSTEM . 'library/translate_expert/translate_expert.php');
 }
 
 class ControllerExtensionModuleClientTranslateExpertCron extends Controller
@@ -11,7 +11,7 @@ class ControllerExtensionModuleClientTranslateExpertCron extends Controller
 	public function index()
 	{
 		$debugKey = version_compare(VERSION, '3.0', '>=') ? 'module_client_translate_expert_debug_status' : 'client_translate_expert_debug_status';
-		$library = new LibraryClientTranslateExpert($this, $this->config->get($debugKey));
+		$library = new TranslateExpert($this, $this->config->get($debugKey));
 
 		$result = $library->runCron($this->request->get);
 

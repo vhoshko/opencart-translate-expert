@@ -1,6 +1,6 @@
 <?php
 
-class LibraryClientTranslateExpertCore
+class TranslateExpertCore
 {
 	const TRANSLATE_EXPERT_SAME_TRANSLATIONS = "translate_expert_same_translations";
 
@@ -455,17 +455,53 @@ INNER JOIN (
 	// translation
 
 	// REGION COMMON
+	protected function createGoogleClient($googleApiKey) {
+		return new TranslateExpertGoogleClient($googleApiKey);
+	}
+
+	protected static function mapGoogleLanguageCode($code) {
+		if ($code == 'ua') return 'uk';
+		if ($code == 'rs') return 'sr';
+		if ($code == 'ge') return 'ka';
+		if ($code == 'cz') return 'cs';
+		return $code;
+	}
+
+	protected function fixFormatParameters($text, $translatedText)
+	{
+		$res = $translatedText;
+		$formatParameters = array('d' => 'д', 's' => 'с');
+		foreach ($formatParameters as $paramKey => $paramValue)
+			$res = $this->fixFormatParameter($text, $res, $paramKey, $paramValue);
+		return $res;
+	}
+
+	protected function fixFormatParameter($text, $translatedText, $paramKey, $paramValue)
+	{
+		$regExp1 = '/(%'.$paramKey.')[^a-zA-Z]/ms';
+		if (preg_match_all($regExp1, $text, $matches, PREG_SET_ORDER, 0) !== false)
+		{
+			$regExp2 = '/(%\s*'.$paramValue.')[^a-zA-Z]/ms';
+			foreach ($matches as $match)
+			{
+				$translatedText = preg_replace($regExp2, $match[1], $translatedText, 1);
+			}
+		}
+
+		return $translatedText;
+	}
+
 	protected function translateInternal($googleApiKey, $text, $source, $target, $format) {
 
 		$this->gebugLog('translateInternal: ============START============', $startTime);
 
 		if (defined('DIR_EXTENSION') && version_compare(VERSION, '4.0', '>=')) {
-			include_once(DIR_EXTENSION . 'client_translate_expert/system/library/vh_google_translator.php');
+			include_once(DIR_EXTENSION . 'client_translate_expert/system/library/translate_expert/translate_expert_google_client.php');
 		} else {
-			include_once(DIR_SYSTEM . 'library/vh_google_translator.php');
+			include_once(DIR_SYSTEM . 'library/translate_expert/translate_expert_google_client.php');
 		}
 
-		$this->gebugLog('translateInternal: vh_google_translator');
+		$this->gebugLog('translateInternal: translate_expert_google_client');
 
 		if (!$googleApiKey)
 		{
@@ -476,12 +512,23 @@ INNER JOIN (
 
 		try {
 			//var_dump($text); print '<br>';
-			$this->gebugLog('translateInternal VHGoogleTranslator creation before');
-			$translator = new VHGoogleTranslator( $googleApiKey );
-			$this->gebugLog('translateInternal VHGoogleTranslator creation after');
-			$res = is_array($text)
-				? $translator->translateBatch($text, $source, $target, $format)
-				: $translator->translate($text, $source, $target, $format);
+			$this->gebugLog('translateInternal TranslateExpertGoogleClient creation before');
+			$translator = $this->createGoogleClient($googleApiKey);
+			$this->gebugLog('translateInternal TranslateExpertGoogleClient creation after');
+			$source = self::mapGoogleLanguageCode($source);
+			$target = self::mapGoogleLanguageCode($target);
+			if (is_array($text)) {
+				$textOriginal = array_values($text);
+				$res = $translator->translateBatch($textOriginal, $source, $target, $format);
+				foreach ($textOriginal as $i => $original) {
+					if (TranslateExpertGoogleClient::isTranslatableText($original)) {
+						$res->texts[$i] = $this->fixFormatParameters($original, $res->texts[$i]);
+					}
+				}
+			} else {
+				$res = $translator->translate($text, $source, $target, $format);
+				$res->text = $this->fixFormatParameters($text, $res->text);
+			}
 			$this->gebugLog(var_export($res, true));
 			//var_dump($res); print '<br>';
 		}

@@ -1,6 +1,6 @@
 <?php
 
-class VHGoogleTranslator  {
+class TranslateExpertGoogleClient  {
 	private $googleApiKey;
 
 	const GOOGLE_TRANSLATE_MAX_LENGTH = 50 * 1000;
@@ -10,20 +10,13 @@ class VHGoogleTranslator  {
 		$this->googleApiKey = $googleApiKey;
 	}
 
+	public static function isTranslatableText($text)
+	{
+		return $text && trim($text);
+	}
+
 	public function translate($text, $source = '', $target = 'en', $format = 'html')
 	{
-
-		if ($source == 'ua') $source = 'uk';
-		if ($target == 'ua') $target = 'uk';
-
-		if ($source == 'rs') $source = 'sr';
-		if ($target == 'rs') $target = 'sr';
-
-		if ($source == 'ge') $source = 'ka';
-		if ($target == 'ge') $target = 'ka';
-
-		if ($source == 'cz') $source = 'cs';
-		if ($target == 'cz') $target = 'cs';
 
 		$res = $this->translateInternal($text, [
 			'source' => $source,
@@ -31,26 +24,12 @@ class VHGoogleTranslator  {
 			'format' => $format
 		]);
 
-		$res = $this->fixFormatParameters($text, $res);
-
 		$data = (object)array('success' => 1, 'text' => $res);
 		return $data;
 	}
 
 	public function translateBatch($texts, $source = '', $target = 'en', $format = 'html')
 	{
-
-		if ($source == 'ua') $source = 'uk';
-		if ($target == 'ua') $target = 'uk';
-
-		if ($source == 'rs') $source = 'sr';
-		if ($target == 'rs') $target = 'sr';
-
-		if ($source == 'ge') $source = 'ka';
-		if ($target == 'ge') $target = 'ka';
-
-		if ($source == 'cz') $source = 'cs';
-		if ($target == 'cz') $target = 'cs';
 
 		// Empty/null/whitespace-only values are not sent to Google - they are
 		// returned unchanged, in their original position.
@@ -60,7 +39,7 @@ class VHGoogleTranslator  {
 		$toTranslateTexts = array();
 		foreach ($resultTexts as $index => $text)
 		{
-			if ($text && trim($text))
+			if (self::isTranslatableText($text))
 			{
 				$toTranslateIndexes[] = $index;
 				$toTranslateTexts[] = $text;
@@ -77,51 +56,12 @@ class VHGoogleTranslator  {
 
 			foreach ($toTranslateIndexes as $pos => $originalIndex)
 			{
-				$resultTexts[$originalIndex] = $this->fixFormatParameters($toTranslateTexts[$pos], $translatedTexts[$pos]);
+				$resultTexts[$originalIndex] = $translatedTexts[$pos];
 			}
 		}
 
 		$data = (object)array('success' => 1, 'texts' => $resultTexts);
 		return $data;
-	}
-
-	private function fixFormatParameters($text, $translatedText)
-	{
-		if (is_array($text))
-		{
-			if (count($text) != count($translatedText))
-				return $translatedText;
-
-			$res = array();
-			$i = 0;
-			foreach ($text as $t)
-			{
-				$res[] = $this->fixFormatParameters($t, $translatedText[$i]);
-				$i++;
-			}
-			return $res;
-		}
-
-		$res = $translatedText;
-		$formatParameters = array('d' => 'д', 's' => 'с');
-		foreach ($formatParameters as $paramKey => $paramValue)
-			$res = $this->fixFormatParameter($text, $res, $paramKey, $paramValue);
-		return $res;
-	}
-
-	private function fixFormatParameter($text, $translatedText, $paramKey, $paramValue)
-	{
-		$regExp1 = '/(%'.$paramKey.')[^a-zA-Z]/ms';
-		if (preg_match_all($regExp1, $text, $matches, PREG_SET_ORDER, 0) !== false)
-		{
-			$regExp2 = '/(%\s*'.$paramValue.')[^a-zA-Z]/ms';
-			foreach ($matches as $match)
-			{
-				$translatedText = preg_replace($regExp2, $match[1], $translatedText, 1);
-			}
-		}
-
-		return $translatedText;
 	}
 
 	private function translateInternal($text, $options)

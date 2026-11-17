@@ -1,6 +1,6 @@
 <?php
 /**
- * Test script for the translate loop of LibraryClientTranslateExpert
+ * Test script for the translate loop of TranslateExpert
  * (translateTable for the admin page, translateNextBatch for the cron link).
  *
  * Usage:
@@ -27,7 +27,7 @@ class Log
 	}
 }
 
-require_once DIR_SYSTEM . 'library/client_translate_expert.php';
+require_once DIR_SYSTEM . 'library/translate_expert/translate_expert.php';
 
 class FakeDb
 {
@@ -97,7 +97,7 @@ class SqlDb extends FakeDb
 	}
 }
 
-class RealSqlLibrary extends LibraryClientTranslateExpert
+class RealSqlLibrary extends TranslateExpert
 {
 	public function __construct($model)
 	{
@@ -124,7 +124,7 @@ class RemoveLanguage
 	}
 }
 
-class RemoveLibrary extends LibraryClientTranslateExpert
+class RemoveLibrary extends TranslateExpert
 {
 	public $removeCalls = array();
 	public $clearedByColumn = array('name' => 3, 'description' => 4, 'meta_title' => 0);
@@ -193,7 +193,7 @@ class DetailLibrary extends RemoveLibrary
 	}
 }
 
-class StubTranslateLibrary extends LibraryClientTranslateExpert
+class StubTranslateLibrary extends TranslateExpert
 {
 	public $groups = array();
 	public $tablesList = array('oc_a');

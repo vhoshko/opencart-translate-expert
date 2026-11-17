@@ -1,11 +1,11 @@
 <?php
 
 if (defined('DIR_EXTENSION') && version_compare(VERSION, '4.0', '>=')) {
-	require_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert.php');
-	require_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_localization_translate_expert.php');
+	require_once(DIR_EXTENSION . 'client_translate_expert/system/library/translate_expert/translate_expert.php');
+	require_once(DIR_EXTENSION . 'client_translate_expert/system/library/translate_expert/translate_expert_localization.php');
 } else {
-	require_once(DIR_SYSTEM . 'library/client_translate_expert.php');
-	require_once(DIR_SYSTEM . 'library/client_localization_translate_expert.php');
+	require_once(DIR_SYSTEM . 'library/translate_expert/translate_expert.php');
+	require_once(DIR_SYSTEM . 'library/translate_expert/translate_expert_localization.php');
 }
 
 class ModelExtensionModuleClientTranslateExpert extends Model
@@ -196,7 +196,7 @@ class ModelExtensionModuleClientTranslateExpert extends Model
 	private function getLibrary()
 	{
 		if (is_null($this->_library))
-			$this->_library = new LibraryClientTranslateExpert($this, $this->config->get(self::settingKey('client_translate_expert_debug_status', VERSION)));
+			$this->_library = new TranslateExpert($this, $this->config->get(self::settingKey('client_translate_expert_debug_status', VERSION)));
 		return $this->_library;
 	}
 	
@@ -205,7 +205,7 @@ class ModelExtensionModuleClientTranslateExpert extends Model
 	private function getLocaliationLibrary()
 	{
 		if (is_null($this->_localiationLibrary))
-			$this->_localiationLibrary = new LocalizationLibraryClientTranslateExpert($this, $this->config->get(self::settingKey('client_translate_expert_debug_status', VERSION)));
+			$this->_localiationLibrary = new TranslateExpertLocalization($this, $this->config->get(self::settingKey('client_translate_expert_debug_status', VERSION)));
 		return $this->_localiationLibrary;
 	}
 }

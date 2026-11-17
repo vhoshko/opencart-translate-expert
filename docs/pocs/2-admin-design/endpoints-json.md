@@ -5,9 +5,9 @@ This file records all AJAX endpoints of the module admin page. It shows which en
 Short path names:
 
 - CTRL: `sources/upload/admin/controller/extension/module/client_translate_expert.php`
-- CORE: `sources/upload/system/library/client_translate_expert_core.php`
-- LOC: `sources/upload/system/library/client_localization_translate_expert.php`
-- LIB: `sources/upload/system/library/client_translate_expert.php`
+- CORE: `sources/upload/system/library/translate_expert/translate_expert_core.php`
+- LOC: `sources/upload/system/library/translate_expert/translate_expert_localization.php`
+- LIB: `sources/upload/system/library/translate_expert/translate_expert.php`
 - JS: `sources/upload/admin/view/javascript/client_translate_expert.js`
 - LANG: `sources/upload/admin/language/en-gb/extension/module/client_translate_expert.php`
 

@@ -1023,25 +1023,25 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	// Strings of the header items for all admin pages (document.te_i18n_global).
 	// The library reads the module language file in a function scope, so the shared language object of the page does not change.
 	private function getGlobalI18nJson(): string {
-		require_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert_i18n.php');
+		require_once(DIR_EXTENSION . 'client_translate_expert/system/library/translate_expert/translate_expert_i18n.php');
 
 		$langDir = DIR_EXTENSION . 'client_translate_expert/admin/language/';
 		$subPaths = array('/module/client_translate_expert.php');
 
-		return \Opencart\Extension\ClientTranslateExpert\System\Library\ClientTranslateExpertI18n::toJson(
-			\Opencart\Extension\ClientTranslateExpert\System\Library\ClientTranslateExpertI18n::loadGlobal(
-				\Opencart\Extension\ClientTranslateExpert\System\Library\ClientTranslateExpertI18n::candidateFiles($langDir, array((string)$this->config->get('config_language_admin')), $subPaths),
-				\Opencart\Extension\ClientTranslateExpert\System\Library\ClientTranslateExpertI18n::candidateFiles($langDir, array('en-gb'), $subPaths)
+		return \Opencart\Extension\ClientTranslateExpert\System\Library\TranslateExpertI18n::toJson(
+			\Opencart\Extension\ClientTranslateExpert\System\Library\TranslateExpertI18n::loadGlobal(
+				\Opencart\Extension\ClientTranslateExpert\System\Library\TranslateExpertI18n::candidateFiles($langDir, array((string)$this->config->get('config_language_admin')), $subPaths),
+				\Opencart\Extension\ClientTranslateExpert\System\Library\TranslateExpertI18n::candidateFiles($langDir, array('en-gb'), $subPaths)
 			)
 		);
 	}
 
-	// The rules are in system/library/client_translate_expert_route_filter.php (shared with the OCMOD header op for OC 1.5–3.0).
+	// The rules are in system/library/translate_expert/translate_expert_route_filter.php (shared with the OCMOD header op for OC 1.5–3.0).
 	// The event $route is common/header, so the page route comes from the request.
 	private function isCurrentRouteExcluded(): bool {
-		require_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert_route_filter.php');
+		require_once(DIR_EXTENSION . 'client_translate_expert/system/library/translate_expert/translate_expert_route_filter.php');
 
-		return \Opencart\Extension\ClientTranslateExpert\System\Library\ClientTranslateExpertRouteFilter::isExcluded(
+		return \Opencart\Extension\ClientTranslateExpert\System\Library\TranslateExpertRouteFilter::isExcluded(
 			isset($this->request->get['route']) ? $this->request->get['route'] : null,
 			(string)$this->config->get(self::settingKey('client_translate_expert_excluded_routes', VERSION)),
 			'common/dashboard'

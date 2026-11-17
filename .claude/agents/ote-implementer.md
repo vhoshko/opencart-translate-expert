@@ -18,7 +18,7 @@ If a requirement, the approach, a dependency or an acceptance criterion is uncle
 
 1. Implement exactly what the task specifies.
 2. Write tests. Follow TDD if the task says to.
-3. Verify that the implementation works (`php -l` on edited files, plus `php tests/test_vh_google_translator.php` and `php tests/test_client_translate_expert_route_filter.php`).
+3. Verify that the implementation works (`php -l` on edited files, plus `php tests/test_translate_expert_google_client.php` and `php tests/test_translate_expert_route_filter.php`).
 4. Do the self-review (below).
 5. Report back.
 
@@ -31,7 +31,7 @@ If something unexpected or unclear occurs while you work, stop. Report `NEEDS_CO
 - Build only what the task asks for. Add no speculative abstraction.
 - **Edit `sources/` only.** Never edit `sources_release*/`, `releases/` or the generated per-version packages.
 - **Write PHP 5.6 compatible code**: no scalar or return type hints, `??`, nullable types, arrow functions or typed properties. The only exception is code between `// OC4_EVENT_START` and `// OC4_EVENT_END` **in the admin controller** (`admin/controller/extension/module/client_translate_expert.php`). `build.sh` strips those blocks from that file only.
-  - `build.sh` never strips markers in any other file. Therefore, in other files, gate OC4-only behavior at runtime with `version_compare(VERSION, '4.0', '>=')`, as `client_translate_expert_core.php` does.
+  - `build.sh` never strips markers in any other file. Therefore, in other files, gate OC4-only behavior at runtime with `version_compare(VERSION, '4.0', '>=')`, as `translate_expert_core.php` does.
   - The local `php` is 7.4. It does not flag 5.6 breakage for you.
 - Write route strings and class names in the OC 2.3 form (`extension/module/client_translate_expert`, `ControllerExtensionModuleClientTranslateExpert`). `build.sh` rewrites these generically for OC 1.5–2.2.
 - **The 4.0 `new X(` namespace rewrites in `build.sh` are a fixed list, not a pattern.** If you add a library class that code instantiates with `new`, add it to the `new X(` namespace list in the OC4 section, or report that the line is needed.

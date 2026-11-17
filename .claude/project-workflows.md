@@ -29,11 +29,11 @@ If a task does one step of a PoC under `docs/pocs/**`, add a "Status: done in is
 |------|------|
 | `sources/upload/admin/controller/extension/module/client_translate_expert.php` | Admin routes, settings, AJAX actions. `// OC4_EVENT_START` … `// OC4_EVENT_END` wrap the OC4-only code |
 | `sources/upload/admin/model/extension/module/client_translate_expert.php` | DB queries for table and column analysis |
-| `sources/upload/system/library/client_translate_expert_core.php` | Main translation logic, table analysis, batch processing |
-| `sources/upload/catalog/controller/extension/module/client_translate_expert_cron.php` | Store-front cron link. Thin controller that calls `LibraryClientTranslateExpert::runCron()`. The secret is the only protection |
-| `sources/upload/system/library/client_translate_expert_cron_helper.php` | Pure cron helpers (secret rules, request parameters, setting key). `tests/` tests it |
-| `sources/upload/system/library/client_translate_expert_i18n.php` | Pure header string helper (`document.te_i18n_global`). Reads the module language file in a function scope. `tests/` tests it |
-| `sources/upload/system/library/vh_google_translator.php` | Google Translate API wrapper (`tests/` tests it) |
+| `sources/upload/system/library/translate_expert/translate_expert_core.php` | Main translation logic, table analysis, batch processing, language code mapping, format parameter fix |
+| `sources/upload/catalog/controller/extension/module/client_translate_expert_cron.php` | Store-front cron link. Thin controller that calls `TranslateExpert::runCron()`. The secret is the only protection |
+| `sources/upload/system/library/translate_expert/translate_expert_cron_helper.php` | Pure cron helpers (secret rules, request parameters, setting key). `tests/` tests it |
+| `sources/upload/system/library/translate_expert/translate_expert_i18n.php` | Pure header string helper (`document.te_i18n_global`). Reads the module language file in a function scope. `tests/` tests it |
+| `sources/upload/system/library/translate_expert/translate_expert_google_client.php` | Google Translate API wrapper (`tests/` tests it). It does not map language codes and does not fix format parameters |
 | `sources/upload/admin/view/template/extension/module/client_translate_expert.tpl` | Admin template (PHP syntax) for OC 1.5–3.0. OC 3.0 also ships the `.tpl` and renders it as PHP, because the controller sets `template_engine = template` at runtime for OC 3.0 |
 | `sources/upload/admin/view/template/extension/module/client_translate_expert.oc4.twig` | Admin template for OC 4.0 only |
 | `sources/upload/admin/language/{en-gb,ru-ru,uk-ua}/…` | i18n. Put every string in all three languages |
@@ -46,12 +46,14 @@ Edit `sources/` only. `sources_release*/` and `releases/` are build output.
 | Scope | Command | Notes |
 |-------|---------|-------|
 | Syntax check | `php -l <file>` | Local PHP is 8.2. It does **not** find syntax that breaks on 5.6 |
-| Unit tests | `php tests/test_vh_google_translator.php` | No API key needed |
-| Unit + integration tests | `php tests/test_vh_google_translator.php <GOOGLE_API_KEY>` | Use only a key that the user gives you |
-| Route filter unit tests | `php tests/test_client_translate_expert_route_filter.php` | No API key needed. Any PHP warning fails a test |
-| Cron helper unit tests | `php tests/test_client_translate_expert_cron_helper.php` | No API key needed. Any PHP warning fails a test |
+| Unit tests | `php tests/test_translate_expert_google_client.php` | No API key needed |
+| Unit + integration tests | `php tests/test_translate_expert_google_client.php <GOOGLE_API_KEY>` | Use only a key that the user gives you |
+| Core translate tests | `php tests/test_translate_expert_core_translate.php` | No DB and no API key needed. Any PHP warning fails a test |
+| Library path tests | `php tests/test_translate_expert_library_paths.php` | Static. Checks the `translate_expert/` paths and the old names |
+| Route filter unit tests | `php tests/test_translate_expert_route_filter.php` | No API key needed. Any PHP warning fails a test |
+| Cron helper unit tests | `php tests/test_translate_expert_cron_helper.php` | No API key needed. Any PHP warning fails a test |
 | Controller JSON guard tests | `php tests/test_client_translate_expert_ajax_guard.php` | No DB and no API key needed. Any PHP warning fails a test. It checks the error JSON of `runJsonAction` and the POST check |
-| Header strings tests | `php tests/test_client_translate_expert_i18n.php` | No DB and no API key needed. Any PHP warning fails a test |
+| Header strings tests | `php tests/test_translate_expert_i18n.php` | No DB and no API key needed. Any PHP warning fails a test |
 | JS helper tests | `cd tests/js && npm ci && node test_client_translate_expert_js_helpers.js` | Node and npm (allowed by the firewall). jsdom with jQuery 3.7.1 (npm) and 1.7.1 (`tests/js/vendor/`, the OC 1.5 file). `npm ci` is part of the command, so it runs each time |
 | Translate loop tests | `php tests/test_client_translate_expert_translate_loop.php` | No DB and no API key needed. Any PHP warning fails a test |
 | Version rules tests | `php tests/test_client_translate_expert_version_rules.php` | No DB and no API key needed. Any PHP warning fails a test. It checks the version helpers of the admin controller and the model (token name, setting key, routes, template engine, flag URL) |
@@ -77,7 +79,7 @@ gh api "repos/opencart/opencart/contents/upload/<path>?ref=<tag>" -H "Accept: ap
 
 | Symptom | Cause | What to do |
 |---|---|---|
-| A module works on OC 4.0 / PHP 8 but shows a white screen on OC 2.x / PHP 5.6 | A pre-4.0 package has PHP 7+ syntax (type hints, `??`, nullable types, arrow functions). `build.sh` removes `// OC4_EVENT_START` … `// OC4_EVENT_END` blocks **only from the admin controller**. It does not remove markers in the model, libraries or `install.php`. The local `php -l` (8.2) accepts the syntax | Keep every file PHP 5.6 compatible. Put PHP 7+ code only inside the marker blocks of the controller. Elsewhere, control OC4-only behavior at runtime with `version_compare(VERSION, '4.0', '>=')`, as `client_translate_expert_core.php` does. Before you build, check the added lines and new files for these features |
+| A module works on OC 4.0 / PHP 8 but shows a white screen on OC 2.x / PHP 5.6 | A pre-4.0 package has PHP 7+ syntax (type hints, `??`, nullable types, arrow functions). `build.sh` removes `// OC4_EVENT_START` … `// OC4_EVENT_END` blocks **only from the admin controller**. It does not remove markers in the model, libraries or `install.php`. The local `php -l` (8.2) accepts the syntax | Keep every file PHP 5.6 compatible. Put PHP 7+ code only inside the marker blocks of the controller. Elsewhere, control OC4-only behavior at runtime with `version_compare(VERSION, '4.0', '>=')`, as `translate_expert_core.php` does. Before you build, check the added lines and new files for these features |
 | A feature works on OC 2.3 but gives a 404 or fatal error on 2.2 and earlier | `build.sh` rewrites routes and class names with plain `sed` (`extension/module/` → `module/`, `ControllerExtensionModule` → `ControllerModule`). It does not rewrite a string in another shape | Write routes and class names in the OC 2.3 form. After the build, unzip the 2.2 or 1.5 package to a temp dir. Then grep for the new string |
 | A new AJAX action or library class works on OC 1.5–2.3. On 4.0 it gives a 404 or fatal error | The 4.0 `new X(` namespace rewrites in `build.sh` are a **fixed list**, not a pattern. The runtime rules of the module (`tokenName()`, `settingKey()`, `extensionListRoute()`, `routeMethodSeparator()`, `needsPhpTemplateEngine()` in the admin controller, and `teRoute()` in the JS) need no list | For a new library class instantiated with `new`, add the matching line to the `new X(` list in `build.sh`. For a new AJAX method, write the route with `teRoute('<method>')` in the JS. For a new setting key, use `settingKey()` in the controller, and keep the bare name in the templates. After the build, grep the oc4.x package for the unqualified `new <Class>(` |
 | The OC 4 admin page shows "Error: Could not load template extension/client_translate_expert/module/client_translate_expert!" | OC 4 `system/library/template/twig.php` shows each Twig `SyntaxError` with this text. An unknown filter, test, function or tag (for example `|string`, which Twig does not define) is a `SyntaxError`. `php -l` and the build do not compile Twig | Use only filters, tests, functions and tags that both Twig v3.4.2 (OC 4.0.2.x) and v3.18.0 (OC 4.1.0.x) define. Do not use `dump()`: OC 4.0.2.x does not load the Twig debug extension. `tests/test_oc4_twig_filters.php` checks this. Compare values with `in` and without a cast filter: Twig `in` compares `"15"` and `15` as equal |

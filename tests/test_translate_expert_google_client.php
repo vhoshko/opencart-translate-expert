@@ -1,16 +1,16 @@
 <?php
 /**
- * Test script for VHGoogleTranslator
+ * Test script for TranslateExpertGoogleClient
  *
  * Usage:
- *   php tests/test_vh_google_translator.php YOUR_GOOGLE_API_KEY
+ *   php tests/test_translate_expert_google_client.php YOUR_GOOGLE_API_KEY
  *
  * Runs unit tests (no API key needed) and integration tests (require a valid key).
  */
 
-require_once __DIR__ . '/../sources/upload/system/library/vh_google_translator.php';
+require_once __DIR__ . '/../sources/upload/system/library/translate_expert/translate_expert_google_client.php';
 
-class VHGoogleTranslatorTest {
+class TranslateExpertGoogleClientTest {
 	private $passed = 0;
 	private $failed = 0;
 	private $skipped = 0;
@@ -23,21 +23,19 @@ class VHGoogleTranslatorTest {
 
 	public function run()
 	{
-		echo "=== VHGoogleTranslator Tests ===\n\n";
+		echo "=== TranslateExpertGoogleClient Tests ===\n\n";
 
 		echo "--- Unit Tests (no API call) ---\n";
 		$this->testConstructor();
-		$this->testLanguageCodeMapping();
-		$this->testFixFormatParametersSingle();
-		$this->testFixFormatParametersArray();
 		$this->testBatchSkipsEmptyStrings();
 		$this->testBatchSendsSingleRequest();
+		$this->testBatchKeepsZeroNullAndBlankPositions();
 
 		if ($this->apiKey) {
 			echo "\n--- Integration Tests (live API) ---\n";
 			$this->testTranslateSingle();
 			$this->testTranslateBatch();
-			$this->testTranslateWithLanguageAlias();
+			$this->testTranslateWithLanguageCode();
 			$this->testTranslateEmptyInBatch();
 			$this->testTranslateHtmlFormat();
 			$this->testApiErrorHandling();
@@ -54,71 +52,13 @@ class VHGoogleTranslatorTest {
 
 	private function testConstructor()
 	{
-		$translator = new VHGoogleTranslator('test-key');
-		$this->assert($translator instanceof VHGoogleTranslator, 'Constructor creates instance');
-	}
-
-	private function testLanguageCodeMapping()
-	{
-		$translator = new TestableVHGoogleTranslator('test-key');
-
-		$translator->translate('hello', 'ua', 'en');
-		$lastOpts = $translator->getLastOptions();
-		$this->assert($lastOpts['source'] === 'uk', 'Language code "ua" mapped to "uk"');
-
-		$translator->translate('hello', 'en', 'ua');
-		$lastOpts = $translator->getLastOptions();
-		$this->assert($lastOpts['target'] === 'uk', 'Target "ua" mapped to "uk"');
-
-		$translator->translate('hello', 'rs', 'en');
-		$lastOpts = $translator->getLastOptions();
-		$this->assert($lastOpts['source'] === 'sr', 'Language code "rs" mapped to "sr"');
-
-		$translator->translate('hello', 'ge', 'en');
-		$lastOpts = $translator->getLastOptions();
-		$this->assert($lastOpts['source'] === 'ka', 'Language code "ge" mapped to "ka"');
-
-		$translator->translate('hello', 'cz', 'en');
-		$lastOpts = $translator->getLastOptions();
-		$this->assert($lastOpts['source'] === 'cs', 'Language code "cz" mapped to "cs"');
-
-		$translator->translate('hello', 'en', 'cz');
-		$lastOpts = $translator->getLastOptions();
-		$this->assert($lastOpts['target'] === 'cs', 'Target "cz" mapped to "cs"');
-	}
-
-	private function testFixFormatParametersSingle()
-	{
-		$translator = new TestableVHGoogleTranslator('test-key');
-
-		$method = new ReflectionMethod($translator, 'fixFormatParameters');
-		$method->setAccessible(true);
-
-		$result = $method->invoke($translator, 'Hello %s world', 'Привіт %с світ');
-		$this->assert(strpos($result, '%s') !== false, 'fixFormatParameters restores %s from %с');
-
-		$result2 = $method->invoke($translator, 'Count: %d items', 'Кількість: %д предметів');
-		$this->assert(strpos($result2, '%d') !== false, 'fixFormatParameters restores %d from %д');
-	}
-
-	private function testFixFormatParametersArray()
-	{
-		$translator = new TestableVHGoogleTranslator('test-key');
-
-		$method = new ReflectionMethod($translator, 'fixFormatParameters');
-		$method->setAccessible(true);
-
-		$originals = ['Hello %s!', 'Count %d.'];
-		$translated = ['Привіт %с!', 'Кількість %д.'];
-		$result = $method->invoke($translator, $originals, $translated);
-
-		$this->assert(is_array($result), 'fixFormatParameters returns array for array input');
-		$this->assert(count($result) === 2, 'fixFormatParameters returns same count');
+		$translator = new TranslateExpertGoogleClient('test-key');
+		$this->assert($translator instanceof TranslateExpertGoogleClient, 'Constructor creates instance');
 	}
 
 	private function testBatchSkipsEmptyStrings()
 	{
-		$translator = new TestableVHGoogleTranslator('test-key');
+		$translator = new TestableTranslateExpertGoogleClient('test-key');
 
 		$result = $translator->translateBatch(['', '  ', 'hello'], 'en', 'uk');
 		$this->assert($result->success === 1, 'Batch returns success');
@@ -129,7 +69,7 @@ class VHGoogleTranslatorTest {
 
 	private function testBatchSendsSingleRequest()
 	{
-		$translator = new TestableVHGoogleTranslator('test-key');
+		$translator = new TestableTranslateExpertGoogleClient('test-key');
 
 		$result = $translator->translateBatch(['one', 'two', '', null, '   ', 'three'], 'en', 'uk');
 
@@ -145,11 +85,27 @@ class VHGoogleTranslatorTest {
 		$this->assert(count($result->texts) === 6, 'Result has same length as input');
 	}
 
+	private function testBatchKeepsZeroNullAndBlankPositions()
+	{
+		$translator = new TestableTranslateExpertGoogleClient('test-key');
+
+		$result = $translator->translateBatch(array('0', null, '  ', 'one'), 'en', 'uk');
+		$this->assert($translator->getLastBatchTexts() === array('one'), 'Zero, null and blank texts are not sent to Google');
+		$this->assert($result->texts === array('0', null, '  ', 'one_translated'), 'Zero, null and blank texts keep their positions');
+
+		$translator = new TestableTranslateExpertGoogleClient('test-key');
+		$result = $translator->translateBatch(array('0', null, '  '), 'en', 'uk');
+		$this->assert($translator->getBatchCallCount() === 0, 'No request is sent when no text can be translated');
+		$this->assert($result->texts === array('0', null, '  '), 'Skipped texts come back unchanged');
+		$this->assert(TranslateExpertGoogleClient::isTranslatableText('0') ? false : true, 'isTranslatableText rejects "0"');
+		$this->assert(TranslateExpertGoogleClient::isTranslatableText('a') ? true : false, 'isTranslatableText accepts text');
+	}
+
 	// --- Integration Tests ---
 
 	private function testTranslateSingle()
 	{
-		$translator = new VHGoogleTranslator($this->apiKey);
+		$translator = new TranslateExpertGoogleClient($this->apiKey);
 
 		try {
 			$result = $translator->translate('Hello', 'en', 'uk');
@@ -163,7 +119,7 @@ class VHGoogleTranslatorTest {
 
 	private function testTranslateBatch()
 	{
-		$translator = new VHGoogleTranslator($this->apiKey);
+		$translator = new TranslateExpertGoogleClient($this->apiKey);
 
 		try {
 			$result = $translator->translateBatch(['Hello', 'World'], 'en', 'uk');
@@ -177,23 +133,23 @@ class VHGoogleTranslatorTest {
 		}
 	}
 
-	private function testTranslateWithLanguageAlias()
+	private function testTranslateWithLanguageCode()
 	{
-		$translator = new VHGoogleTranslator($this->apiKey);
+		$translator = new TranslateExpertGoogleClient($this->apiKey);
 
 		try {
-			$result = $translator->translate('Good morning', 'en', 'ua');
-			$this->assert($result->success === 1, 'Translate with "ua" alias returns success');
-			$this->assert(!empty($result->text), 'Translate with "ua" alias returns text');
-			echo "   Translated 'Good morning' (ua alias) -> '{$result->text}'\n";
+			$result = $translator->translate('Good morning', 'en', 'uk');
+			$this->assert($result->success === 1, 'Translate with language code "uk" returns success');
+			$this->assert(!empty($result->text), 'Translate with language code "uk" returns text');
+			echo "   Translated 'Good morning' (code uk) -> '{$result->text}'\n";
 		} catch (Exception $e) {
-			$this->fail('Translate with alias threw exception: ' . $e->getMessage());
+			$this->fail('Translate with language code threw exception: ' . $e->getMessage());
 		}
 	}
 
 	private function testTranslateEmptyInBatch()
 	{
-		$translator = new VHGoogleTranslator($this->apiKey);
+		$translator = new TranslateExpertGoogleClient($this->apiKey);
 
 		try {
 			$result = $translator->translateBatch(['Hello', '', 'World'], 'en', 'uk');
@@ -208,7 +164,7 @@ class VHGoogleTranslatorTest {
 
 	private function testTranslateHtmlFormat()
 	{
-		$translator = new VHGoogleTranslator($this->apiKey);
+		$translator = new TranslateExpertGoogleClient($this->apiKey);
 
 		try {
 			$result = $translator->translate('<b>Hello</b> world', 'en', 'uk', 'html');
@@ -222,7 +178,7 @@ class VHGoogleTranslatorTest {
 
 	private function testApiErrorHandling()
 	{
-		$translator = new VHGoogleTranslator('invalid-key-12345');
+		$translator = new TranslateExpertGoogleClient('invalid-key-12345');
 
 		try {
 			$translator->translate('Hello', 'en', 'uk');
@@ -258,7 +214,7 @@ class VHGoogleTranslatorTest {
 /**
  * Testable subclass that stubs the API call for unit tests.
  */
-class TestableVHGoogleTranslator extends VHGoogleTranslator {
+class TestableTranslateExpertGoogleClient extends TranslateExpertGoogleClient {
 	private $lastOptions = [];
 	private $batchCallCount = 0;
 	private $lastBatchTexts = [];
@@ -298,9 +254,9 @@ $apiKey = isset($argv[1]) ? $argv[1] : '';
 
 if (!$apiKey) {
 	echo "Tip: pass your Google API key as argument to run integration tests:\n";
-	echo "  php tests/test_vh_google_translator.php YOUR_API_KEY\n\n";
+	echo "  php tests/test_translate_expert_google_client.php YOUR_API_KEY\n\n";
 }
 
-$test = new VHGoogleTranslatorTest($apiKey);
+$test = new TranslateExpertGoogleClientTest($apiKey);
 $success = $test->run();
 exit($success ? 0 : 1);

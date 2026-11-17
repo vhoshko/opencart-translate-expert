@@ -30,6 +30,33 @@ strip_oc4_event_blocks() {
     fi
 }
 
+# Check a finished package: the 7 library files are in the translate_expert folder
+# and no old library file name or class name remains in the package contents.
+OLD_LIB_NAMES='vh_google_translator|VHGoogleTranslator|LibraryClientTranslateExpert|ClientTranslateExpertCronHelper|ClientTranslateExpertI18n|ClientTranslateExpertRouteFilter|client_translate_expert_(core|cron_helper|i18n|route_filter)\.php|client_localization_translate_expert|library/client_translate_expert\.php'
+check_package() {
+    local zipfile="$1"
+    local dir="$2"
+    local libpath="$3"
+    local listing
+    listing=$(unzip -Z1 "$zipfile")
+    local name
+    for name in translate_expert translate_expert_core translate_expert_localization translate_expert_cron_helper translate_expert_i18n translate_expert_route_filter translate_expert_google_client; do
+        if ! grep -qxF "${libpath}/translate_expert/${name}.php" <<< "$listing"; then
+            echo "ERROR: ${libpath}/translate_expert/${name}.php is missing in $(basename "$zipfile")" >&2
+            exit 1
+        fi
+    done
+    if grep -qE "${libpath}/(client_|vh_)[a-z_]*\.php" <<< "$listing"; then
+        echo "ERROR: old flat library file in $(basename "$zipfile")" >&2
+        exit 1
+    fi
+    if grep -rqIE "$OLD_LIB_NAMES" "$dir" --exclude-dir=google-cloud-translate; then
+        echo "ERROR: old library file or class name in $(basename "$zipfile")" >&2
+        grep -rInE "$OLD_LIB_NAMES" "$dir" --exclude-dir=google-cloud-translate >&2
+        exit 1
+    fi
+}
+
 cleanup_temp() {
     rm -rf sources_release sources_release_22 sources_release_21 sources_release_20 sources_release_15 sources_release_30 sources_release_40
 }
@@ -55,6 +82,7 @@ OC23_CTRL="sources_release/upload/admin/controller/extension/module/client_trans
 cp "$OC23_CTRL" "${OC23_CTRL}.oc4bak"
 strip_oc4_event_blocks "$OC23_CTRL"
 cd sources_release && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.3-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4bak' -x '*.oc4.twig' -x 'upload/admin/view/stylesheet/oc15/*' && cd "$SCRIPT_DIR"
+check_package "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.3-v${VERSION}-${LOCAL_DATE}.ocmod.zip" sources_release upload/system/library
 mv "${OC23_CTRL}.oc4bak" "$OC23_CTRL"
 
 # prepare release for OpenCart 2.2
@@ -90,6 +118,7 @@ mv sources_release_22/upload/admin/view/template/extension/module/* sources_rele
 rm -rf sources_release_22/upload/admin/view/template/extension
 
 cd sources_release_22 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.2-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4.twig' -x 'upload/admin/view/stylesheet/oc15/*' && cd "$SCRIPT_DIR"
+check_package "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.2-v${VERSION}-${LOCAL_DATE}.ocmod.zip" sources_release_22 upload/system/library
 
 # prepare release for OpenCart 2.1
 cp -r sources_release_22 sources_release_21
@@ -100,12 +129,14 @@ mv sources_release_21/upload/admin/language/ru-ru sources_release_21/upload/admi
 mv sources_release_21/upload/admin/language/uk-ua sources_release_21/upload/admin/language/ukrainian
 
 cd sources_release_21 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.1-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4.twig' -x 'upload/admin/view/stylesheet/oc15/*' && cd "$SCRIPT_DIR"
+check_package "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.1-v${VERSION}-${LOCAL_DATE}.ocmod.zip" sources_release_21 upload/system/library
 
 # prepare release for OpenCart 2.0
 cp -r sources_release_21 sources_release_20
 file_replace sources_release_20/upload/admin/controller/module/client_translate_expert.php 'language->load' 'load->language'
 
 cd sources_release_20 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.0-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4.twig' -x 'upload/admin/view/stylesheet/oc15/*' && cd "$SCRIPT_DIR"
+check_package "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc2.0-v${VERSION}-${LOCAL_DATE}.ocmod.zip" sources_release_20 upload/system/library
 
 # prepare release for OpenCart 1.5
 cp -r sources_release_20 sources_release_15
@@ -131,6 +162,7 @@ if ! grep -qF '<![CDATA[function index(]]>' "$OC15_XML" || ! grep -qF '<![CDATA[
 fi
 
 cd sources_release_15 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc1.5-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4.twig' && cd "$SCRIPT_DIR"
+check_package "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc1.5-v${VERSION}-${LOCAL_DATE}.ocmod.zip" sources_release_15 upload/system/library
 
 # prepare release for OpenCart 3.0
 cp -r sources_release sources_release_30
@@ -144,6 +176,7 @@ OC30_CTRL="sources_release_30/upload/admin/controller/extension/module/client_tr
 cp "$OC30_CTRL" "${OC30_CTRL}.oc4bak"
 strip_oc4_event_blocks "$OC30_CTRL"
 cd sources_release_30 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc3.0-v${VERSION}-${LOCAL_DATE}.ocmod.zip" . -x '*.DS_Store' -x '*.oc4bak' -x '*.oc4.twig' -x 'upload/admin/view/stylesheet/oc15/*' && cd "$SCRIPT_DIR"
+check_package "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc3.0-v${VERSION}-${LOCAL_DATE}.ocmod.zip" sources_release_30 upload/system/library
 mv "${OC30_CTRL}.oc4bak" "$OC30_CTRL"
 
 # ============================================================
@@ -185,9 +218,7 @@ for lang in en-gb uk-ua ru-ru; do
 done
 
 # Move library files
-for lib in client_translate_expert_core.php client_translate_expert.php client_localization_translate_expert.php vh_google_translator.php client_translate_expert_route_filter.php client_translate_expert_cron_helper.php client_translate_expert_i18n.php; do
-    mv "sources_release_40/upload/system/library/${lib}" "$EXT_DIR/system/library/${lib}"
-done
+mv sources_release_40/upload/system/library/translate_expert "$EXT_DIR/system/library/translate_expert"
 # Also copy google-cloud-translate if present
 if [ -d "sources_release_40/upload/system/library/google-cloud-translate" ]; then
     mv "sources_release_40/upload/system/library/google-cloud-translate" "$EXT_DIR/system/library/google-cloud-translate"
@@ -223,13 +254,13 @@ rm -rf sources_release_40/upload/admin
 OC4_CONTROLLER="$EXT_DIR/admin/controller/module/client_translate_expert.php"
 OC4_MODEL="$EXT_DIR/admin/model/module/client_translate_expert.php"
 OC4_JS="$EXT_DIR/admin/view/javascript/client_translate_expert.js"
-OC4_LIB_CORE="$EXT_DIR/system/library/client_translate_expert_core.php"
-OC4_LIB_MAIN="$EXT_DIR/system/library/client_translate_expert.php"
-OC4_LIB_LOC="$EXT_DIR/system/library/client_localization_translate_expert.php"
-OC4_LIB_GOOGLE="$EXT_DIR/system/library/vh_google_translator.php"
-OC4_LIB_ROUTE_FILTER="$EXT_DIR/system/library/client_translate_expert_route_filter.php"
-OC4_LIB_CRON_HELPER="$EXT_DIR/system/library/client_translate_expert_cron_helper.php"
-OC4_LIB_I18N="$EXT_DIR/system/library/client_translate_expert_i18n.php"
+OC4_LIB_CORE="$EXT_DIR/system/library/translate_expert/translate_expert_core.php"
+OC4_LIB_MAIN="$EXT_DIR/system/library/translate_expert/translate_expert.php"
+OC4_LIB_LOC="$EXT_DIR/system/library/translate_expert/translate_expert_localization.php"
+OC4_LIB_GOOGLE="$EXT_DIR/system/library/translate_expert/translate_expert_google_client.php"
+OC4_LIB_ROUTE_FILTER="$EXT_DIR/system/library/translate_expert/translate_expert_route_filter.php"
+OC4_LIB_CRON_HELPER="$EXT_DIR/system/library/translate_expert/translate_expert_cron_helper.php"
+OC4_LIB_I18N="$EXT_DIR/system/library/translate_expert/translate_expert_i18n.php"
 OC4_CATALOG_CRON="$EXT_DIR/catalog/controller/module/client_translate_expert_cron.php"
 
 # --- Add namespace declarations (insert after <?php on line 1) ---
@@ -284,9 +315,9 @@ file_replace "$OC4_CONTROLLER" 'model_extension_module_client_translate_expert' 
 # OC4 uses full extension paths: extension/client_translate_expert/module/client_translate_expert
 
 # --- Update class instantiations in model to use namespaced classes ---
-file_replace "$OC4_MODEL" 'new LibraryClientTranslateExpert(' 'new \\Opencart\\Extension\\ClientTranslateExpert\\System\\Library\\LibraryClientTranslateExpert('
-file_replace "$OC4_CATALOG_CRON" 'new LibraryClientTranslateExpert(' 'new \\Opencart\\Extension\\ClientTranslateExpert\\System\\Library\\LibraryClientTranslateExpert('
-file_replace "$OC4_MODEL" 'new LocalizationLibraryClientTranslateExpert(' 'new \\Opencart\\Extension\\ClientTranslateExpert\\System\\Library\\LocalizationLibraryClientTranslateExpert('
+file_replace "$OC4_MODEL" 'new TranslateExpert(' 'new \\Opencart\\Extension\\ClientTranslateExpert\\System\\Library\\TranslateExpert('
+file_replace "$OC4_CATALOG_CRON" 'new TranslateExpert(' 'new \\Opencart\\Extension\\ClientTranslateExpert\\System\\Library\\TranslateExpert('
+file_replace "$OC4_MODEL" 'new TranslateExpertLocalization(' 'new \\Opencart\\Extension\\ClientTranslateExpert\\System\\Library\\TranslateExpertLocalization('
 
 # --- Update Log class instantiation for OC4 namespaced engine ---
 file_replace "$OC4_LIB_CORE" 'new Log(' 'new \\Opencart\\System\\Library\\Log('
@@ -336,6 +367,7 @@ INSTJSON
 OC4_SUBFOLDER="$SCRIPT_DIR/OpenCartTranslateExpertClient-oc4.x-v${VERSION}-${LOCAL_DATE}"
 mkdir -p "$OC4_SUBFOLDER"
 cd "$OC4_ZIP_ROOT" && zip -r "$OC4_SUBFOLDER/client_translate_expert.ocmod.zip" . -x '*.DS_Store' && cd "$SCRIPT_DIR"
+check_package "$OC4_SUBFOLDER/client_translate_expert.ocmod.zip" "$OC4_ZIP_ROOT" system/library
 
 cleanup_temp
 echo "Build complete!"

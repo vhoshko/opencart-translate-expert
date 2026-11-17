@@ -1,12 +1,12 @@
 <?php
 
 if (defined('DIR_EXTENSION') && version_compare(VERSION, '4.0', '>=')) {
-	include_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert_core.php');
+	include_once(DIR_EXTENSION . 'client_translate_expert/system/library/translate_expert/translate_expert_core.php');
 } else {
-	include_once(DIR_SYSTEM . 'library/client_translate_expert_core.php');
+	include_once(DIR_SYSTEM . 'library/translate_expert/translate_expert_core.php');
 }
 
-class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExpertCore
+class TranslateExpertLocalization extends TranslateExpertCore
 {
 	const ANALIZE_BULK_SIZE = 10;
 

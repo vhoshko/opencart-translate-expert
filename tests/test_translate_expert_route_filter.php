@@ -1,22 +1,22 @@
 <?php
 /**
- * Test script for ClientTranslateExpertRouteFilter
+ * Test script for TranslateExpertRouteFilter
  *
  * Usage:
- *   php tests/test_client_translate_expert_route_filter.php
+ *   php tests/test_translate_expert_route_filter.php
  *
  * Unit tests only (no OpenCart, no API key). Any PHP warning or notice fails the run.
  */
 
-require_once __DIR__ . '/../sources/upload/system/library/client_translate_expert_route_filter.php';
+require_once __DIR__ . '/../sources/upload/system/library/translate_expert/translate_expert_route_filter.php';
 
-class ClientTranslateExpertRouteFilterTest {
+class TranslateExpertRouteFilterTest {
 	private $passed = 0;
 	private $failed = 0;
 
 	public function run()
 	{
-		echo "=== ClientTranslateExpertRouteFilter Tests ===\n\n";
+		echo "=== TranslateExpertRouteFilter Tests ===\n\n";
 
 		// Warnings such as "strpos(): Empty needle" (PHP < 8) must fail the test.
 		set_error_handler(function ($errno, $errstr, $errfile, $errline) {
@@ -128,7 +128,7 @@ class ClientTranslateExpertRouteFilterTest {
 	{
 		echo "\nDefault route:\n";
 		// The test runs without OpenCart, so VERSION is not defined.
-		$actual = ClientTranslateExpertRouteFilter::defaultRoute();
+		$actual = TranslateExpertRouteFilter::defaultRoute();
 		$this->assert(!defined('VERSION') && $actual === 'common/dashboard', "defaultRoute() without VERSION gives common/dashboard (got {$actual})");
 	}
 
@@ -148,7 +148,7 @@ class ClientTranslateExpertRouteFilterTest {
 	private function check($route, $rules, $expected, $message, $defaultRoute = 'common/dashboard')
 	{
 		try {
-			$actual = ClientTranslateExpertRouteFilter::isExcluded($route, $rules, $defaultRoute);
+			$actual = TranslateExpertRouteFilter::isExcluded($route, $rules, $defaultRoute);
 		} catch (ErrorException $e) {
 			echo " [FAIL] {$message} (PHP error: {$e->getMessage()})\n";
 			$this->failed++;
@@ -165,6 +165,6 @@ class ClientTranslateExpertRouteFilterTest {
 	}
 }
 
-$test = new ClientTranslateExpertRouteFilterTest();
+$test = new TranslateExpertRouteFilterTest();
 $success = $test->run();
 exit($success ? 0 : 1);

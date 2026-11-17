@@ -7,7 +7,7 @@
  *
  * Keep this file PHP 5.6 compatible and free of OpenCart dependencies (it is loaded on every admin page).
  */
-class ClientTranslateExpertRouteFilter
+class TranslateExpertRouteFilter
 {
 	/**
 	 * @param string|null $route        Current request route ($this->request->get['route']), null if absent
