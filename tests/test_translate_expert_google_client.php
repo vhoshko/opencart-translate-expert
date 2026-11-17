@@ -30,6 +30,8 @@ class TranslateExpertGoogleClientTest {
 		$this->testBatchSkipsEmptyStrings();
 		$this->testBatchSendsSingleRequest();
 		$this->testBatchKeepsZeroNullAndBlankPositions();
+		$this->testBatchSplitsByMaxSegments();
+		$this->testBatchSegmentCapWithLongTexts();
 
 		if ($this->apiKey) {
 			echo "\n--- Integration Tests (live API) ---\n";
@@ -99,6 +101,77 @@ class TranslateExpertGoogleClientTest {
 		$this->assert($result->texts === array('0', null, '  '), 'Skipped texts come back unchanged');
 		$this->assert(TranslateExpertGoogleClient::isTranslatableText('0') ? false : true, 'isTranslatableText rejects "0"');
 		$this->assert(TranslateExpertGoogleClient::isTranslatableText('a') ? true : false, 'isTranslatableText accepts text');
+	}
+
+	private function testBatchSplitsByMaxSegments()
+	{
+		$translator = new TestableTranslateExpertGoogleClient('test-key');
+
+		$texts = array();
+		$translatable = 0;
+		for ($i = 0; $i < 300; $i++)
+		{
+			if ($i === 5)
+				$texts[] = '';
+			elseif ($i === 150)
+				$texts[] = null;
+			elseif ($i === 250)
+				$texts[] = '   ';
+			else
+			{
+				$texts[] = 't' . $i;
+				$translatable++;
+			}
+		}
+
+		$result = $translator->translateBatch($texts, 'en', 'uk');
+		$sizes = $translator->getBatchSizes();
+
+		$this->assert(max($sizes) <= TranslateExpertGoogleClient::GOOGLE_TRANSLATE_MAX_SEGMENTS, 'No Google request has more texts than GOOGLE_TRANSLATE_MAX_SEGMENTS');
+		$this->assert(count($sizes) === 3, 'Texts are split into 3 Google requests');
+		$this->assert(array_sum($sizes) === $translatable, 'The batch sizes add up to the number of translatable texts');
+		$this->assert(count($result->texts) === 300, 'Result has same length as input');
+
+		$ok = true;
+		foreach ($texts as $i => $text)
+		{
+			if (!isset($result->texts[$i]) && $text !== null)
+				$ok = false;
+			elseif ($i === 5 || $i === 150 || $i === 250)
+				$ok = $ok && $result->texts[$i] === $text;
+			else
+				$ok = $ok && isset($result->texts[$i]) && $result->texts[$i] === $text . '_translated';
+		}
+		$this->assert($ok, 'Each text keeps its position, and empty, null and blank texts come back unchanged');
+	}
+
+	private function testBatchSegmentCapWithLongTexts()
+	{
+		$translator = new TestableTranslateExpertGoogleClient('test-key');
+
+		$long = str_repeat('a', TranslateExpertGoogleClient::GOOGLE_TRANSLATE_MAX_LENGTH + 10);
+		$texts = array();
+		for ($i = 0; $i < 250; $i++)
+			$texts[] = 'x' . $i;
+		array_splice($texts, 100, 0, array($long));
+		array_splice($texts, 150, 0, array($long));
+		$texts[] = $long;
+
+		$result = $translator->translateBatch($texts, 'en', 'uk');
+		$sizes = $translator->getBatchSizes();
+
+		$this->assert(count($sizes) > 0 && max($sizes) <= TranslateExpertGoogleClient::GOOGLE_TRANSLATE_MAX_SEGMENTS, 'Long texts do not break the segment cap of the batches');
+		$this->assert(count($result->texts) === count($texts), 'Result has same length as input with long texts');
+
+		$ok = true;
+		foreach ($texts as $i => $text)
+		{
+			// The stub adds the suffix to each chunk of a long text, so remove it before the compare.
+			$ok = $ok && isset($result->texts[$i]) && str_replace('_translated', '', $result->texts[$i]) === $text;
+			if (strlen($text) <= TranslateExpertGoogleClient::GOOGLE_TRANSLATE_MAX_LENGTH)
+				$ok = $ok && $result->texts[$i] === $text . '_translated';
+		}
+		$this->assert($ok, 'Short and long texts keep their positions around the segment cap');
 	}
 
 	// --- Integration Tests ---
@@ -218,6 +291,7 @@ class TestableTranslateExpertGoogleClient extends TranslateExpertGoogleClient {
 	private $lastOptions = [];
 	private $batchCallCount = 0;
 	private $lastBatchTexts = [];
+	private $batchSizes = [];
 
 	public function getLastOptions()
 	{
@@ -227,6 +301,11 @@ class TestableTranslateExpertGoogleClient extends TranslateExpertGoogleClient {
 	public function getBatchCallCount()
 	{
 		return $this->batchCallCount;
+	}
+
+	public function getBatchSizes()
+	{
+		return $this->batchSizes;
 	}
 
 	public function getLastBatchTexts()
@@ -245,6 +324,7 @@ class TestableTranslateExpertGoogleClient extends TranslateExpertGoogleClient {
 		$this->lastOptions = $options;
 		$this->batchCallCount++;
 		$this->lastBatchTexts = $texts;
+		$this->batchSizes[] = count($texts);
 		return array_map(function($text) { return $text . '_translated'; }, $texts);
 	}
 }

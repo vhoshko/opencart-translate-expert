@@ -5,6 +5,9 @@ class TranslateExpertGoogleClient  {
 
 	const GOOGLE_TRANSLATE_MAX_LENGTH = 50 * 1000;
 
+	// Maximum number of texts in one Google request. Google answers HTTP 400 "Too many text segments" above its own limit.
+	const GOOGLE_TRANSLATE_MAX_SEGMENTS = 100;
+
 	function __construct($googleApiKey)
 	{
 		$this->googleApiKey = $googleApiKey;
@@ -95,7 +98,8 @@ class TranslateExpertGoogleClient  {
 	/**
 	 * Translates a list of non-empty texts, grouping them into as few Google
 	 * Translate API requests as possible (one request per group of texts
-	 * whose combined length fits under GOOGLE_TRANSLATE_MAX_LENGTH). A text
+	 * whose combined length fits under GOOGLE_TRANSLATE_MAX_LENGTH and whose
+	 * count fits under GOOGLE_TRANSLATE_MAX_SEGMENTS). A text
 	 * that alone exceeds the limit is translated on its own via translateInternal(),
 	 * which chunks it into sequential requests. Returns translations in the
 	 * same order as $texts.
@@ -132,7 +136,8 @@ class TranslateExpertGoogleClient  {
 				continue;
 			}
 
-			if ($batchLength + strlen($text) > self::GOOGLE_TRANSLATE_MAX_LENGTH)
+			if ($batchLength + strlen($text) > self::GOOGLE_TRANSLATE_MAX_LENGTH
+				|| count($batchTexts) >= self::GOOGLE_TRANSLATE_MAX_SEGMENTS)
 				$flushBatch();
 
 			$batchIndexes[] = $index;
