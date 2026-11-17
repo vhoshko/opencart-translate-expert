@@ -525,7 +525,7 @@ function makeRemovingDataFromDbRequest() {
 	delete params.langIdFrom;
 	delete params.mode;
 
-	$.get(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/removeDataFromDb'
+	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/removeDataFromDb'
 		+ '&token=' + getOcToken(),
 		params
 	).done(function(data) {
@@ -630,22 +630,20 @@ function resetTranslationCharCount()
 
 function resetTranslationCache()
 {
-	var urlParams = new URLSearchParams(window.location.search);
-	var token = urlParams.get('token');
-
-	$.get(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/resetCache'
-		+ '&token=' + token
+	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/resetCache'
+		+ '&token=' + getOcToken()
 	).done(function(data) {
-		if (!data.success)
+		teAlerts.clear('#te-debug-alerts');
+		if (!data || !data.success)
 		{
-			showTranslateExpertErrorMessage(data, null);
+			teAlerts.fromResponse('#te-debug-alerts', data);
 			return;
 		}
 
-		console.log(data);
+		teAlerts.show('#te-debug-alerts', 'success', teT('te_cache_reset_done'));
 	}).fail(function(data) {
-		console.log(data);
-		showTranslateExpertErrorMessage(data, null);
+		teAlerts.clear('#te-debug-alerts');
+		teAlerts.fromResponse('#te-debug-alerts', data);
 	});
 }
 

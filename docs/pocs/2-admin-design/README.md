@@ -41,5 +41,6 @@ Status: PoC. This folder contains only Markdown. No file under `sources/upload/*
    - Change `removeDataFromDb` and `resetCache` from GET to POST, because they change data.
    - Show a success message after `resetCache`.
    - Return a JSON error, not an OpenCart HTML error page, when the model re-throws a PHP exception.
+   - Status: done in issue 61.
 
 Each step must keep OpenCart 1.5–4.1 working. Each step must pass the tests and the build.

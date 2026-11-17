@@ -98,6 +98,7 @@ $_['te_settings_card_routes'] = 'Виключені маршрути';
 $_['te_settings_card_try'] = 'Пробний переклад';
 $_['te_debug_card_versions'] = 'Версії';
 $_['te_debug_card_cache'] = 'Кеш';
+$_['te_cache_reset_done'] = 'Кеш перекладів скинуто.';
 $_['te_about_card'] = 'Інформація про модуль';
 
 // Value

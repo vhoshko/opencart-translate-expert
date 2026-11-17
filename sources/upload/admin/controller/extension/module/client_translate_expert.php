@@ -191,7 +191,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		// Front-end strings of the new admin design: the template writes them as document.te_i18n (read with teT() in the JS).
 		$te_i18n = array();
 		foreach (array('te_alert_details', 'te_alert_close', 'te_alert_not_json', 'te_summary_month', 'te_summary_cost', 'te_remove_completed', 'te_remove_start', 'te_remove_table', 'te_remove_column', 'te_remove_finish', 'te_time_in_sec',
-			'te_site_stop', 'te_site_log', 'te_site_analyzing', 'te_site_translating', 'te_site_col_table', 'te_site_col_chars', 'te_site_col_chars_lang', 'te_site_col_actions', 'te_site_total', 'te_site_translate', 'te_site_translate_all', 'te_site_details', 'te_site_not_supported', 'te_site_done', 'te_site_toggle', 'te_site_cnt_current', 'te_site_cnt_table', 'te_site_cnt_request', 'te_site_cnt_chars', 'te_site_cnt_time', 'te_site_cnt_translated', 'te_site_translate_confirm', 'te_site_translate_all_confirm', 'te_site_log_table_done', 'te_site_detail_loading', 'te_site_detail_source', 'te_site_detail_target', 'te_site_empty', 'te_site_identical', 'te_site_detail_none', 'te_site_detail_more', 'te_site_state_done', 'te_site_state_stopped', 'te_site_state_error', 'te_loc_analyzing', 'te_loc_translating', 'te_loc_cnt_files', 'te_loc_totals_files', 'te_loc_totals_to_translate', 'te_loc_totals_values', 'te_loc_totals_chars', 'te_loc_col_file', 'te_loc_col_keys', 'te_loc_col_chars', 'te_loc_col_state', 'te_loc_state_missing', 'te_loc_state_partial', 'te_loc_state_saved', 'te_loc_toggle', 'te_loc_root', 'te_loc_expression', 'te_loc_source_file', 'te_loc_translate_file', 'te_loc_translate_save_file', 'te_loc_save_file', 'te_loc_saved', 'te_loc_nothing_to_save', 'te_loc_no_files', 'te_loc_translate_all_confirm', 'te_loc_translate_all', 'value_analization_mode_both', 'value_analization_mode_only_empty', 'value_analization_mode_same_value') as $te_i18n_key) {
+			'te_site_stop', 'te_site_log', 'te_site_analyzing', 'te_site_translating', 'te_site_col_table', 'te_site_col_chars', 'te_site_col_chars_lang', 'te_site_col_actions', 'te_site_total', 'te_site_translate', 'te_site_translate_all', 'te_site_details', 'te_site_not_supported', 'te_site_done', 'te_site_toggle', 'te_site_cnt_current', 'te_site_cnt_table', 'te_site_cnt_request', 'te_site_cnt_chars', 'te_site_cnt_time', 'te_site_cnt_translated', 'te_site_translate_confirm', 'te_site_translate_all_confirm', 'te_site_log_table_done', 'te_site_detail_loading', 'te_site_detail_source', 'te_site_detail_target', 'te_site_empty', 'te_site_identical', 'te_site_detail_none', 'te_site_detail_more', 'te_site_state_done', 'te_site_state_stopped', 'te_site_state_error', 'te_loc_analyzing', 'te_loc_translating', 'te_loc_cnt_files', 'te_loc_totals_files', 'te_loc_totals_to_translate', 'te_loc_totals_values', 'te_loc_totals_chars', 'te_loc_col_file', 'te_loc_col_keys', 'te_loc_col_chars', 'te_loc_col_state', 'te_loc_state_missing', 'te_loc_state_partial', 'te_loc_state_saved', 'te_loc_toggle', 'te_loc_root', 'te_loc_expression', 'te_loc_source_file', 'te_loc_translate_file', 'te_loc_translate_save_file', 'te_loc_save_file', 'te_loc_saved', 'te_loc_nothing_to_save', 'te_loc_no_files', 'te_loc_translate_all_confirm', 'te_loc_translate_all', 'te_cache_reset_done', 'value_analization_mode_both', 'value_analization_mode_only_empty', 'value_analization_mode_same_value') as $te_i18n_key) {
 			$te_i18n[$te_i18n_key] = $this->language->get($te_i18n_key);
 		}
 		foreach (array('te_site_lang_from', 'te_site_lang_to', 'te_site_lang_swap', 'te_site_card_what', 'te_site_more_filters', 'te_loc_card_files', 'te_loc_analyze', 'te_summary_status', 'te_summary_enabled', 'te_summary_disabled', 'te_summary_api_key', 'te_summary_key_set', 'te_summary_key_not_set', 'te_settings_card_connection', 'te_settings_card_usage', 'te_settings_card_cron', 'te_settings_card_routes', 'te_settings_card_try', 'te_debug_card_versions', 'te_debug_card_cache', 'te_about_card') as $te_text_key) {
@@ -409,62 +409,63 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	}
 
 	public function translate() {
-		if ($this->request->server['REQUEST_METHOD'] == 'POST') {
-			$text = isset($this->request->post['text']) ? html_entity_decode($this->request->post['text']) : '';
-			$textArr = isset($this->request->post['textArr']) ? html_entity_decode($this->request->post['textArr']) : '';
-			$source = isset($this->request->post['source']) ? $this->request->post['source'] : '';
-			$target = isset($this->request->post['target']) ? $this->request->post['target'] : 'en';
-			$format = isset($this->request->post['format']) ? $this->request->post['format'] : 'html';
-		}
-		else {
-			$text = isset($this->request->get['text']) ? html_entity_decode($this->request->get['text']) : '';
-			$textArr = isset($this->request->get['textArr']) ? html_entity_decode($this->request->get['textArr']) : '';
-			$source = isset($this->request->get['source']) ? $this->request->get['source'] : '';
-			$target = isset($this->request->get['target']) ? $this->request->get['target'] : 'en';
-			$format = isset($this->request->get['format']) ? $this->request->get['format'] : 'html';
-		}
-
-		if ($textArr)
-		{
-			$textArr = json_decode($textArr);
-			foreach($textArr as &$textEl)
-				$textEl = html_entity_decode($textEl);
-			$text = $textArr;
-		}
-
-		$this->load->model('localisation/language');
-		if (is_numeric($source))
-		{
-			$source = $this->model_localisation_language->getLanguage($source)['code'];
-		}
-		if (is_numeric($target))
-		{
-			$target = $this->model_localisation_language->getLanguage($target)['code'];
-		}
-
-		$this->load->model('extension/module/client_translate_expert');
-		$result = $this->model_extension_module_client_translate_expert->translate($text, $source, $target, $format);
-
-		// Count the characters as Google gets them (the library trims each text) and only for a successful call.
-		$translatedCharCount = 0;
-		if (is_array($text))
-		{
-			foreach($text as $textValue)
-			{
-				$translatedCharCount += mb_strlen(trim($textValue), 'UTF-8');
+		$this->runJsonAction(function () {
+			if ($this->request->server['REQUEST_METHOD'] == 'POST') {
+				$text = isset($this->request->post['text']) ? html_entity_decode($this->request->post['text']) : '';
+				$textArr = isset($this->request->post['textArr']) ? html_entity_decode($this->request->post['textArr']) : '';
+				$source = isset($this->request->post['source']) ? $this->request->post['source'] : '';
+				$target = isset($this->request->post['target']) ? $this->request->post['target'] : 'en';
+				$format = isset($this->request->post['format']) ? $this->request->post['format'] : 'html';
 			}
-		}
-		else
-		{
-			$translatedCharCount = mb_strlen(trim($text), 'UTF-8');
-		}
-		if (is_object($result) && !empty($result->success))
-		{
-			$this->storeTranslatedCharCount($translatedCharCount);
-		}
+			else {
+				$text = isset($this->request->get['text']) ? html_entity_decode($this->request->get['text']) : '';
+				$textArr = isset($this->request->get['textArr']) ? html_entity_decode($this->request->get['textArr']) : '';
+				$source = isset($this->request->get['source']) ? $this->request->get['source'] : '';
+				$target = isset($this->request->get['target']) ? $this->request->get['target'] : 'en';
+				$format = isset($this->request->get['format']) ? $this->request->get['format'] : 'html';
+			}
 
-		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
-		$this->response->setOutput(json_encode($result));
+			if ($textArr)
+			{
+				$textArr = json_decode($textArr);
+				foreach($textArr as &$textEl)
+					$textEl = html_entity_decode($textEl);
+				$text = $textArr;
+			}
+
+			$this->load->model('localisation/language');
+			if (is_numeric($source))
+			{
+				$source = $this->model_localisation_language->getLanguage($source)['code'];
+			}
+			if (is_numeric($target))
+			{
+				$target = $this->model_localisation_language->getLanguage($target)['code'];
+			}
+
+			$this->load->model('extension/module/client_translate_expert');
+			$result = $this->model_extension_module_client_translate_expert->translate($text, $source, $target, $format);
+
+			// Count the characters as Google gets them (the library trims each text) and only for a successful call.
+			$translatedCharCount = 0;
+			if (is_array($text))
+			{
+				foreach($text as $textValue)
+				{
+					$translatedCharCount += mb_strlen(trim($textValue), 'UTF-8');
+				}
+			}
+			else
+			{
+				$translatedCharCount = mb_strlen(trim($text), 'UTF-8');
+			}
+			if (is_object($result) && !empty($result->success))
+			{
+				$this->storeTranslatedCharCount($translatedCharCount);
+			}
+
+			return $result;
+		});
 	}
 
 	private function readStrictListParam($source, $key, $isTable) {
@@ -478,10 +479,27 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			: $this->model_extension_module_client_translate_expert->parseIdList($raw);
 	}
 
-	private function badFilterResponse() {
+	private function badFilterResult() {
 		$this->load->language('extension/module/client_translate_expert');
+		return array('success' => 0, 'message' => $this->language->get('error_bad_filter'));
+	}
+
+	private function jsonErrorResult($e) {
+		$this->log->write(get_class($e) . ': ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+		return $this->convert_from_latin1_to_utf8_recursively(array('success' => 0, 'error_code' => 2000, 'message' => 'Internal error.', 'additional_message' => get_class($e) . ': ' . $e->getMessage()));
+	}
+
+	private function runJsonAction($action) {
+		try {
+			$result = $action();
+		} catch (\Exception $e) {
+			$result = $this->jsonErrorResult($e);
+		} catch (\Throwable $e) {
+			$result = $this->jsonErrorResult($e);
+		}
+
 		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
-		$this->response->setOutput(json_encode(array('success' => 0, 'message' => $this->language->get('error_bad_filter'))));
+		$this->response->setOutput(json_encode($result));
 	}
 
 	private function readSessionList($key) {
@@ -497,201 +515,212 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 	}
 
 	public function translateTable() {
-		$langIdFrom = isset($this->request->post['langIdFrom']) ? (int)$this->request->post['langIdFrom'] : 0;
-		$mode = isset($this->request->post['mode']) && is_string($this->request->post['mode']) ? $this->request->post['mode'] : '';
-		$tableName = isset($this->request->post['tableName']) ? html_entity_decode($this->request->post['tableName']) : null;
-		$textColumnName = isset($this->request->post['textColumnName']) ? html_entity_decode($this->request->post['textColumnName']) : null;
-		$langIdTo = isset($this->request->post['langIdTo']) ? (int)$this->request->post['langIdTo'] : 0;
-		$product_status = isset($this->request->post['product_status']) ? boolval(html_entity_decode($this->request->post['product_status'])) : false;
-		$product_quantity = isset($this->request->post['product_quantity']) ? boolval(html_entity_decode($this->request->post['product_quantity'])) : false;
-		$product_category_id = $this->readStrictListParam($this->request->post, 'product_category_id', false);
-		$stock_status = $this->readStrictListParam($this->request->post, 'stock_status', false);
-		$manufacturer_id = $this->readStrictListParam($this->request->post, 'manufacturer_id', false);
+		$this->runJsonAction(function () {
+			$langIdFrom = isset($this->request->post['langIdFrom']) ? (int)$this->request->post['langIdFrom'] : 0;
+			$mode = isset($this->request->post['mode']) && is_string($this->request->post['mode']) ? $this->request->post['mode'] : '';
+			$tableName = isset($this->request->post['tableName']) ? html_entity_decode($this->request->post['tableName']) : null;
+			$textColumnName = isset($this->request->post['textColumnName']) ? html_entity_decode($this->request->post['textColumnName']) : null;
+			$langIdTo = isset($this->request->post['langIdTo']) ? (int)$this->request->post['langIdTo'] : 0;
+			$product_status = isset($this->request->post['product_status']) ? boolval(html_entity_decode($this->request->post['product_status'])) : false;
+			$product_quantity = isset($this->request->post['product_quantity']) ? boolval(html_entity_decode($this->request->post['product_quantity'])) : false;
+			$product_category_id = $this->readStrictListParam($this->request->post, 'product_category_id', false);
+			$stock_status = $this->readStrictListParam($this->request->post, 'stock_status', false);
+			$manufacturer_id = $this->readStrictListParam($this->request->post, 'manufacturer_id', false);
 
-		if ($langIdFrom <= 0 || $langIdTo <= 0 || !in_array($mode, array('both', 'only_empty', 'same_value'), true) || $product_category_id === false || $stock_status === false || $manufacturer_id === false) {
-			$this->badFilterResponse();
-			return;
-		}
+			if ($langIdFrom <= 0 || $langIdTo <= 0 || !in_array($mode, array('both', 'only_empty', 'same_value'), true) || $product_category_id === false || $stock_status === false || $manufacturer_id === false) {
+				return $this->badFilterResult();
+			}
 
-		$this->load->model('extension/module/client_translate_expert');
-		$result = $this->model_extension_module_client_translate_expert->translateTable($langIdFrom, $mode, $tableName, $textColumnName, $langIdTo, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
+			$this->load->model('extension/module/client_translate_expert');
+			$result = $this->model_extension_module_client_translate_expert->translateTable($langIdFrom, $mode, $tableName, $textColumnName, $langIdTo, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
 
-		if (isset($result->translatedCharCount))
-		{
-			$this->storeTranslatedCharCount($result->translatedCharCount);
-		}
+			if (isset($result->translatedCharCount))
+			{
+				$this->storeTranslatedCharCount($result->translatedCharCount);
+			}
 
-		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
-		$this->response->setOutput(json_encode($result));
+			return $result;
+		});
 	}
 
 	public function analizeTableDetail() {
-		$langIdFrom = isset($this->request->post['langIdFrom']) ? (int)$this->request->post['langIdFrom'] : 0;
-		$mode = isset($this->request->post['mode']) && is_string($this->request->post['mode']) ? $this->request->post['mode'] : '';
-		$tableName = isset($this->request->post['tableName']) ? html_entity_decode($this->request->post['tableName']) : null;
-		$textColumnName = isset($this->request->post['textColumnName']) ? html_entity_decode($this->request->post['textColumnName']) : null;
-		$langIdTo = isset($this->request->post['langIdTo']) ? (int)$this->request->post['langIdTo'] : 0;
-		$product_status = isset($this->request->post['product_status']) ? boolval(html_entity_decode($this->request->post['product_status'])) : false;
-		$product_quantity = isset($this->request->post['product_quantity']) ? boolval(html_entity_decode($this->request->post['product_quantity'])) : false;
-		$product_category_id = $this->readStrictListParam($this->request->post, 'product_category_id', false);
-		$stock_status = $this->readStrictListParam($this->request->post, 'stock_status', false);
-		$manufacturer_id = $this->readStrictListParam($this->request->post, 'manufacturer_id', false);
+		$this->runJsonAction(function () {
+			$langIdFrom = isset($this->request->post['langIdFrom']) ? (int)$this->request->post['langIdFrom'] : 0;
+			$mode = isset($this->request->post['mode']) && is_string($this->request->post['mode']) ? $this->request->post['mode'] : '';
+			$tableName = isset($this->request->post['tableName']) ? html_entity_decode($this->request->post['tableName']) : null;
+			$textColumnName = isset($this->request->post['textColumnName']) ? html_entity_decode($this->request->post['textColumnName']) : null;
+			$langIdTo = isset($this->request->post['langIdTo']) ? (int)$this->request->post['langIdTo'] : 0;
+			$product_status = isset($this->request->post['product_status']) ? boolval(html_entity_decode($this->request->post['product_status'])) : false;
+			$product_quantity = isset($this->request->post['product_quantity']) ? boolval(html_entity_decode($this->request->post['product_quantity'])) : false;
+			$product_category_id = $this->readStrictListParam($this->request->post, 'product_category_id', false);
+			$stock_status = $this->readStrictListParam($this->request->post, 'stock_status', false);
+			$manufacturer_id = $this->readStrictListParam($this->request->post, 'manufacturer_id', false);
 
-		if ($langIdFrom <= 0 || $langIdTo <= 0 || !in_array($mode, array('both', 'only_empty', 'same_value'), true) || $product_category_id === false || $stock_status === false || $manufacturer_id === false) {
-			$this->badFilterResponse();
-			return;
-		}
+			if ($langIdFrom <= 0 || $langIdTo <= 0 || !in_array($mode, array('both', 'only_empty', 'same_value'), true) || $product_category_id === false || $stock_status === false || $manufacturer_id === false) {
+				return $this->badFilterResult();
+			}
 
-		$this->load->model('extension/module/client_translate_expert');
-		$result = $this->model_extension_module_client_translate_expert->analizeTableDetail($langIdFrom, $mode, $tableName, $textColumnName, $langIdTo, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
+			$this->load->model('extension/module/client_translate_expert');
+			$result = $this->model_extension_module_client_translate_expert->analizeTableDetail($langIdFrom, $mode, $tableName, $textColumnName, $langIdTo, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
 
-		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
-		$this->response->setOutput(json_encode($result));
+			return $result;
+		});
 	}
 
 	public function analize() {
-		$langIdFrom = isset($this->request->get['langIdFrom']) ? (int)$this->request->get['langIdFrom'] : 0;
-		$langIdTo = isset($this->request->get['langIdTo']) ? (int)$this->request->get['langIdTo'] : 0;
-		$mode = isset($this->request->get['mode']) && is_string($this->request->get['mode']) ? $this->request->get['mode'] : '';
-		$table = $this->readStrictListParam($this->request->get, 'table', true);
-		$product_status = isset($this->request->get['product_status']) ? boolval(html_entity_decode($this->request->get['product_status'])) : false;
-		$product_quantity = isset($this->request->get['product_quantity']) ? boolval(html_entity_decode($this->request->get['product_quantity'])) : false;
-		$product_category_id = $this->readStrictListParam($this->request->get, 'product_category_id', false);
-		$stock_status = $this->readStrictListParam($this->request->get, 'stock_status', false);
-		$manufacturer_id = $this->readStrictListParam($this->request->get, 'manufacturer_id', false);
+		$this->runJsonAction(function () {
+			$langIdFrom = isset($this->request->get['langIdFrom']) ? (int)$this->request->get['langIdFrom'] : 0;
+			$langIdTo = isset($this->request->get['langIdTo']) ? (int)$this->request->get['langIdTo'] : 0;
+			$mode = isset($this->request->get['mode']) && is_string($this->request->get['mode']) ? $this->request->get['mode'] : '';
+			$table = $this->readStrictListParam($this->request->get, 'table', true);
+			$product_status = isset($this->request->get['product_status']) ? boolval(html_entity_decode($this->request->get['product_status'])) : false;
+			$product_quantity = isset($this->request->get['product_quantity']) ? boolval(html_entity_decode($this->request->get['product_quantity'])) : false;
+			$product_category_id = $this->readStrictListParam($this->request->get, 'product_category_id', false);
+			$stock_status = $this->readStrictListParam($this->request->get, 'stock_status', false);
+			$manufacturer_id = $this->readStrictListParam($this->request->get, 'manufacturer_id', false);
 
-		if ($langIdFrom <= 0 || $langIdTo <= 0 || !in_array($mode, array('both', 'only_empty', 'same_value'), true) || $product_category_id === false || $stock_status === false || $manufacturer_id === false || $table === false) {
-			$this->badFilterResponse();
-			return;
-		}
+			if ($langIdFrom <= 0 || $langIdTo <= 0 || !in_array($mode, array('both', 'only_empty', 'same_value'), true) || $product_category_id === false || $stock_status === false || $manufacturer_id === false || $table === false) {
+				return $this->badFilterResult();
+			}
 
-		$continueAfterTable = isset($this->request->get['continue_after_table']) ? html_entity_decode($this->request->get['continue_after_table']) : null;
-		$continueAfterColumn = isset($this->request->get['continue_after_column']) ? html_entity_decode($this->request->get['continue_after_column']) : null;
-		$continueOffset = isset($this->request->get['continue_offset']) ? intval(html_entity_decode($this->request->get['continue_offset'])) : 0;
+			$continueAfterTable = isset($this->request->get['continue_after_table']) ? html_entity_decode($this->request->get['continue_after_table']) : null;
+			$continueAfterColumn = isset($this->request->get['continue_after_column']) ? html_entity_decode($this->request->get['continue_after_column']) : null;
+			$continueOffset = isset($this->request->get['continue_offset']) ? intval(html_entity_decode($this->request->get['continue_offset'])) : 0;
 
-		$this->session->data['te_langIdFrom'] = $langIdFrom;
-		$this->session->data['te_langIdTo'] = $langIdTo;
-		$this->session->data['te_mode'] = $mode;
-		$this->session->data['te_table'] = $table;
+			$this->session->data['te_langIdFrom'] = $langIdFrom;
+			$this->session->data['te_langIdTo'] = $langIdTo;
+			$this->session->data['te_mode'] = $mode;
+			$this->session->data['te_table'] = $table;
 
-		$this->session->data['te_product_status'] = $product_status;
-		$this->session->data['te_product_quantity'] = $product_quantity;
-		$this->session->data['te_product_category_id'] = $product_category_id;
-		$this->session->data['te_stock_status'] = $stock_status;
-		$this->session->data['te_manufacturer_id'] = $manufacturer_id;
+			$this->session->data['te_product_status'] = $product_status;
+			$this->session->data['te_product_quantity'] = $product_quantity;
+			$this->session->data['te_product_category_id'] = $product_category_id;
+			$this->session->data['te_stock_status'] = $stock_status;
+			$this->session->data['te_manufacturer_id'] = $manufacturer_id;
 
-		$this->load->model('extension/module/client_translate_expert');
-		$result = $this->model_extension_module_client_translate_expert->analize($langIdFrom, $langIdTo, $mode, $table, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id,
-			$continueAfterTable, $continueAfterColumn, $continueOffset);
+			$this->load->model('extension/module/client_translate_expert');
+			$result = $this->model_extension_module_client_translate_expert->analize($langIdFrom, $langIdTo, $mode, $table, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id,
+				$continueAfterTable, $continueAfterColumn, $continueOffset);
 
-		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
-		$this->response->setOutput(json_encode($result));
+			return $result;
+		});
 	}
 
 	public function removeDataFromDb() {
-		$langIdTo = isset($this->request->get['langIdTo']) ? (int)$this->request->get['langIdTo'] : 0;
-		$table = $this->readStrictListParam($this->request->get, 'table', true);
-		$product_status = isset($this->request->get['product_status']) ? boolval(html_entity_decode($this->request->get['product_status'])) : false;
-		$product_quantity = isset($this->request->get['product_quantity']) ? boolval(html_entity_decode($this->request->get['product_quantity'])) : false;
-		$product_category_id = $this->readStrictListParam($this->request->get, 'product_category_id', false);
-		$stock_status = $this->readStrictListParam($this->request->get, 'stock_status', false);
-		$manufacturer_id = $this->readStrictListParam($this->request->get, 'manufacturer_id', false);
+		$this->runJsonAction(function () {
+			if (!isset($this->request->server['REQUEST_METHOD']) || $this->request->server['REQUEST_METHOD'] != 'POST') {
+				return array('success' => 0, 'error_code' => 2001, 'message' => 'Wrong request method.');
+			}
 
-		if ($table === false || $product_category_id === false || $stock_status === false || $manufacturer_id === false) {
-			$this->badFilterResponse();
-			return;
-		}
+			$langIdTo = isset($this->request->post['langIdTo']) ? (int)$this->request->post['langIdTo'] : 0;
+			$table = $this->readStrictListParam($this->request->post, 'table', true);
+			$product_status = isset($this->request->post['product_status']) ? boolval(html_entity_decode($this->request->post['product_status'])) : false;
+			$product_quantity = isset($this->request->post['product_quantity']) ? boolval(html_entity_decode($this->request->post['product_quantity'])) : false;
+			$product_category_id = $this->readStrictListParam($this->request->post, 'product_category_id', false);
+			$stock_status = $this->readStrictListParam($this->request->post, 'stock_status', false);
+			$manufacturer_id = $this->readStrictListParam($this->request->post, 'manufacturer_id', false);
 
-		$this->session->data['te_langIdTo'] = $langIdTo;
-		$this->session->data['te_table'] = $table;
+			if ($table === false || $product_category_id === false || $stock_status === false || $manufacturer_id === false) {
+				return $this->badFilterResult();
+			}
 
-		$this->session->data['te_product_status'] = $product_status;
-		$this->session->data['te_product_quantity'] = $product_quantity;
-		$this->session->data['te_product_category_id'] = $product_category_id;
-		$this->session->data['te_stock_status'] = $stock_status;
-		$this->session->data['te_manufacturer_id'] = $manufacturer_id;
+			$this->session->data['te_langIdTo'] = $langIdTo;
+			$this->session->data['te_table'] = $table;
 
-		$this->load->model('extension/module/client_translate_expert');
+			$this->session->data['te_product_status'] = $product_status;
+			$this->session->data['te_product_quantity'] = $product_quantity;
+			$this->session->data['te_product_category_id'] = $product_category_id;
+			$this->session->data['te_stock_status'] = $stock_status;
+			$this->session->data['te_manufacturer_id'] = $manufacturer_id;
 
-		$result = $this->model_extension_module_client_translate_expert->removeDataFromDb($langIdTo, $table, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
+			$this->load->model('extension/module/client_translate_expert');
 
-		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
-		$this->response->setOutput(json_encode($result));
+			$result = $this->model_extension_module_client_translate_expert->removeDataFromDb($langIdTo, $table, $product_status, $product_quantity, $product_category_id, $stock_status, $manufacturer_id);
+
+			return $result;
+		});
 	}
 
 	public function analizeLocalization() {
-		$langIdFrom = isset($this->request->get['langIdFrom']) ? (int)$this->request->get['langIdFrom'] : 0;
-		$langIdTo = isset($this->request->get['langIdTo']) ? (int)$this->request->get['langIdTo'] : 0;
-		$nextFileIndex = isset($this->request->get['nextFileIndex']) ? (int)$this->request->get['nextFileIndex'] : 0;
-		$scope = (isset($this->request->get['scope']) && $this->request->get['scope'] === 'admin') ? 'admin' : 'catalog';
+		$this->runJsonAction(function () {
+			$langIdFrom = isset($this->request->get['langIdFrom']) ? (int)$this->request->get['langIdFrom'] : 0;
+			$langIdTo = isset($this->request->get['langIdTo']) ? (int)$this->request->get['langIdTo'] : 0;
+			$nextFileIndex = isset($this->request->get['nextFileIndex']) ? (int)$this->request->get['nextFileIndex'] : 0;
+			$scope = (isset($this->request->get['scope']) && $this->request->get['scope'] === 'admin') ? 'admin' : 'catalog';
 
-		if ($langIdFrom <= 0 || $langIdTo <= 0) {
-			$this->badFilterResponse();
-			return;
-		}
-		if ($nextFileIndex < 0) {
-			$nextFileIndex = 0;
-		}
+			if ($langIdFrom <= 0 || $langIdTo <= 0) {
+				return $this->badFilterResult();
+			}
+			if ($nextFileIndex < 0) {
+				$nextFileIndex = 0;
+			}
 
-		$this->session->data['te_langIdFrom'] = $langIdFrom;
-		$this->session->data['te_langIdTo'] = $langIdTo;
+			$this->session->data['te_langIdFrom'] = $langIdFrom;
+			$this->session->data['te_langIdTo'] = $langIdTo;
 
-		$this->load->model('extension/module/client_translate_expert');
-		$result = $this->model_extension_module_client_translate_expert->analizeLocalization($langIdFrom, $langIdTo, $nextFileIndex, $scope);
+			$this->load->model('extension/module/client_translate_expert');
+			$result = $this->model_extension_module_client_translate_expert->analizeLocalization($langIdFrom, $langIdTo, $nextFileIndex, $scope);
 
-		$result = $this->convert_from_latin1_to_utf8_recursively($result);
+			$result = $this->convert_from_latin1_to_utf8_recursively($result);
 
-		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
-		$this->response->setOutput(json_encode($result));
+			return $result;
+		});
 	}
 
 	public function translatedCharCountInfo()
 	{
-		$this->resetCharCountOnStartMonth();
+		$this->runJsonAction(function () {
+			$this->resetCharCountOnStartMonth();
 
-		$this->load->model('extension/module/client_translate_expert');
-		$charCount = (int)$this->model_extension_module_client_translate_expert->getCharCount();
-		$monthFreeLimit = 500*1000;
-		$priceFor20MInUSD = 20;
-		$costOverFreeLimit = $charCount <= $monthFreeLimit ? 0 : round(($charCount - $monthFreeLimit) / (1000 * 1000) * $priceFor20MInUSD, 2);
+			$this->load->model('extension/module/client_translate_expert');
+			$charCount = (int)$this->model_extension_module_client_translate_expert->getCharCount();
+			$monthFreeLimit = 500*1000;
+			$priceFor20MInUSD = 20;
+			$costOverFreeLimit = $charCount <= $monthFreeLimit ? 0 : round(($charCount - $monthFreeLimit) / (1000 * 1000) * $priceFor20MInUSD, 2);
 
-		$result = (object)array(
-			'success' => 1,
-			'charCount' => $charCount,
-			'monthFreeLimit' => $monthFreeLimit,
-			'priceFor20MInUSD' => $priceFor20MInUSD,
-			'costOverFreeLimit' => $costOverFreeLimit
-		);
+			$result = (object)array(
+				'success' => 1,
+				'charCount' => $charCount,
+				'monthFreeLimit' => $monthFreeLimit,
+				'priceFor20MInUSD' => $priceFor20MInUSD,
+				'costOverFreeLimit' => $costOverFreeLimit
+			);
 
-		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
-		$this->response->setOutput(json_encode($result));
+			return $result;
+		});
 	}
 
 	public function resetCharCount()
 	{
-		$this->load->model('extension/module/client_translate_expert');
-		$this->model_extension_module_client_translate_expert->resetCharCount(date('m'));
+		$this->runJsonAction(function () {
+			$this->load->model('extension/module/client_translate_expert');
+			$this->model_extension_module_client_translate_expert->resetCharCount(date('m'));
 
-		$result = (object)array(
-			'success' => 1,
-		);
+			$result = (object)array(
+				'success' => 1,
+			);
 
-		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
-		$this->response->setOutput(json_encode($result));
+			return $result;
+		});
 	}
 
 	public function resetCache()
 	{
-		$this->load->model('extension/module/client_translate_expert');
-		$result = $this->model_extension_module_client_translate_expert->uninstall();
-		$result = $this->model_extension_module_client_translate_expert->install();
+		$this->runJsonAction(function () {
+			if (!isset($this->request->server['REQUEST_METHOD']) || $this->request->server['REQUEST_METHOD'] != 'POST') {
+				return array('success' => 0, 'error_code' => 2001, 'message' => 'Wrong request method.');
+			}
 
-		$result = (object)array(
-			'success' => true,
-		);
+			$this->load->model('extension/module/client_translate_expert');
+			$result = $this->model_extension_module_client_translate_expert->uninstall();
+			$result = $this->model_extension_module_client_translate_expert->install();
 
-		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
-		$this->response->setOutput(json_encode($result));
+			$result = (object)array(
+				'success' => true,
+			);
+
+			return $result;
+		});
 	}
 
 	private function storeTranslatedCharCount($charCount = 0)
@@ -752,25 +781,24 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 	public function saveLocalizationFile()
 	{
-		$this->load->language('extension/module/client_translate_expert');
+		$this->runJsonAction(function () {
+			$this->load->language('extension/module/client_translate_expert');
 
-		if (!$this->user->hasPermission('modify', 'extension/module/client_translate_expert')) {
-			$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
-			$this->response->setOutput(json_encode(array('success' => 0, 'error_code' => 3006, 'message' => $this->language->get('error_permission'))));
-			return;
-		}
+			if (!$this->user->hasPermission('modify', 'extension/module/client_translate_expert')) {
+				return array('success' => 0, 'error_code' => 3006, 'message' => $this->language->get('error_permission'));
+			}
 
-		$fileContent = (isset($this->request->post['fileContent']) && is_string($this->request->post['fileContent'])) ? html_entity_decode($this->request->post['fileContent']) : null;
-		$langId = (isset($this->request->post['langId']) && is_string($this->request->post['langId'])) ? html_entity_decode($this->request->post['langId']) : null;
-		$path = (isset($this->request->post['path']) && is_string($this->request->post['path'])) ? html_entity_decode($this->request->post['path']) : null;
-		$scope = (isset($this->request->post['scope']) && $this->request->post['scope'] === 'admin') ? 'admin' : 'catalog';
-		$root = (isset($this->request->post['root']) && is_string($this->request->post['root'])) ? html_entity_decode($this->request->post['root']) : 'core';
+			$fileContent = (isset($this->request->post['fileContent']) && is_string($this->request->post['fileContent'])) ? html_entity_decode($this->request->post['fileContent']) : null;
+			$langId = (isset($this->request->post['langId']) && is_string($this->request->post['langId'])) ? html_entity_decode($this->request->post['langId']) : null;
+			$path = (isset($this->request->post['path']) && is_string($this->request->post['path'])) ? html_entity_decode($this->request->post['path']) : null;
+			$scope = (isset($this->request->post['scope']) && $this->request->post['scope'] === 'admin') ? 'admin' : 'catalog';
+			$root = (isset($this->request->post['root']) && is_string($this->request->post['root'])) ? html_entity_decode($this->request->post['root']) : 'core';
 
-		$this->load->model('extension/module/client_translate_expert');
-		$result = $this->model_extension_module_client_translate_expert->saveLocalizationFile($fileContent, $langId, $path, $scope, $root);
+			$this->load->model('extension/module/client_translate_expert');
+			$result = $this->model_extension_module_client_translate_expert->saveLocalizationFile($fileContent, $langId, $path, $scope, $root);
 
-		$this->response->addHeader('Content-Type: application/json; Charset=UTF-8');
-		$this->response->setOutput(json_encode($result));
+			return $result;
+		});
 	}
 
 	public function downloadDebugLog() {

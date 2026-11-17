@@ -331,6 +331,7 @@
 				    <div class="te-card">
 				      <div class="te-card__head"><?php echo $te_debug_card_cache; ?></div>
 				      <div class="te-card__body">
+				        <div class="te-alerts" id="te-debug-alerts"></div>
 				        <div class="te-form">
 				          <div class="te-field">
 				            <span class="te-field__label"><?php echo $entry_reset_translation_cache; ?></span>
