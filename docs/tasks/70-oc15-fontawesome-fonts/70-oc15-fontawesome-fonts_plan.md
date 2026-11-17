@@ -26,6 +26,9 @@ Add the 5 web font files of Font Awesome 4.4.0 to `sources/upload/admin/view/sty
 
 ## Done
 - Added the 5 Font Awesome 4.4.0 web font files to `oc15/fonts/`. The OC 1.5 package now ships them.
-- Final version: 04.01.0205. All test suites pass.
-- Gotcha: the OC 2.0 to 3.0 packages also ship `oc15/`, so each zip grows by about 400 KB. Deferred: remove `oc15` from those packages in `build.sh`.
+- Final version: 04.01.0206. All test suites pass.
+- Gotcha: the OC 2.0 to 3.0 packages also shipped `oc15/`, so each zip would grow by about 400 KB. Fixed in the same PR: `build.sh` excludes `upload/admin/view/stylesheet/oc15/*` from the OC 2.0 to 3.0 zips. The 9 `oc15` files are the only difference. Only the OC 1.5 package keeps them.
 - Not verified: a real OC 1.5 store run (font requests must return 200).
+
+## Update 2026-11-17 (user request)
+The user asked to fix the package size in the same PR. Change: `-x 'upload/admin/view/stylesheet/oc15/*'` on 5 zip lines of `build.sh`. Build and tests pass (04.01.0206). Review: no new review pass. The change only adds zip exclusions, and the build agent compared the file lists of both releases.

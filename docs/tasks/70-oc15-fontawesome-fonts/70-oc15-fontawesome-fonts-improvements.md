@@ -12,4 +12,4 @@
 
 ## Proposed edits
 - Add a rule to `project-workflows.md`: if a task adds a font or image to `sources/`, compare it with the npm package of the same version using `cmp`.
-- Follow-up issue: remove `oc15` from the OC 2.0 to 3.0 packages in `build.sh` to save about 400 KB for each zip.
+- Done in the same PR: the OC 2.0 to 3.0 zips exclude `oc15`.
