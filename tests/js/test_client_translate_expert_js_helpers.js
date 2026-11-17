@@ -316,7 +316,10 @@ function testRemoveLog(w) {
 	console.log('\nresetTranslationCache:');
 	const origPost2 = w.$.post;
 	let postUrl = '';
-	w.document.te_i18n = { te_cache_reset_done: 'Cache reset text' };
+	w.document.te_i18n = { te_cache_reset_done: 'Cache reset text', te_cache_reset_confirm: 'Reset the cache?' };
+	let cacheConfirmText = null;
+	const origConfirm2 = w.confirm;
+	w.confirm = function(text) { cacheConfirmText = text; return true; };
 	w.$('body').append('<div class="te-app"><div class="te-alerts" id="te-debug-alerts"></div></div>');
 	w.$.post = function(url) { postUrl = url; return w.$.Deferred().resolve({ success: 1 }).promise(); };
 	w.resetTranslationCache();
@@ -328,6 +331,13 @@ function testRemoveLog(w) {
 	w.$.post = function() { return w.$.Deferred().reject({ status: 500 }).promise(); };
 	w.resetTranslationCache();
 	check('a failed request shows only an error alert', () => w.$('#te-debug-alerts .te-alert').length === 1 && w.$('#te-debug-alerts .te-alert--error').length === 1);
+	check('the confirm text is the te_cache_reset_confirm key', () => cacheConfirmText === 'Reset the cache?');
+	let cachePosts = 0;
+	w.$.post = function() { cachePosts++; return w.$.Deferred().resolve({ success: 1 }).promise(); };
+	w.confirm = function() { return false; };
+	w.resetTranslationCache();
+	check('confirm false: no request', () => cachePosts === 0);
+	w.confirm = origConfirm2;
 	w.$('#te-debug-alerts').parent().remove();
 	w.$.post = origPost2;
 }

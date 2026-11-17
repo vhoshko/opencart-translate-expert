@@ -90,6 +90,6 @@ Design corrections:
 
 - Landed: POST for `removeDataFromDb` and `resetCache` (non-POST gives error_code 2001), success alert in `#te-debug-alerts`, and `runJsonAction` in 10 AJAX methods (error_code 2000). The model is unchanged.
 - The helper writes to the OpenCart error log, not to `client_translate_expert.log`. The model already writes `\Exception` to the debug log.
-- Final version 04.01.0201. 9 test suites pass (new suite: 60 checks). Release build passes.
+- Final version 04.01.0202. A confirm popup now shows before the cache reset (`te_cache_reset_confirm`). 9 test suites pass (new suite: 60 checks). Release build passes.
 - No example of a PHP warning before the JSON output was found. No store run was done.
 - Follow-up: add a `modify` permission check to the data-changing AJAX methods.

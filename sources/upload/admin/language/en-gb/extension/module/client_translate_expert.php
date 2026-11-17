@@ -98,6 +98,7 @@ $_['te_settings_card_try'] = 'Try a translation';
 $_['te_debug_card_versions'] = 'Versions';
 $_['te_debug_card_cache'] = 'Cache';
 $_['te_cache_reset_done'] = 'Translation cache was reset.';
+$_['te_cache_reset_confirm'] = 'Are you sure you want to reset the translation cache? The module removes the saved translation data.';
 $_['te_about_card'] = 'About the module';
 
 // Value;

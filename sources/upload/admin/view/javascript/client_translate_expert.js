@@ -630,6 +630,9 @@ function resetTranslationCharCount()
 
 function resetTranslationCache()
 {
+	if (!confirm(teT('te_cache_reset_confirm')))
+		return;
+
 	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/resetCache'
 		+ '&token=' + getOcToken()
 	).done(function(data) {
