@@ -34,10 +34,9 @@ If something unexpected or unclear occurs while you work, stop. Report `NEEDS_CO
   - `build.sh` never strips markers in any other file. Therefore, in other files, gate OC4-only behavior at runtime with `version_compare(VERSION, '4.0', '>=')`, as `client_translate_expert_core.php` does.
   - The local `php` is 7.4. It does not flag 5.6 breakage for you.
 - Write route strings and class names in the OC 2.3 form (`extension/module/client_translate_expert`, `ControllerExtensionModuleClientTranslateExpert`). `build.sh` rewrites these generically for OC 1.5–2.2.
-- **The OC 3.0 and 4.0 rewrites in `build.sh` are fixed lists, not patterns.** If you add one of the items below, do one of two things. Add the matching line in `build.sh`. Or report that the line is needed.
-  - A new controller method called by route (AJAX action): add it to the `/` → `.` method-separator list. This list is in the OC4 controller and JS sections.
-  - A new library class instantiated with `new`: add it to the `new X(` namespace list in the OC4 section.
-  - A new `client_translate_expert_*` setting key: add it to the `module_` prefix list for 3.0 and 4.0.
+- **The 4.0 `new X(` namespace rewrites in `build.sh` are a fixed list, not a pattern.** If you add a library class that code instantiates with `new`, add it to the `new X(` namespace list in the OC4 section, or report that the line is needed.
+- Version rules run at runtime in the code. Use the `private static` helpers of the admin controller (`tokenName`, `settingKey`, `extensionListRoute`, `routeMethodSeparator`). Use `teRoute('<method>')` for a JS route. Keep setting names bare in the templates.
+- A new AJAX method needs no `build.sh` line. A new `client_translate_expert_*` setting key needs no `build.sh` line. Read the key with `settingKey()` in the controller.
 - OC 1.5–3.0 all render the `.tpl` as a PHP template (3.0 included). Only OC 4.0 uses Twig. Put a UI change in both `client_translate_expert.tpl` (PHP syntax) and `client_translate_expert.oc4.twig` (Twig syntax). Put a new user-facing string in all three language files (`en-gb`, `ru-ru`, `uk-ua`).
 - **Do not run `build.sh` or `build.release.sh`.** Each build requires a version bump. The build/test agent does the version bump.
 

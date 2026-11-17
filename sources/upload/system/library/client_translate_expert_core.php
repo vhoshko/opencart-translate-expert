@@ -678,6 +678,15 @@ INNER JOIN (
 
 	protected function getLangImgUrl($langCode)
 	{
+		if (version_compare(VERSION, '4.0', '>='))
+		{
+			foreach($this->getLanguages() as $language)
+			{
+				if ($language['code'] == $langCode && isset($language['image']))
+					return $language['image'];
+			}
+			return '';
+		}
 		if (version_compare(VERSION, '2.2', '<'))
 			return 'view/image/flags/' . $this->getLangImageName($langCode);
 		else

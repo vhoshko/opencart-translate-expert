@@ -93,6 +93,9 @@ php tests/test_client_translate_expert_translate_loop.php
 # Controller JSON guard tests: runJsonAction error JSON for Exception and Error, bad filter result, POST-only removeDataFromDb and resetCache (stubs, no DB, no API key)
 php tests/test_client_translate_expert_ajax_guard.php
 
+# Version rules tests: token name, setting key prefix, routes, template engine and flag URL helpers of the admin controller and the model (stubs, no DB, no API key)
+php tests/test_client_translate_expert_version_rules.php
+
 # OC4 Twig name check: filters, tests, functions, tags (static, no Twig needed)
 php tests/test_oc4_twig_filters.php
 
@@ -115,6 +118,8 @@ The `ClientTranslateExpertCronHelper` tests cover the cron secret rules, the req
 The `ClientTranslateExpertI18n` tests cover the language file candidates, the English fallback, the global keys in the 3 module language files and the JSON escaping for a `<script>` block. Any PHP warning fails these tests.
 
 The JS helper tests load the real `client_translate_expert.js` in jsdom. They cover the `teT` lookup and placeholders, the FA 4 and FA 6 icon classes, the Bootstrap adapter with BS5 and with no Bootstrap, and the `teAlerts` text-only rendering of JSON, non-JSON and jqXHR responses. They also cover the localization tabs: the analysis loop, the key list, the PHP literal helpers, translate and save for one file, and "Translate all" with Stop. `npm ci` installs the pinned dev dependencies (jsdom, jQuery 3.7.1) into `tests/js/node_modules/`, which git ignores. jQuery 1.7.1 is the OC 1.5 file in `tests/js/vendor/`.
+
+The version rules tests call the `private static` helpers of the admin controller and the model with a version string. They cover each branch (OC 1.5, 2.2, 2.3, 3.0 and 4.x). Any PHP warning fails these tests.
 
 The OC4 Twig name test reads each `.twig` file under `sources/`. It fails on a filter, test, function or tag that Twig v3.4.2 (OpenCart 4.0.2.x) or Twig v3.18.0 (OpenCart 4.1.0.x) does not define. Such a name breaks the OC4 admin page with "Could not load template". It also fails on syntax that only Twig v3.18.0 accepts (`has some`, `has every`, `xor`, the `...` spread, `name: value` arguments) and on an unclosed comment, block, string or `verbatim` block. The test skips comments and `verbatim` blocks, and it checks string interpolation.
 

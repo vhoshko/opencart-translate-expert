@@ -64,10 +64,7 @@ file_replace sources_release_22/install.php 'extension/module' 'module'
 file_replace sources_release_22/upload/admin/controller/extension/module/client_translate_expert.php 'ControllerExtensionModuleClientTranslateExpert' 'ControllerModuleClientTranslateExpert'
 file_replace sources_release_22/upload/admin/controller/extension/module/client_translate_expert.php 'extension/module/' 'module/'
 file_replace sources_release_22/upload/admin/controller/extension/module/client_translate_expert.php 'extension_module' 'module'
-file_replace sources_release_22/upload/admin/controller/extension/module/client_translate_expert.php 'extension/extension' 'extension/module'
 file_replace sources_release_22/upload/admin/model/extension/module/client_translate_expert.php 'ModelExtensionModuleClientTranslateExpert' 'ModelModuleClientTranslateExpert'
-file_replace sources_release_22/upload/admin/view/javascript/client_translate_expert.js "'extension/module'" "'module'"
-file_replace sources_release_22/upload/admin/view/javascript/client_translate_expert.js '"extension/module"' '"module"'
 
 mkdir -p sources_release_22/upload/admin/controller/module
 mv sources_release_22/upload/admin/controller/extension/module/* sources_release_22/upload/admin/controller/module/
@@ -137,26 +134,10 @@ cd sources_release_15 && zip -r "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc1.5
 
 # prepare release for OpenCart 3.0
 cp -r sources_release sources_release_30
-file_replace sources_release_30/upload/admin/controller/extension/module/client_translate_expert.php 'extension/extension' 'marketplace/extension'
-file_replace sources_release_30/upload/admin/controller/extension/module/client_translate_expert.php 'token' 'user_token'
-file_replace "sources_release_30/upload/admin/controller/extension/module/client_translate_expert.php" '\$this->response->setOutput(\$this->load->view' '$this->config->set('\''template_engine'\'', '\''template'\''); $this->response->setOutput($this->load->view'
-file_replace sources_release_30/upload/admin/controller/extension/module/client_translate_expert.php "'client_translate_expert'" "'module_client_translate_expert'"
-
-for setting in client_translate_expert_status client_translate_expert_key client_translate_expert_debug_status client_translate_expert_char_count client_translate_expert_reset_char_count_on_start_month client_translate_expert_show_char_count_globally client_translate_expert_last_reset_char_month client_translate_expert_excluded_routes client_translate_expert_cron_secret client_translate_expert_cron_bulk_amount; do
-    module_setting="module_${setting}"
-    for f in \
-        sources_release_30/upload/admin/controller/extension/module/client_translate_expert.php \
-        sources_release_30/upload/admin/model/extension/module/client_translate_expert.php \
-        sources_release_30/upload/admin/view/template/extension/module/client_translate_expert.tpl \
-        sources_release_30/upload/system/OpenCartTranslateExpertClient.ocmod.xml; do
-        [ -f "$f" ] && file_replace "$f" "$setting" "$module_setting"
-    done
-done
 
 file_replace sources_release_30/upload/system/OpenCartTranslateExpertClient.ocmod.xml '.tpl' '.twig'
 file_replace sources_release_30/upload/system/OpenCartTranslateExpertClient.ocmod.xml '<\?php echo \$' '{{ '
 file_replace sources_release_30/upload/system/OpenCartTranslateExpertClient.ocmod.xml '; \?\>' ' }}'
-file_replace sources_release_30/upload/admin/view/javascript/client_translate_expert.js 'token' 'user_token'
 
 # Strip OC4-only event handlers before zip (PHP 8.0 type hints break PHP 7.x)
 OC30_CTRL="sources_release_30/upload/admin/controller/extension/module/client_translate_expert.php"
@@ -293,47 +274,19 @@ else
     sed -i '/^\/\/ add missed functions$/,/^class /{ /^class /!d; }' "$OC4_CONTROLLER"
 fi
 
-# --- Remove OC3 template_engine workaround (not needed in OC4) ---
-file_replace "$OC4_CONTROLLER" "\\\$this->config->set('template_engine', 'template'); " ""
-
 # --- Update route strings: extension/module/ -> extension/client_translate_expert/module/ ---
 file_replace "$OC4_CONTROLLER" 'extension/module/client_translate_expert' 'extension/client_translate_expert/module/client_translate_expert'
-file_replace "$OC4_MODEL" 'extension/module/client_translate_expert' 'extension/client_translate_expert/module/client_translate_expert'
 
 # --- Update model variable name (OC4 auto-naming from route path) ---
 file_replace "$OC4_CONTROLLER" 'model_extension_module_client_translate_expert' 'model_extension_client_translate_expert_module_client_translate_expert'
 
-# --- Update controller route method separator (/ -> . for method calls) ---
-# Routes like client_translate_expert/downloadDebugLog -> client_translate_expert.downloadDebugLog
-file_replace "$OC4_CONTROLLER" 'client_translate_expert/downloadDebugLog' 'client_translate_expert.downloadDebugLog'
-file_replace "$OC4_CONTROLLER" 'client_translate_expert/clearDebugLog' 'client_translate_expert.clearDebugLog'
-
-# --- Update setting model methods for OC4 ---
-file_replace "$OC4_CONTROLLER" 'editSettingValue' 'editValue'
-
-# --- Fix language flag image URLs for OC4 (model already provides full URL in 'image' field) ---
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    sed -i '' "/version_compare(VERSION, '2.2'/,/image_url.*langUrl/c\\
-\\				\$data['languages'][\$code]['image_url'] = \$language['image'];" "$OC4_CONTROLLER"
-else
-    sed -i "/version_compare(VERSION, '2.2'/,/image_url.*langUrl/c\\
-\\				\$data['languages'][\$code]['image_url'] = \$language['image'];" "$OC4_CONTROLLER"
-fi
-
 # --- load->language, load->model, load->view paths are correct after route update ---
 # OC4 uses full extension paths: extension/client_translate_expert/module/client_translate_expert
-
-# --- Update model require_once paths for OC4 (use DIR_EXTENSION) ---
-file_replace "$OC4_MODEL" "require_once(DIR_SYSTEM . 'library/client_translate_expert.php')" "require_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert.php')"
-file_replace "$OC4_MODEL" "require_once(DIR_SYSTEM . 'library/client_localization_translate_expert.php')" "require_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_localization_translate_expert.php')"
 
 # --- Update class instantiations in model to use namespaced classes ---
 file_replace "$OC4_MODEL" 'new LibraryClientTranslateExpert(' 'new \\Opencart\\Extension\\ClientTranslateExpert\\System\\Library\\LibraryClientTranslateExpert('
 file_replace "$OC4_CATALOG_CRON" 'new LibraryClientTranslateExpert(' 'new \\Opencart\\Extension\\ClientTranslateExpert\\System\\Library\\LibraryClientTranslateExpert('
 file_replace "$OC4_MODEL" 'new LocalizationLibraryClientTranslateExpert(' 'new \\Opencart\\Extension\\ClientTranslateExpert\\System\\Library\\LocalizationLibraryClientTranslateExpert('
-
-# --- Update class instantiation in core library for VHGoogleTranslator ---
-file_replace "$OC4_LIB_CORE" 'new VHGoogleTranslator(' 'new \\Opencart\\Extension\\ClientTranslateExpert\\System\\Library\\VHGoogleTranslator('
 
 # --- Update Log class instantiation for OC4 namespaced engine ---
 file_replace "$OC4_LIB_CORE" 'new Log(' 'new \\Opencart\\System\\Library\\Log('
@@ -345,58 +298,10 @@ else
     sed -i '/l2\.image language_image_to/d' "$OC4_LIB_MAIN"
 fi
 
-# --- Fix getLangImgUrl for OC4 (use 'image' field from language model, which has full URL) ---
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    sed -i '' "/function getLangImgUrl/,/^[[:space:]]*}$/c\\
-\\	protected function getLangImgUrl(\$langCode)\\
-\\	{\\
-\\		foreach(\$this->getLanguages() as \$key => \$language)\\
-\\		{\\
-\\			if (\$language['code'] == \$langCode \\&\\& isset(\$language['image']))\\
-\\				return \$language['image'];\\
-\\		}\\
-\\		return '';\\
-\\	}" "$OC4_LIB_CORE"
-else
-    sed -i "/function getLangImgUrl/,/^[[:space:]]*}$/c\\
-\\	protected function getLangImgUrl(\$langCode)\\
-\\	{\\
-\\		foreach(\$this->getLanguages() as \$key => \$language)\\
-\\		{\\
-\\			if (\$language['code'] == \$langCode \\&\\& isset(\$language['image']))\\
-\\				return \$language['image'];\\
-\\		}\\
-\\		return '';\\
-\\	}" "$OC4_LIB_CORE"
-fi
-
-# --- Qualify global classes that would otherwise resolve to the extension namespace ---
-file_replace "$OC4_LIB_GOOGLE" 'new Exception(' 'new \\Exception('
-
-# --- Update JS: module prefix and method separator ---
-# Change js_const_module_prefix to OC4 extension route prefix
-file_replace "$OC4_JS" "js_const_module_prefix = 'extension/module'" "js_const_module_prefix = 'extension/client_translate_expert/module'"
-
-# Change method separator in AJAX routes: /client_translate_expert/<method> -> /client_translate_expert.<method>
-# These are the patterns after js_const_module_prefix + '/client_translate_expert/<method>'
-# Replace longer method names first to avoid partial matches (e.g. translate vs translateTable)
-file_replace "$OC4_JS" '/client_translate_expert/translatedCharCountInfo' '/client_translate_expert.translatedCharCountInfo'
-file_replace "$OC4_JS" '/client_translate_expert/analizeTableDetail' '/client_translate_expert.analizeTableDetail'
-file_replace "$OC4_JS" '/client_translate_expert/analizeLocalization' '/client_translate_expert.analizeLocalization'
-file_replace "$OC4_JS" '/client_translate_expert/saveLocalizationFile' '/client_translate_expert.saveLocalizationFile'
-file_replace "$OC4_JS" '/client_translate_expert/translateTable' '/client_translate_expert.translateTable'
-file_replace "$OC4_JS" '/client_translate_expert/removeDataFromDb' '/client_translate_expert.removeDataFromDb'
-file_replace "$OC4_JS" '/client_translate_expert/resetCharCount' '/client_translate_expert.resetCharCount'
-file_replace "$OC4_JS" '/client_translate_expert/resetCache' '/client_translate_expert.resetCache'
-file_replace "$OC4_JS" '/client_translate_expert/translate' '/client_translate_expert.translate'
-file_replace "$OC4_JS" '/client_translate_expert/analize' '/client_translate_expert.analize'
-
 # --- Update Bootstrap modal calls for OC4 (Bootstrap 5 uses native JS API, not jQuery) ---
 # showTranslateExpertModal and hideTranslateExpertModal in the source already use the Bootstrap 5 API
 # (getOrCreateInstance, and a hide that waits for the show animation). The OC4 template sets
 # data-bs-backdrop="static" and data-bs-keyboard="false", so the source functions need no rewrite.
-# Replace all .modal('hide') calls
-file_replace "$OC4_JS" "\$('#translateExpertModal').modal('hide')" "var _m = bootstrap.Modal.getInstance(document.getElementById('translateExpertModal')); if (_m) _m.hide()"
 
 # --- Update image paths for OC4 extension directory structure ---
 # rootUrl in JS points to admin dir, so we need ../ to reach OC root where extension/ lives
@@ -408,13 +313,6 @@ for lang in en-gb uk-ua ru-ru; do
         echo "ERROR: OC4 heading_title icon path rewrite failed in ${lang} language file" >&2
         exit 1
     fi
-done
-
-# --- Apply module_ prefix to settings in OC4 template (same as OC3) ---
-OC4_TEMPLATE="$EXT_DIR/admin/view/template/module/client_translate_expert.twig"
-for setting in client_translate_expert_status client_translate_expert_key client_translate_expert_debug_status client_translate_expert_char_count client_translate_expert_reset_char_count_on_start_month client_translate_expert_show_char_count_globally client_translate_expert_last_reset_char_month client_translate_expert_excluded_routes client_translate_expert_cron_secret client_translate_expert_cron_bulk_amount; do
-    module_setting="module_${setting}"
-    file_replace "$OC4_TEMPLATE" "$setting" "$module_setting"
 done
 
 # --- Restructure for OC4 zip: installer expects files at root, not under upload/extension/<code>/ ---

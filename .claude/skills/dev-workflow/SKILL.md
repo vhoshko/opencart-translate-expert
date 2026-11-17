@@ -274,6 +274,15 @@ Give the agent these items:
 
 The agent owns the sequence. Its definition in `.claude/agents/ote-build-test.md` lists the steps. The agent reports pass or fail, error details, the test count, the version bump and the release path. The main context sees only this summary.
 
+### Compare with a baseline (changes to `build.sh` or to a version rule)
+
+If the task changes `build.sh` or moves a version rule into the code, prove that the packages behave the same (task 68). Do these steps:
+
+1. Build the packages from `origin/main` in a temporary worktree. Remove the worktree after the build.
+2. Build the packages of the branch.
+3. Run a probe for each package with the matching `VERSION`. Compare each value with the literal in the baseline package.
+4. Run `diff -r` for each package. Explain each changed file.
+
 ### Prove the test would have caught it (bug fixes only)
 
 A green suite shows that the code works **now**. It does not show that the new test would have failed **before** the fix. A test that passes either way is not a regression test. It is a test of current behavior that looks like a regression test.
@@ -308,6 +317,8 @@ Dispatch `ote-code-reviewer` (`subagent_type: ote-code-reviewer`). The agent pin
 - If the front end builds content that the server parses or writes (for example a PHP language file), an instruction to run a round-trip probe. The probe runs the real JS helpers in jsdom and sends the result through the real server code. Task 59: such a probe found 2 Important findings that the unit tests did not find
 
 The reviewer must NOT see your reasoning.
+
+If the diff changes `.claude/**`, tell the reviewer to read the full diff of each file. A rewrite can lose a line that nobody meant to remove (task 68).
 
 When the agent returns, do these steps:
 1. Read the review file.

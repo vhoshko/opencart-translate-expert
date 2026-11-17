@@ -219,7 +219,7 @@ class VHGoogleTranslator  {
 		$translations = $this->sendGoogleTranslateRequest($postData);
 
 		if (!isset($translations[0]['translatedText']))
-			throw new Exception('Google Translate API: unexpected response format');
+			throw new \Exception('Google Translate API: unexpected response format');
 
 		return $translations[0]['translatedText'];
 	}
@@ -238,13 +238,13 @@ class VHGoogleTranslator  {
 		$translations = $this->sendGoogleTranslateRequest($postData);
 
 		if (count($translations) !== count($texts))
-			throw new Exception('Google Translate API: unexpected response format');
+			throw new \Exception('Google Translate API: unexpected response format');
 
 		$translatedTexts = array();
 		foreach ($translations as $translation)
 		{
 			if (!isset($translation['translatedText']))
-				throw new Exception('Google Translate API: unexpected response format');
+				throw new \Exception('Google Translate API: unexpected response format');
 			$translatedTexts[] = $translation['translatedText'];
 		}
 
@@ -270,7 +270,7 @@ class VHGoogleTranslator  {
 		curl_close($ch);
 
 		if ($curlError)
-			throw new Exception('Google Translate API curl error: ' . $curlError);
+			throw new \Exception('Google Translate API curl error: ' . $curlError);
 
 		$responseData = json_decode($response, true);
 
@@ -279,11 +279,11 @@ class VHGoogleTranslator  {
 			$errorMessage = 'Google Translate API error (HTTP ' . $httpCode . ')';
 			if (isset($responseData['error']['message']))
 				$errorMessage .= ': ' . $responseData['error']['message'];
-			throw new Exception($errorMessage);
+			throw new \Exception($errorMessage);
 		}
 
 		if (!isset($responseData['data']['translations']) || !is_array($responseData['data']['translations']))
-			throw new Exception('Google Translate API: unexpected response format');
+			throw new \Exception('Google Translate API: unexpected response format');
 
 		return $responseData['data']['translations'];
 	}

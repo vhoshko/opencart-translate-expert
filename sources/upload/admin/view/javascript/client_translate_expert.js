@@ -31,7 +31,7 @@ function initTranslateExpert() {
 	}
 	else if ($('#te-summary-count').length)
 	{
-		document.js_const_module_prefix = 'extension/module';
+		teDefaultModulePrefix();
 		showTranslatedCharCount();
 	}
 
@@ -350,8 +350,25 @@ function getParameter(name) {
 	return value;
 }
 
+function getOcTokenName() {
+	return getParameter('user_token') !== null ? 'user_token' : 'token';
+}
+
 function getOcToken() {
-	return getParameter('token');
+	return getParameter(getOcTokenName());
+}
+
+function teDefaultModulePrefix() {
+	if (!document.js_const_module_prefix)
+	{
+		document.js_const_module_prefix = 'extension/module';
+	}
+}
+
+function teRoute(method) {
+	var prefix = document.js_const_module_prefix || 'extension/module';
+	var separator = document.js_const_module_method_separator || '/';
+	return prefix + '/client_translate_expert' + separator + method;
 }
 
 // Bootstrap 5 Modal.hide() does nothing while the show animation runs.
@@ -489,7 +506,7 @@ function doTranslateExpert(event) {
 
 	var format = isTranslateExpertHTMLEditor(el) ? 'html' : 'text';
 
-	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/translate&token=' + getOcToken(),
+	$.post(document.location.href.split("?")[0] + '?route=' + teRoute('translate') + '&' + getOcTokenName() + '=' + getOcToken(),
 		{ text: textToTranslate, source: source, target: target, format: format }
 	).done(function(data) {
 		console.log(data);
@@ -525,8 +542,8 @@ function makeRemovingDataFromDbRequest() {
 	delete params.langIdFrom;
 	delete params.mode;
 
-	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/removeDataFromDb'
-		+ '&token=' + getOcToken(),
+	$.post(document.location.href.split("?")[0] + '?route=' + teRoute('removeDataFromDb')
+		+ '&' + getOcTokenName() + '=' + getOcToken(),
 		params
 	).done(function(data) {
 		if (!data.success)
@@ -558,11 +575,10 @@ function showTranslatedCharCount()
 		return;
 	}
 
-	var urlParams = new URLSearchParams(window.location.search);
-	var token = urlParams.get('token');
+	var token = getOcToken();
 
-	$.get(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/translatedCharCountInfo'
-		+ '&token=' + token
+	$.get(document.location.href.split("?")[0] + '?route=' + teRoute('translatedCharCountInfo')
+		+ '&' + getOcTokenName() + '=' + token
 	).done(function(data) {
 		if (!data.success)
 		{
@@ -622,11 +638,10 @@ function showTeCharCountError(response)
 
 function resetTranslationCharCount()
 {
-	var urlParams = new URLSearchParams(window.location.search);
-	var token = urlParams.get('token');
+	var token = getOcToken();
 
-	$.get(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/resetCharCount'
-		+ '&token=' + token
+	$.get(document.location.href.split("?")[0] + '?route=' + teRoute('resetCharCount')
+		+ '&' + getOcTokenName() + '=' + token
 	).done(function(data) {
 		if (!data.success)
 		{
@@ -645,8 +660,8 @@ function resetTranslationCache()
 	if (!confirm(teT('te_cache_reset_confirm')))
 		return;
 
-	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/resetCache'
-		+ '&token=' + getOcToken()
+	$.post(document.location.href.split("?")[0] + '?route=' + teRoute('resetCache')
+		+ '&' + getOcTokenName() + '=' + getOcToken()
 	).done(function(data) {
 		teAlerts.clear('#te-debug-alerts');
 		if (!data || !data.success)
@@ -664,7 +679,7 @@ function resetTranslationCache()
 
 function initModule()
 {
-	document.js_const_module_prefix = 'extension/module';
+	teDefaultModulePrefix();
 
 	teSiteInit();
 
@@ -1657,8 +1672,8 @@ function teSiteRequestAnalysis(next) {
 		params.continue_offset = next.offset;
 	}
 	state.requestNumber++;
-	$.get(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/analize'
-		+ '&token=' + getOcToken(),
+	$.get(document.location.href.split("?")[0] + '?route=' + teRoute('analize')
+		+ '&' + getOcTokenName() + '=' + getOcToken(),
 		params
 	).done(function(data) {
 		teSiteOnAnalysisBatch(state, data);
@@ -1796,8 +1811,8 @@ function teSiteShowDetail(table, column) {
 		teAlerts.fromResponse('#te-site-alerts', response);
 		hideTranslateExpertModal();
 	};
-	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/analizeTableDetail'
-		+ '&token=' + getOcToken(),
+	$.post(document.location.href.split("?")[0] + '?route=' + teRoute('analizeTableDetail')
+		+ '&' + getOcTokenName() + '=' + getOcToken(),
 		teSitePostParams(filters, table, column)
 	).done(function(data) {
 		if (!data || !data.success) {
@@ -1865,8 +1880,8 @@ function teSiteTranslateRequest() {
 	var t = teSiteTranslate;
 	var job = t.current;
 	t.requestNumber++;
-	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/translateTable'
-		+ '&token=' + getOcToken(),
+	$.post(document.location.href.split("?")[0] + '?route=' + teRoute('translateTable')
+		+ '&' + getOcTokenName() + '=' + getOcToken(),
 		teSitePostParams(t.filters, job.table, job.column)
 	).done(function(data) {
 		if (!data || !data.success) {
@@ -2347,8 +2362,8 @@ function teLocStartAnalysis(scope) {
 function teLocRequestAnalysis(scope) {
 	var state = teLocState[scope];
 	state.requestNumber++;
-	$.get(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/analizeLocalization'
-		+ '&token=' + getOcToken(),
+	$.get(document.location.href.split("?")[0] + '?route=' + teRoute('analizeLocalization')
+		+ '&' + getOcTokenName() + '=' + getOcToken(),
 		{ langIdFrom: state.langIdFrom, langIdTo: state.langIdTo, nextFileIndex: state.nextFileIndex, scope: scope }
 	).done(function(data) {
 		teLocOnBatch(scope, data);
@@ -2438,7 +2453,7 @@ function teLocTranslateFile(scope, index, done, fail, onlyKey) {
 		done();
 		return;
 	}
-	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/translate&token=' + getOcToken(),
+	$.post(document.location.href.split("?")[0] + '?route=' + teRoute('translate') + '&' + getOcTokenName() + '=' + getOcToken(),
 		{ textArr: JSON.stringify(texts), source: state.langIdFrom, target: state.langIdTo, format: 'html' }
 	).done(function(data) {
 		if (!data || !data.success || !$.isArray(data.texts)) {
@@ -2468,7 +2483,7 @@ function teLocSaveFile(scope, index, done, fail) {
 		done(false);
 		return;
 	}
-	$.post(document.location.href.split("?")[0] + '?route=' + document.js_const_module_prefix + '/client_translate_expert/saveLocalizationFile&token=' + getOcToken(),
+	$.post(document.location.href.split("?")[0] + '?route=' + teRoute('saveLocalizationFile') + '&' + getOcTokenName() + '=' + getOcToken(),
 		{ fileContent: content, langId: state.langIdTo, path: file.pathTo, scope: scope, root: file.root }
 	).done(function(data) {
 		if (!data || !data.success) {

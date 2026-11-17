@@ -36,6 +36,59 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		return '{client_version}';
 	}
 
+	private static function tokenName($version)
+	{
+		return version_compare($version, '3.0', '>=') ? 'user_token' : 'token';
+	}
+
+	private static function settingKey($name, $version)
+	{
+		return (version_compare($version, '3.0', '>=') ? 'module_' : '') . $name;
+	}
+
+	private static function prefixSettingKeys(array $post, $version)
+	{
+		$result = array();
+		foreach ($post as $key => $value) {
+			$result[strpos($key, 'client_translate_expert_') === 0 ? self::settingKey($key, $version) : $key] = $value;
+		}
+		return $result;
+	}
+
+	private static function extensionListRoute($version)
+	{
+		if (version_compare($version, '2.3', '<'))
+			return 'extension/module';
+		if (version_compare($version, '3.0', '<'))
+			return 'extension/extension';
+		return 'marketplace/extension';
+	}
+
+	private static function routeMethodSeparator($version)
+	{
+		return version_compare($version, '4.0', '>=') ? '.' : '/';
+	}
+
+	private static function needsPhpTemplateEngine($version)
+	{
+		return version_compare($version, '3.0', '>=') && version_compare($version, '4.0', '<');
+	}
+
+	private static function languageImageUrl($code, array $language, $version)
+	{
+		if (version_compare($version, '4.0', '>='))
+			return isset($language['image']) ? $language['image'] : '';
+		if (version_compare($version, '2.2', '<'))
+			return 'view/image/flags/' . $language['image'];
+		return "language/{$code}/{$code}.png";
+	}
+
+	private function tokenQuery($version)
+	{
+		$name = self::tokenName($version);
+		return $name . '=' . $this->session->data[$name];
+	}
+
 	public function index() {
 		$this->load->language('extension/module/client_translate_expert');
 
@@ -71,11 +124,11 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			{
 				$this->request->post['client_translate_expert_show_char_count_globally'] = 0;
 			}
-			$this->model_setting_setting->editSetting('client_translate_expert', $this->request->post);
+			$this->model_setting_setting->editSetting(self::settingKey('client_translate_expert', VERSION), self::prefixSettingKeys($this->request->post, VERSION));
 
 			$this->session->data['success'] = $this->language->get('text_success');
 
-			$this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true));
+			$this->response->redirect($this->url->link(self::extensionListRoute(VERSION), $this->tokenQuery(VERSION) . '&type=module', true));
 		}
 
 		$data['heading_title'] = $this->language->get('heading_title');
@@ -197,8 +250,8 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		foreach (array('te_site_lang_from', 'te_site_lang_to', 'te_site_lang_swap', 'te_site_card_what', 'te_site_more_filters', 'te_loc_card_files', 'te_loc_analyze', 'te_summary_status', 'te_summary_enabled', 'te_summary_disabled', 'te_summary_api_key', 'te_summary_key_set', 'te_summary_key_not_set', 'te_settings_card_connection', 'te_settings_card_usage', 'te_settings_card_cron', 'te_settings_card_routes', 'te_settings_card_try', 'te_debug_card_versions', 'te_debug_card_cache', 'te_about_card') as $te_text_key) {
 			$data[$te_text_key] = $this->language->get($te_text_key);
 		}
-		$data['te_summary_status_on'] = $this->config->get('client_translate_expert_status') ? 1 : 0;
-		$data['te_summary_key_set_on'] = trim((string)$this->config->get('client_translate_expert_key')) !== '' ? 1 : 0;
+		$data['te_summary_status_on'] = $this->config->get(self::settingKey('client_translate_expert_status', VERSION)) ? 1 : 0;
+		$data['te_summary_key_set_on'] = trim((string)$this->config->get(self::settingKey('client_translate_expert_key', VERSION))) !== '' ? 1 : 0;
 		// The JSON_HEX_* flags escape <, >, &, ' and ", so a value cannot close the <script> block.
 		$te_i18n_json = json_encode($te_i18n, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 		$data['te_i18n_json'] = is_string($te_i18n_json) && $te_i18n_json !== '' ? $te_i18n_json : '{}';
@@ -225,11 +278,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['languages'] = $this->model_localisation_language->getLanguages();
 		foreach($data['languages'] as $code => $language)
 		{
-			if (version_compare(VERSION, '2.2', '<'))
-				$langUrl = 'view/image/flags/' . $language['image'];
-			else
-				$langUrl = "language/{$code}/{$code}.png";
-			$data['languages'][$code]['image_url'] = $langUrl;
+			$data['languages'][$code]['image_url'] = self::languageImageUrl($code, $language, VERSION);
 		}
 
 
@@ -237,79 +286,79 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', $this->tokenQuery(VERSION), true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_extension'),
-			'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true)
+			'href' => $this->url->link(self::extensionListRoute(VERSION), $this->tokenQuery(VERSION) . '&type=module', true)
 		);
 
 		if (!isset($this->request->get['module_id'])) {
 			$data['breadcrumbs'][] = array(
 				'text' => $heading_title_text,
-				'href' => $this->url->link('extension/module/client_translate_expert', 'token=' . $this->session->data['token'], true)
+				'href' => $this->url->link('extension/module/client_translate_expert', $this->tokenQuery(VERSION), true)
 			);
 		} else {
 			$data['breadcrumbs'][] = array(
 				'text' => $heading_title_text,
-				'href' => $this->url->link('extension/module/client_translate_expert', 'token=' . $this->session->data['token'] . '&module_id=' . $this->request->get['module_id'], true)
+				'href' => $this->url->link('extension/module/client_translate_expert', $this->tokenQuery(VERSION) . '&module_id=' . $this->request->get['module_id'], true)
 			);
 		}
 
-		$data['action'] = $this->url->link('extension/module/client_translate_expert', 'token=' . $this->session->data['token'], true);
+		$data['action'] = $this->url->link('extension/module/client_translate_expert', $this->tokenQuery(VERSION), true);
 
-		$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true);
+		$data['cancel'] = $this->url->link(self::extensionListRoute(VERSION), $this->tokenQuery(VERSION) . '&type=module', true);
 
 		if (isset($this->request->post['client_translate_expert_key'])) {
 			$data['client_translate_expert_key'] = $this->request->post['client_translate_expert_key'];
 		} else {
-			$data['client_translate_expert_key'] = $this->config->get('client_translate_expert_key');
+			$data['client_translate_expert_key'] = $this->config->get(self::settingKey('client_translate_expert_key', VERSION));
 		}
 
 		if (isset($this->request->post['client_translate_expert_cron_secret'])) {
 			$data['client_translate_expert_cron_secret'] = $this->request->post['client_translate_expert_cron_secret'];
 		} else {
-			$data['client_translate_expert_cron_secret'] = (string)$this->config->get('client_translate_expert_cron_secret');
+			$data['client_translate_expert_cron_secret'] = (string)$this->config->get(self::settingKey('client_translate_expert_cron_secret', VERSION));
 		}
 
 		if (isset($this->request->post['client_translate_expert_cron_bulk_amount'])) {
 			$data['client_translate_expert_cron_bulk_amount'] = $this->request->post['client_translate_expert_cron_bulk_amount'];
 		} else {
 			$this->load->model('extension/module/client_translate_expert');
-			$data['client_translate_expert_cron_bulk_amount'] = $this->model_extension_module_client_translate_expert->clampCronBulkAmount($this->config->get('client_translate_expert_cron_bulk_amount'));
+			$data['client_translate_expert_cron_bulk_amount'] = $this->model_extension_module_client_translate_expert->clampCronBulkAmount($this->config->get(self::settingKey('client_translate_expert_cron_bulk_amount', VERSION)));
 		}
 
 		if (isset($this->request->post['client_translate_expert_show_char_count_globally'])) {
 			$data['client_translate_expert_show_char_count_globally'] = $this->request->post['client_translate_expert_show_char_count_globally'];
 		} else {
-			$data['client_translate_expert_show_char_count_globally'] = $this->config->get('client_translate_expert_show_char_count_globally');
+			$data['client_translate_expert_show_char_count_globally'] = $this->config->get(self::settingKey('client_translate_expert_show_char_count_globally', VERSION));
 		}
 
 		if (isset($this->request->post['client_translate_expert_reset_char_count_on_start_month'])) {
 			$data['client_translate_expert_reset_char_count_on_start_month'] = $this->request->post['client_translate_expert_reset_char_count_on_start_month'];
 		} else {
-			$data['client_translate_expert_reset_char_count_on_start_month'] = $this->config->get('client_translate_expert_reset_char_count_on_start_month');
+			$data['client_translate_expert_reset_char_count_on_start_month'] = $this->config->get(self::settingKey('client_translate_expert_reset_char_count_on_start_month', VERSION));
 		}
 
 		if (isset($this->request->post['client_translate_expert_excluded_routes'])) {
 			$data['client_translate_expert_excluded_routes'] = $this->request->post['client_translate_expert_excluded_routes'];
 		} else {
-			$data['client_translate_expert_excluded_routes'] = (string)$this->config->get('client_translate_expert_excluded_routes');
+			$data['client_translate_expert_excluded_routes'] = (string)$this->config->get(self::settingKey('client_translate_expert_excluded_routes', VERSION));
 		}
 
-		$data['client_translate_expert_char_count'] = number_format((float)$this->config->get('client_translate_expert_char_count'), 0, '.', '`');
+		$data['client_translate_expert_char_count'] = number_format((float)$this->config->get(self::settingKey('client_translate_expert_char_count', VERSION)), 0, '.', '`');
 
 		if (isset($this->request->post['client_translate_expert_status'])) {
 			$data['client_translate_expert_status'] = $this->request->post['client_translate_expert_status'];
 		} else {
-			$data['client_translate_expert_status'] = $this->config->get('client_translate_expert_status');
+			$data['client_translate_expert_status'] = $this->config->get(self::settingKey('client_translate_expert_status', VERSION));
 		}
 
 		if (isset($this->request->post['client_translate_expert_debug_status'])) {
 			$data['client_translate_expert_debug_status'] = $this->request->post['client_translate_expert_debug_status'];
 		} else {
-			$data['client_translate_expert_debug_status'] = $this->config->get('client_translate_expert_debug_status');
+			$data['client_translate_expert_debug_status'] = $this->config->get(self::settingKey('client_translate_expert_debug_status', VERSION));
 		}
 
 		$data['te_langIdFrom'] = isset($this->session->data['te_langIdFrom']) ? $this->session->data['te_langIdFrom'] : null;
@@ -351,9 +400,9 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		$data['te_cron_url'] = $cronBaseUrl . 'index.php?route=extension/module/client_translate_expert_cron';
 		$data['te_cron_secret_valid'] = $this->model_extension_module_client_translate_expert->isValidCronSecret((string)$data['client_translate_expert_cron_secret']);
 
-		$data['download_href'] = $this->url->link('extension/module/client_translate_expert/downloadDebugLog', 'token=' . $this->session->data['token'], true);
-		$data['clear_href'] = $this->url->link('extension/module/client_translate_expert/clearDebugLog', 'token=' . $this->session->data['token'], true);
-		$data['view_href'] = $this->url->link('extension/module/client_translate_expert', 'view=1&token=' . $this->session->data['token'], true);
+		$data['download_href'] = $this->url->link('extension/module/client_translate_expert' . self::routeMethodSeparator(VERSION) . 'downloadDebugLog', $this->tokenQuery(VERSION), true);
+		$data['clear_href'] = $this->url->link('extension/module/client_translate_expert' . self::routeMethodSeparator(VERSION) . 'clearDebugLog', $this->tokenQuery(VERSION), true);
+		$data['view_href'] = $this->url->link('extension/module/client_translate_expert', 'view=1&' . $this->tokenQuery(VERSION), true);
 
 		if (isset($this->request->get)
 			&& isset($this->request->get['view'])
@@ -404,6 +453,9 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			$data['column_left'] = $this->load->controller('common/column_left');
 			$data['footer'] = $this->load->controller('common/footer');
 
+			if (self::needsPhpTemplateEngine(VERSION)) {
+				$this->config->set('template_engine', 'template');
+			}
 			$this->response->setOutput($this->load->view('extension/module/client_translate_expert', $data));
 		}
 	}
@@ -750,7 +802,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 	private function resetCharCountOnStartMonth()
 	{
-		if ($this->config->get("client_translate_expert_reset_char_count_on_start_month"))
+		if ($this->config->get(self::settingKey("client_translate_expert_reset_char_count_on_start_month", VERSION)))
 		{
 			$this->load->model('extension/module/client_translate_expert');
 			$this->model_extension_module_client_translate_expert->resetCharCountOnNewMonth(date('m'));
@@ -830,7 +882,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 		} else {
 			$this->session->data['error'] = sprintf($this->language->get('error_debug_log_warning'), basename($file), '0B');
 
-			$this->response->redirect($this->url->link('extension/module/client_translate_expert', 'view=1&token=' . $this->session->data['token'], true));
+			$this->response->redirect($this->url->link('extension/module/client_translate_expert', 'view=1&' . $this->tokenQuery(VERSION), true));
 		}
 	}
 
@@ -849,7 +901,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			$this->session->data['success'] = $this->language->get('text_clear_debug_log_success');
 		}
 
-		$this->response->redirect($this->url->link('extension/module/client_translate_expert', 'view=1&token=' . $this->session->data['token'], true));
+		$this->response->redirect($this->url->link('extension/module/client_translate_expert', 'view=1&' . $this->tokenQuery(VERSION), true));
 	}
 
 	protected function validate() {
@@ -940,8 +992,8 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			return;
 		}
 
-		$isEnabled = $this->config->get('client_translate_expert_status');
-		$showCharCount = $this->config->get('client_translate_expert_show_char_count_globally');
+		$isEnabled = $this->config->get(self::settingKey('client_translate_expert_status', VERSION));
+		$showCharCount = $this->config->get(self::settingKey('client_translate_expert_show_char_count_globally', VERSION));
 		$languagesJson = $this->config->get('client_translate_expert_languages_json');
 
 		$version = $this->getCurrentVersion();
@@ -954,6 +1006,8 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 			. 'document.js_const_client_translate_expert_show_char_count_is_enabled = ' . (int)$showCharCount . ';'
 			. 'document.js_const_client_translate_expert_languages = ' . ($languagesJson ? $languagesJson : '{}') . ';'
 			. 'document.te_i18n_global = ' . $this->getGlobalI18nJson() . ';'
+			. 'document.js_const_module_prefix = "extension/client_translate_expert/module";'
+			. 'document.js_const_module_method_separator = ".";'
 			. '</script>';
 
 		$output = str_replace('</head>', $js . $css . '</head>', $output);
@@ -989,7 +1043,7 @@ class ControllerExtensionModuleClientTranslateExpert extends Controller {
 
 		return \Opencart\Extension\ClientTranslateExpert\System\Library\ClientTranslateExpertRouteFilter::isExcluded(
 			isset($this->request->get['route']) ? $this->request->get['route'] : null,
-			(string)$this->config->get('client_translate_expert_excluded_routes'),
+			(string)$this->config->get(self::settingKey('client_translate_expert_excluded_routes', VERSION)),
 			'common/dashboard'
 		);
 	}

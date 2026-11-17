@@ -1,7 +1,12 @@
 <?php
 
-require_once(DIR_SYSTEM . 'library/client_translate_expert.php');
-require_once(DIR_SYSTEM . 'library/client_localization_translate_expert.php');
+if (defined('DIR_EXTENSION') && version_compare(VERSION, '4.0', '>=')) {
+	require_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_translate_expert.php');
+	require_once(DIR_EXTENSION . 'client_translate_expert/system/library/client_localization_translate_expert.php');
+} else {
+	require_once(DIR_SYSTEM . 'library/client_translate_expert.php');
+	require_once(DIR_SYSTEM . 'library/client_localization_translate_expert.php');
+}
 
 class ModelExtensionModuleClientTranslateExpert extends Model
 {
@@ -181,12 +186,17 @@ class ModelExtensionModuleClientTranslateExpert extends Model
 		return $this->getLibrary()->clampCronBulkAmount($value);
 	}
 
+	private static function settingKey($name, $version)
+	{
+		return (version_compare($version, '3.0', '>=') ? 'module_' : '') . $name;
+	}
+
 	private $_library = null;
 
 	private function getLibrary()
 	{
 		if (is_null($this->_library))
-			$this->_library = new LibraryClientTranslateExpert($this, $this->config->get('client_translate_expert_debug_status'));
+			$this->_library = new LibraryClientTranslateExpert($this, $this->config->get(self::settingKey('client_translate_expert_debug_status', VERSION)));
 		return $this->_library;
 	}
 	
@@ -195,7 +205,7 @@ class ModelExtensionModuleClientTranslateExpert extends Model
 	private function getLocaliationLibrary()
 	{
 		if (is_null($this->_localiationLibrary))
-			$this->_localiationLibrary = new LocalizationLibraryClientTranslateExpert($this, $this->config->get('client_translate_expert_debug_status'));
+			$this->_localiationLibrary = new LocalizationLibraryClientTranslateExpert($this, $this->config->get(self::settingKey('client_translate_expert_debug_status', VERSION)));
 		return $this->_localiationLibrary;
 	}
 }

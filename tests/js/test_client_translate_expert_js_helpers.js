@@ -42,12 +42,12 @@ function check(message, cond) {
 
 // withBs5: add a stub of the BS5 global "bootstrap" that records the calls in window.teCalls.
 // Without it, the page has no Bootstrap and no jQuery plugins (the case of an OC 1.5 page other than the module page).
-function makeWindow(jqueryFile, withBs5, bodyHtml) {
+function makeWindow(jqueryFile, withBs5, bodyHtml, url) {
 	const dom = new JSDOM(
 		'<!doctype html><html><head></head><body>' + (bodyHtml || '<div class="te-app">'
 		+ '<div id="te-analization-result"><p id="keep">old</p></div><div id="al" class="te-alerts"></div><div id="col" style="display:none">c</div><a id="tab" href="#x">t</a>'
 		+ '</div>') + '</body></html>',
-		{ runScripts: 'outside-only' }
+		{ runScripts: 'outside-only', url: url || 'http://localhost/admin/index.php' }
 	);
 	const w = dom.window;
 	w.eval(fs.readFileSync(jqueryFile, 'utf8'));
@@ -84,6 +84,44 @@ function testTeT(w) {
 	check('a number parameter becomes text', () => w.teT('a', { name: 0 }) === 'Hello 0 0 {x}');
 	check('a non-string value falls back to the key', () => w.teT('n') === 'n');
 	check('a prototype key is not used', () => w.teT('toString') === 'toString');
+}
+
+function testTokenAndRoute(jqueryFile) {
+	console.log('\nToken and route helpers:');
+	const base = 'http://localhost/admin/index.php';
+	let w = makeWindow(jqueryFile, false, null, base + '?route=x&user_token=abc');
+	check('getOcTokenName gives user_token', () => w.getOcTokenName() === 'user_token' && w.getOcToken() === 'abc');
+	w = makeWindow(jqueryFile, false, null, base + '?route=x&token=def');
+	check('getOcTokenName gives token', () => w.getOcTokenName() === 'token' && w.getOcToken() === 'def');
+	w = makeWindow(jqueryFile, false, null, base + '?route=x');
+	check('without a token the name is token', () => w.getOcTokenName() === 'token' && w.getOcToken() === null);
+
+	w = makeWindow(jqueryFile, false, null, base + '?route=x&user_token=abc');
+	const urls = [];
+	const chain = { done: function() { return chain; }, fail: function() { return chain; }, always: function() { return chain; } };
+	w.$.get = function(u) { urls.push(u); return chain; };
+	w.document.js_const_module_prefix = 'extension/module';
+	w.resetTranslationCharCount();
+	check('the request URL has &user_token=abc and no &token=', () => urls.length === 1
+		&& urls[0] === base + '?route=extension/module/client_translate_expert/resetCharCount&user_token=abc');
+
+	w = makeWindow(jqueryFile, false);
+	check('teRoute default', () => w.teRoute('translate') === 'extension/module/client_translate_expert/translate');
+	w.document.js_const_module_prefix = 'module';
+	check('teRoute with the module prefix', () => w.teRoute('analize') === 'module/client_translate_expert/analize');
+	w.document.js_const_module_prefix = 'extension/client_translate_expert/module';
+	w.document.js_const_module_method_separator = '.';
+	check('teRoute with the OC4 values', () => w.teRoute('translate') === 'extension/client_translate_expert/module/client_translate_expert.translate');
+	w.document.js_const_module_prefix = 'module';
+	w.document.js_const_module_method_separator = undefined;
+	w.teDefaultModulePrefix();
+	check('teDefaultModulePrefix keeps a header prefix', () => w.document.js_const_module_prefix === 'module');
+	w.document.js_const_module_prefix = undefined;
+	w.teDefaultModulePrefix();
+	check('teDefaultModulePrefix sets the default', () => w.document.js_const_module_prefix === 'extension/module');
+	// A plain assignment in initModule or initTranslateExpert would override the prefix of the header.
+	const src = fs.readFileSync(JS_FILE, 'utf8');
+	check('only teDefaultModulePrefix assigns js_const_module_prefix', () => (src.match(/js_const_module_prefix\s*=(?!=)/g) || []).length === 1);
 }
 
 function testDomHelpers(w) {
@@ -1451,6 +1489,7 @@ for (const version of JQUERY_VERSIONS) {
 	console.log('\n--- ' + version.label + ' ---');
 	let w = makeWindow(version.file, false);
 	testTeT(w);
+	testTokenAndRoute(version.file);
 	testDomHelpers(w);
 	testNoBootstrap(w);
 	testAlerts(w);
