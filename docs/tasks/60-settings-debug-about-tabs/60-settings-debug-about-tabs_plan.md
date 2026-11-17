@@ -53,7 +53,7 @@ Tab names get shorter values. The keys stay.
 
 ## Done
 
-- Settings, Debug and About tabs now use `te-card` blocks in the `.tpl` and the `.oc4.twig`. Tab names are shorter. Final version: 04.01.0196.
-- Review (Opus): 0 critical, 0 important, 6 minor. Fixed: the lost `(int)` and `htmlspecialchars()` in the `.tpl`, the `te-radio-group` class, a dead CSS rule and the About card title in ru-ru and uk-ua. Skipped: the unused `entry_try_translate` load and the select indentation.
+- Settings, Debug and About tabs now use `te-card` blocks in the `.tpl` and the `.oc4.twig`. Tab names are shorter. Final version: 04.01.0198.
+- Review (Opus): 0 critical, 0 important, 6 minor. Fixed: the lost `(int)` and `htmlspecialchars()` in the `.tpl`, the `te-radio-group` class, a dead CSS rule and the About card title in ru-ru and uk-ua. Skipped: the select indentation. The unused `entry_try_translate` key was removed later, at the request of the user, from the controller and the 3 language files.
 - No re-review: the fixes are small and the build is green.
 - Deferred: the "Reset cache" success message (README step 6). No visual check on a real store.
