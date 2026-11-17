@@ -89,6 +89,6 @@ Google prices and rules can change. Check them in your Google Cloud account.
 The About tab of the module shows the module version and the support link. Support is through GitHub Issues: https://github.com/vhoshko/opencart-translate-expert/issues
 
 <!--
-Candidate screenshots in the images/ folder of the repository (check that they are current before you use them):
-500x500_1.png, 500x500_2.png, 500x500_3.png, 500x500_4.png, 500x500_5.png, 500x500_6.png, 500x500_7.png, 500x500_8.png, TranslateExpert_en_710x380.png, TranslateExpert_ru_380x380.png, TranslateExpert_ru_710x380.png, translate_expert_opencart_10_.png, translate_expert_opencart_11_.png, translate_expert_opencart_12.png, translate_expert_opencart_13.png, translate_expert_opencart_15.png, translate_expert_opencart_16.png, translate_expert_opencart_17.png
+Main images of the module (1024x1024, same design):
+main-image.en.png (English), main-image.uk.png (Ukrainian)
 -->

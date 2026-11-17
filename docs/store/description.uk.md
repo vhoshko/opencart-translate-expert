@@ -89,6 +89,6 @@ Translate Expert — це модуль для адмінки OpenCart. Він в
 Вкладка «Про модуль» показує версію модуля та посилання на підтримку. Підтримка через GitHub Issues: https://github.com/vhoshko/opencart-translate-expert/issues
 
 <!--
-Кандидати на скриншоти в папці images/ репозиторію (перевірте, що вони актуальні, перш ніж використовувати):
-500x500_1.png, 500x500_2.png, 500x500_3.png, 500x500_4.png, 500x500_5.png, 500x500_6.png, 500x500_7.png, 500x500_8.png, TranslateExpert_en_710x380.png, TranslateExpert_ru_380x380.png, TranslateExpert_ru_710x380.png, translate_expert_opencart_10_.png, translate_expert_opencart_11_.png, translate_expert_opencart_12.png, translate_expert_opencart_13.png, translate_expert_opencart_15.png, translate_expert_opencart_16.png, translate_expert_opencart_17.png
+Головні зображення модуля (1024x1024, однаковий дизайн):
+main-image.uk.png (українська), main-image.en.png (англійська)
 -->

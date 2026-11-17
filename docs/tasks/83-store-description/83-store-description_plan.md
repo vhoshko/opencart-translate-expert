@@ -78,3 +78,6 @@ Claims that must NOT appear: a module price or "one-time price", video links, sc
 
 ## Done
 The 2 files in `docs/store/` describe the module for a store page. The review found one wrong plan claim (the manual Reset button exists). Open points for the user: the old text claims (price, $300 credit, speed, videos) are not in the new files. The word "елітий" stays as in the issue. No build and no version bump.
+
+## Update 17.11.2026 (images)
+The user chose 2 generated main images (Gemini, 1024x1024, en and uk). They are in `docs/store/main-image.en.png` and `docs/store/main-image.uk.png`. The old `images/` folder (18 files) is removed. No code, build script or README used it. The end comment of both description files now names the 2 new images. This replaces the candidate list in the Assumptions and in the Steps above.
