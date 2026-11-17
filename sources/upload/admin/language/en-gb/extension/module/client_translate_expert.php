@@ -202,6 +202,7 @@ $_['te_loc_totals_values'] = 'Values to translate: {count}';
 $_['te_loc_totals_chars'] = 'Characters to translate: {count}';
 $_['te_loc_col_file'] = 'File';
 $_['te_loc_col_keys'] = 'Keys to translate';
+$_['te_loc_col_chars'] = 'Characters to translate';
 $_['te_loc_col_state'] = 'State';
 $_['te_loc_state_missing'] = 'missing';
 $_['te_loc_state_partial'] = 'partial';

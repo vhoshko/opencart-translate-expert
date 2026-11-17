@@ -287,3 +287,9 @@ Findings: 04.01.0189, build green, PHP tests pass, JS 589 passed. A mutation of 
 
 - The user asked that the green "Saved: <path>" alerts go away after some time. `teAlerts.show` now closes a success alert after `teAlerts.successTimeout` (5000 ms) with a 400 ms fade. Error and info alerts stay until the user closes them. The change is in the shared helper, so it applies to each tab that shows a success alert.
 - Findings: 04.01.0193, build green, PHP tests pass, JS 611 passed. jQuery 3 `fadeOut` also calls `setTimeout`, so the test counts only the 5000 ms timers. No re-review: a small UI change with tests.
+
+## Update 2026-11-17 (store run feedback, characters to translate column)
+
+- The user asked for a "Characters to translate" column after "Keys to translate". LOC adds `charCount` to each file item. The new private `calcFileCharCount` holds the count formula, and `calcAnalizeTotals` uses it too. So the file values add up to `needToTranslateCharCount`. The total row shows `needToTranslateCharCount` in the new column. The group row and the key list span 4 columns.
+- New language key `te_loc_col_chars` in en-gb, ru-ru and uk-ua, and in the CTRL `te_i18n` list. PoC `endpoints-json.md` 3.4 has a note about `charCount`.
+- Findings: 04.01.0194, build green, PHP localization 1101 passed (9 fields in a file item, `charCount` is an int, the sum check), JS 613 passed. No PHP 7+ syntax in the added lines. No re-review: a small additive field and column with tests.

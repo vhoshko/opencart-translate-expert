@@ -437,7 +437,10 @@ class LocalizationChildTest
 		$this->check($header['targetExists'], $this->isOc4 ? 1 : 0, 'targetExists is an int');
 		$fields = array_keys($header);
 		sort($fields);
-		$this->check($fields, array('contentFrom', 'contentTo', 'keys', 'pathFrom', 'pathTo', 'root', 'rootName', 'targetExists'), 'file item has exactly 8 fields');
+		$this->check($fields, array('charCount', 'contentFrom', 'contentTo', 'keys', 'pathFrom', 'pathTo', 'root', 'rootName', 'targetExists'), 'file item has exactly 9 fields');
+		$this->check(isset($header['charCount']) ? $header['charCount'] : null, 13 + $this->keyChars($header, 'heading_title'),
+			'charCount of the file: the characters of its literal keys ("Admin include" is 13)');
+		$this->check(isset($header['charCount']) && is_int($header['charCount']), true, 'charCount is an int');
 
 		$quote = $rows["core|/quote'name.php"];
 		$this->check($quote['pathTo'], "/quote'name.php", 'pathTo is the raw value');
@@ -457,6 +460,17 @@ class LocalizationChildTest
 			'needToTranslateValueCount' => 6,
 			'needToTranslateCharCount' => $this->isOc4 ? 43 : 42,
 		), 'admin totals are computed from the fixture');
+		$sum = 0;
+		foreach ($rows as $row)
+			$sum += isset($row['charCount']) ? $row['charCount'] : 0;
+		$this->check($sum, isset($totals['needToTranslateCharCount']) ? $totals['needToTranslateCharCount'] : -1, 'the charCount values of the files add up to needToTranslateCharCount');
+	}
+
+	// The characters of one literal key, with the count formula of the library (0 if the key is not in the file).
+	private function keyChars($file, $key)
+	{
+		$item = $this->keyItem($file, $key);
+		return is_array($item) && !$item['expression'] ? mb_strlen(trim(html_entity_decode($item['text'])), 'UTF-8') : 0;
 	}
 
 	private function checkResponseShape($res, $prefix)

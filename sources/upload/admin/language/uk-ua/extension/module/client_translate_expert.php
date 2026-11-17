@@ -203,6 +203,7 @@ $_['te_loc_totals_values'] = 'Значень для перекладу: {count}'
 $_['te_loc_totals_chars'] = 'Символів для перекладу: {count}';
 $_['te_loc_col_file'] = 'Файл';
 $_['te_loc_col_keys'] = 'Ключів для перекладу';
+$_['te_loc_col_chars'] = 'Символів для перекладу';
 $_['te_loc_col_state'] = 'Стан';
 $_['te_loc_state_missing'] = 'немає файла';
 $_['te_loc_state_partial'] = 'частково';

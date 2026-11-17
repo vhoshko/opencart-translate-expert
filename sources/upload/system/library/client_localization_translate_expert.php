@@ -262,8 +262,21 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 			'pathTo' => $analizeFile['pathTo'],
 			'targetExists' => $analizeFile['targetExists'] ? 1 : 0,
 			'keys' => $keys,
+			'charCount' => $this->calcFileCharCount($analizeFile['toTranslate']),
 			'contentFrom' => $analizeFile['contentFrom'],
 			'contentTo' => $analizeFile['contentTo']);
+	}
+
+	// The characters to translate of one file. The file items (charCount) and the totals use this count.
+	private function calcFileCharCount($toTranslate)
+	{
+		$charCount = 0;
+		foreach($toTranslate as $toTranslateLine)
+		{
+			// The admin controller html_entity_decode()s each text before the send and the count: use the same call.
+			$charCount += mb_strlen(trim(html_entity_decode($toTranslateLine['text'])), 'UTF-8');
+		}
+		return $charCount;
 	}
 
 	private function calcAnalizeTotals($analize)
@@ -280,11 +293,7 @@ class LocalizationLibraryClientTranslateExpert extends LibraryClientTranslateExp
 			if ($toTranslateCount > 0)
 				$needToTranslateFileCount++;
 			$needToTranslateValueCount += $toTranslateCount;
-			foreach($toTranslate as $key => $toTranslateLine)
-			{
-				// The admin controller html_entity_decode()s each text before the send and the count: use the same call.
-				$needToTranslateCharCount += mb_strlen(trim(html_entity_decode($toTranslateLine['text'])), 'UTF-8');
-			}
+			$needToTranslateCharCount += $this->calcFileCharCount($toTranslate);
 		}
 
 		return array(

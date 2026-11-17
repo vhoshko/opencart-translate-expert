@@ -204,6 +204,7 @@ Changes in issue 59:
 - A file item has no language rows.
 - The controller casts the integers. It rejects a language ID that is not positive.
 - The library returns the error code 3002 for an unknown language ID.
+- A file item has `charCount`: the characters to translate of the file. The library counts it with the formula of `needToTranslateCharCount`, so the file values add up to the total (store run feedback).
 
 Now: `analize[]` (data), `html` (totals block and an empty table, used only for batch 0) and `detailsHtml` (the file rows, LOC:288-368).
 

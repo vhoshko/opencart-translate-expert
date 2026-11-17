@@ -423,7 +423,7 @@ const SITE_I18N = {
 const LOC_I18N = {
 	te_loc_analyzing: 'Analyzing files', te_loc_translating: 'Translating {path}', te_loc_cnt_files: 'Files {n} of {total}', te_loc_totals_files: 'Files: {count}',
 	te_loc_totals_to_translate: 'To translate: {count}', te_loc_totals_values: 'Values: {count}', te_loc_totals_chars: 'Chars: {count}', te_loc_col_file: 'File',
-	te_loc_col_keys: 'Keys', te_loc_col_state: 'State', te_loc_state_missing: 'missing', te_loc_state_partial: 'partial', te_loc_state_saved: 'saved',
+	te_loc_col_keys: 'Keys', te_loc_col_chars: 'Chars', te_loc_col_state: 'State', te_loc_state_missing: 'missing', te_loc_state_partial: 'partial', te_loc_state_saved: 'saved',
 	te_loc_toggle: 'Toggle {path}', te_loc_root: 'Extension: {name}', te_loc_expression: 'PHP code', te_loc_source_file: 'Source file',
 	te_loc_translate_file: 'Translate file', te_loc_translate_save_file: 'Translate and save file', te_loc_save_file: 'Save file', te_loc_saved: 'Saved: {path}', te_loc_nothing_to_save: 'Nothing: {path}',
 	te_loc_no_files: 'All translated.', te_loc_translate_all: 'Translate all', te_loc_translate_all_confirm: 'Translate all ({lang})?'
@@ -1005,7 +1005,7 @@ function testLocAnalysis(w) {
 	const row0 = rows()[0];
 	check('batch 0: only files with keys are rows, data-index is the server index', () => rows().length === 2 && w.$(rows()[0]).attr('data-index') === '0' && w.$(rows()[1]).attr('data-index') === '2');
 	check('batch 0: badges partial and missing, key count, toggle button', () => w.$(rows()[0]).find('.te-badge--warn').text() === 'partial' && w.$(rows()[1]).find('.te-badge--error').text() === 'missing'
-		&& w.$(rows()[0]).children('td.te-num').text() === '1' && w.$(rows()[0]).find('button.te-table__expand').attr('aria-expanded') === 'false');
+		&& w.$(rows()[0]).children('td.te-num').eq(0).text() === '1' && w.$(rows()[0]).children('td.te-loc-chars').text() === '0' && w.$(rows()[0]).find('button.te-table__expand').attr('aria-expanded') === 'false');
 	check('batch 0: totals text and progress counters', () => !w.$('#te-loc-totals-catalog').hasClass('te-hidden') && w.$('#te-loc-totals-catalog').text() === 'Files: 12To translate: 2Values: 5Chars: 1 234'
 		&& w.$('#te-loc-progress-catalog .te-progress__counters').text() === 'Files 10 of 12Request 1');
 	check('batch 0: the second request has nextFileIndex 10 and the same scope', () => calls.get.length === 2 && calls.get[1].data.nextFileIndex === 10 && calls.get[1].data.scope === 'catalog');
@@ -1013,6 +1013,8 @@ function testLocAnalysis(w) {
 	check('batch 0: the per-key translate buttons are disabled while the analysis runs', () => w.$('#te-loc-result-catalog .te-js-loc-key-translate').length > 0 && w.$('#te-loc-result-catalog .te-js-loc-key-translate').filter(function() { return !this.disabled; }).length === 0);
 	check('batch 0: the total row is the second head row, with the keys to translate of the totals and a hidden Translate all', () => w.$('#te-loc-result-catalog thead tr').length === 2
 		&& w.$('#te-loc-result-catalog thead tr').eq(1).hasClass('te-table__total') && w.$('#te-loc-result-catalog thead .te-loc-total').text() === '5'
+		&& w.$('#te-loc-result-catalog thead tr').eq(0).children('th').map(function() { return w.$(this).text(); }).get().join('|') === 'File|Keys|Chars|State'
+		&& w.$('#te-loc-result-catalog thead .te-table__total td').eq(2).is('.te-loc-total-chars') && w.$('#te-loc-result-catalog thead .te-loc-total-chars').text() === '1 234'
 		&& w.$('#te-loc-result-catalog thead .te-table__total #te-loc-translate-all-catalog.te-js-loc-translate-all').length === 1
 		&& w.$('#te-loc-translate-all-catalog').hasClass('te-hidden') && w.$('#te-loc-result-catalog tfoot').length === 0);
 	calls.get[1].dfd.resolve(locBatch([locFile('/d.php', [locKey('d', 'D')])], 12, true, null));
@@ -1067,7 +1069,7 @@ function testLocAnalysis(w) {
 		locFile('/z.php', [locKey('z', 'Z')])
 	], 5, true, { fileCount: 5, needToTranslateFileCount: 5, needToTranslateValueCount: 5, needToTranslateCharCount: 5 }));
 	check('OC4 roots: one group row with the extension name, none for core files', () => w.$('#te-loc-result-catalog tr.te-loc-root').length === 1 && w.$('#te-loc-result-catalog tr.te-loc-root').text() === 'Extension: opencart'
-		&& w.$('#te-loc-result-catalog tr.te-loc-root td').attr('colspan') === '3');
+		&& w.$('#te-loc-result-catalog tr.te-loc-root td').attr('colspan') === '4');
 	check('a renamed main file shows from and to', () => w.$('#te-loc-result-catalog tr.te-loc-file').eq(3).find('.te-table__name').text() === '/old.php → /new.php'
 		&& w.$('#te-loc-result-catalog tr.te-loc-file').eq(0).find('.te-table__name').text() === '/a.php');
 
@@ -1249,13 +1251,15 @@ function testLocTranslateSave(w) {
 		&& krow.find('textarea[data-key="k1"]').val() === 'hand made' && kbtn('k1').prop('disabled') === false);
 
 	// The Translate and save file button of the file row
-	locLoad(w, calls, [locFile('/account/account.php', [locKey('heading_title', 'My Account')], { targetExists: 0, contentTo: '' })]);
+	locLoad(w, calls, [locFile('/account/account.php', [locKey('heading_title', 'My Account')], { targetExists: 0, contentTo: '', charCount: 1500 })]);
 	const frow = w.$('#te-loc-result-catalog tr.te-loc-file').eq(0);
 	const fbtn = frow.find('.te-js-loc-translate-save');
 	const fdetail = w.$('#te-loc-result-catalog tr.te-table__detail').eq(0);
+	check('file row: the third cell holds the characters to translate of the file (charCount), the key list spans 4 columns', () => frow.children('td').eq(1).text() === '1'
+		&& frow.children('td').eq(2).is('.te-num.te-loc-chars') && frow.children('td').eq(2).text() === '1 500' && fdetail.children('td').attr('colspan') === '4');
 	check('file row: a Translate and save file button in the third cell (under Translate all), before the state badge, no Translate file button in the row', () => fbtn.length === 1 && fbtn.text() === 'Translate and save file' && fbtn.attr('data-index') === '0'
-		&& frow.children('td').eq(2).children().eq(0).is(fbtn) && frow.children('td').eq(2).children().eq(1).find('.te-badge--error').length === 1 && frow.find('.te-js-loc-translate').length === 0
-		&& w.$('#te-loc-result-catalog thead .te-table__total td').eq(2).find('.te-js-loc-translate-all').length === 1 && fdetail.find('.te-js-loc-translate').text() === 'Translate file');
+		&& frow.children('td').eq(3).children().eq(0).is(fbtn) && frow.children('td').eq(3).children().eq(1).find('.te-badge--error').length === 1 && frow.find('.te-js-loc-translate').length === 0
+		&& w.$('#te-loc-result-catalog thead .te-table__total td').eq(3).find('.te-js-loc-translate-all').length === 1 && fdetail.find('.te-js-loc-translate').text() === 'Translate file');
 	const fposts = calls.post.length;
 	fbtn.trigger('click');
 	const fp = calls.post[calls.post.length - 1];

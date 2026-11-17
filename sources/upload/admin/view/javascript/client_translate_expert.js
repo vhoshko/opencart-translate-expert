@@ -2093,6 +2093,7 @@ function teLocRenderTotals(scope, totals) {
 	}
 	box.removeClass('te-hidden');
 	$(teLocIds(scope).result).find('.te-loc-total').text(teFormatInt(t.needToTranslateValueCount));
+	$(teLocIds(scope).result).find('.te-loc-total-chars').text(teFormatInt(t.needToTranslateCharCount));
 }
 
 // The total row with "Translate all" is at the top of the table, under the column heads (as on the Website content tab).
@@ -2102,10 +2103,12 @@ function teLocBuildTableSkeleton(scope) {
 	var headRow = teEl('tr');
 	headRow.append(teEl('th', {}, teT('te_loc_col_file')));
 	headRow.append(teEl('th', { 'class': 'te-num' }, teT('te_loc_col_keys')));
+	headRow.append(teEl('th', { 'class': 'te-num' }, teT('te_loc_col_chars')));
 	headRow.append(teEl('th', {}, teT('te_loc_col_state')));
 	var totalRow = teEl('tr', { 'class': 'te-table__total' });
 	totalRow.append(teEl('td', {}, teT('te_site_total')));
 	totalRow.append(teEl('td', { 'class': 'te-num te-loc-total' }, '0'));
+	totalRow.append(teEl('td', { 'class': 'te-num te-loc-total-chars' }, '0'));
 	totalRow.append(teEl('td', { 'class': 'te-site-actions' }).append(teSiteButton('te-js-loc-translate-all te-hidden', teT('te_loc_translate_all'), { 'id': teLocIds(scope).translateAll.substring(1) })));
 	table.append(teEl('thead').append(headRow).append(totalRow));
 	table.append(teEl('tbody', { 'class': 'te-loc-tbody' }));
@@ -2146,6 +2149,7 @@ function teLocBuildFileRow(scope, file, index) {
 	nameCell.append(teEl('span', { 'class': 'te-table__name' }, teLocFileLabel(file)));
 	tr.append(nameCell);
 	tr.append(teEl('td', { 'class': 'te-num' }, file.keys.length));
+	tr.append(teEl('td', { 'class': 'te-num te-loc-chars' }, teFormatInt(Number(file.charCount) || 0)));
 	// The "Translate and save file" button of the row is under "Translate all" of the total row, before the state badge.
 	var stateCell = teEl('td', { 'class': 'te-site-actions' });
 	stateCell.append(teSiteButton('te-js-loc-translate-save', teT('te_loc_translate_save_file'), { 'data-index': index, 'disabled': teLocState[scope].running ? 'disabled' : null }));
@@ -2234,7 +2238,7 @@ function teLocRenderDiff(scope, file, index) {
 
 function teLocBuildDetailRow(scope, file, index) {
 	var tr = teEl('tr', { 'class': 'te-table__detail te-hidden', 'data-index': index });
-	tr.append(teEl('td', { 'colspan': '3' }).append(teLocRenderDiff(scope, file, index)));
+	tr.append(teEl('td', { 'colspan': '4' }).append(teLocRenderDiff(scope, file, index)));
 	return tr;
 }
 
@@ -2245,7 +2249,7 @@ function teLocAppendFile(scope, index) {
 	var root = typeof file.root === 'string' ? file.root : '';
 	if (root !== state.lastRoot) {
 		if (typeof file.rootName === 'string' && file.rootName !== '') {
-			tbody.append(teEl('tr', { 'class': 'te-table__group te-loc-root' }).append(teEl('td', { 'colspan': '3' }, teT('te_loc_root', { name: file.rootName }))));
+			tbody.append(teEl('tr', { 'class': 'te-table__group te-loc-root' }).append(teEl('td', { 'colspan': '4' }, teT('te_loc_root', { name: file.rootName }))));
 		}
 		state.lastRoot = root;
 	}
