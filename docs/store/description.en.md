@@ -101,8 +101,8 @@ If the module is useful to you, you can support its development with a crypto do
 
 - Tron
   - TKB4TNF9GRCcJQHavDCaMbFQVsEp322BhU
-  - Accepts: TRX and tokens on the Tron network.
-  - Send only on the Tron network. Do not use ERC-20 or BEP-20.
+  - Accepts: TRX and USDT (TRC-20) on the Tron network.
+  - Send only TRX or USDT (TRC-20) on the Tron network. Do not use ERC-20 or BEP-20.
 - Bitcoin
   - bc1qr38nutpnjeqygs8tnsypw32hqtgpe0wnuf3jnv
   - Accepts: BTC.

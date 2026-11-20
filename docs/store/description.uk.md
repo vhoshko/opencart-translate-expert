@@ -101,8 +101,8 @@ Translate Expert — це модуль для адмінки OpenCart. Він в
 
 - Tron
   - TKB4TNF9GRCcJQHavDCaMbFQVsEp322BhU
-  - Приймає: TRX і токени в мережі Tron.
-  - Надсилайте лише в мережі Tron. Не використовуйте ERC-20 або BEP-20.
+  - Приймає: TRX і USDT (TRC-20) в мережі Tron.
+  - Надсилайте лише TRX або USDT (TRC-20) в мережі Tron. Не використовуйте ERC-20 або BEP-20.
 - Bitcoin
   - bc1qr38nutpnjeqygs8tnsypw32hqtgpe0wnuf3jnv
   - Приймає: BTC.

@@ -142,12 +142,12 @@ If the module is useful to you, you can support its development with a crypto do
 <td><code>0x5706F582478CE6C15Ef6489B103AC018280B0540</code></td>
 </tr>
 <tr>
-<td>Accepts: TRX and tokens on the Tron network.</td>
+<td>Accepts: TRX and USDT (TRC-20) on the Tron network.</td>
 <td>Accepts: BTC.</td>
 <td>Accepts: ETH and tokens on the Base network.</td>
 </tr>
 <tr>
-<td>Send only on the Tron network. Do not use ERC-20 or BEP-20.</td>
+<td>Send only TRX or USDT (TRC-20) on the Tron network. Do not use ERC-20 or BEP-20.</td>
 <td>Send only BTC on the Bitcoin network. This is a native SegWit address (it starts with bc1).</td>
 <td>Send only on the Base network (an Ethereum L2). This is an EVM address, so the same string is valid on other EVM networks. A transfer on Ethereum mainnet or on another EVM network may not arrive at the Base wallet.</td>
 </tr>
