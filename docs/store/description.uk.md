@@ -95,6 +95,25 @@ Translate Expert — це модуль для адмінки OpenCart. Він в
 
 Вкладка «Про модуль» показує версію модуля та посилання на підтримку. Підтримка через GitHub Issues: https://github.com/vhoshko/opencart-translate-expert/issues
 
+## Підтримати проєкт
+
+Якщо модуль вам корисний, ви можете підтримати його розвиток криптовалютним пожертвуванням.
+
+- Tron
+  - TKB4TNF9GRCcJQHavDCaMbFQVsEp322BhU
+  - Приймає: TRX і USDT (TRC-20) в мережі Tron.
+  - Надсилайте лише TRX або USDT (TRC-20) в мережі Tron. Не використовуйте ERC-20 або BEP-20.
+- Bitcoin
+  - bc1qr38nutpnjeqygs8tnsypw32hqtgpe0wnuf3jnv
+  - Приймає: BTC.
+  - Надсилайте лише BTC у мережі Bitcoin. Це нативна адреса SegWit (вона починається з bc1).
+- Base
+  - 0x5706F582478CE6C15Ef6489B103AC018280B0540
+  - Приймає: ETH і токени в мережі Base.
+  - Надсилайте лише в мережі Base (L2 для Ethereum). Це адреса EVM, тому такий самий рядок дійсний в інших мережах EVM. Переказ в основній мережі Ethereum або в іншій мережі EVM може не надійти на гаманець Base.
+
+QR-коди: https://github.com/vhoshko/opencart-translate-expert#donate
+
 <!--
 Головні зображення модуля (1024x1024, однаковий дизайн):
 main-image.uk.png (українська), main-image.en.png (англійська)

@@ -105,6 +105,9 @@ php tests/test_client_translate_expert_version_rules.php
 # Settings cards tests: toggle button, body id and start state of the 4 collapsible cards in the .tpl and the .oc4.twig (static, no DB, no API key)
 php tests/test_client_translate_expert_settings_cards.php
 
+# Donation info tests: wallet addresses in the README, store descriptions and language files, QR image files, template and whitelist keys (static, no DB, no API key)
+php tests/test_client_translate_expert_donation_info.php
+
 # OC4 Twig name check: filters, tests, functions, tags (static, no Twig needed)
 php tests/test_oc4_twig_filters.php
 
@@ -138,6 +141,8 @@ The `TranslateExpertRouteFilter` tests cover the excluded-routes rules. Any PHP 
 The `TranslateExpertCronHelper` tests cover the cron secret rules, the request parameters and the setting key prefix. Any PHP warning fails these tests.
 
 The `TranslateExpertI18n` tests cover the language file candidates, the English fallback, the global keys in the 3 module language files and the JSON escaping for a `<script>` block. Any PHP warning fails these tests.
+
+The donation info test checks that each wallet address is the same in `README.md`, the store descriptions and the 3 language files. It checks that the QR images in `docs/donate/` are PNG files that the README uses. It checks that both templates and the controller whitelist use each `te_donate_*` key. It checks that no file in `sources/` uses the QR images. Any PHP warning fails the test.
 
 The JS helper tests load the real `client_translate_expert.js` in jsdom. They cover the `teT` lookup and placeholders, the FA 4 and FA 6 icon classes, the Bootstrap adapter with BS5 and with no Bootstrap, and the `teAlerts` text-only rendering of JSON, non-JSON and jqXHR responses. They also cover the localization tabs: the analysis loop, the key list, the PHP literal helpers, translate and save for one file, and "Translate all" with Stop. `npm ci` installs the pinned dev dependencies (jsdom, jQuery 3.7.1) into `tests/js/node_modules/`, which git ignores. jQuery 1.7.1 is the OC 1.5 file in `tests/js/vendor/`.
 

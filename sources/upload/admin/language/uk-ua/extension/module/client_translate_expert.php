@@ -102,6 +102,21 @@ $_['te_debug_card_cache'] = 'Кеш';
 $_['te_cache_reset_done'] = 'Кеш перекладів скинуто.';
 $_['te_cache_reset_confirm'] = 'Ви впевнені, що хочете скинути кеш перекладів? Модуль видалить збережені дані перекладів.';
 $_['te_about_card'] = 'Інформація про модуль';
+$_['te_donate_card'] = 'Підтримати проєкт';
+$_['te_donate_intro'] = 'Якщо модуль вам корисний, ви можете підтримати його розвиток криптовалютним пожертвуванням.';
+$_['te_donate_network_tron'] = 'Tron';
+$_['te_donate_network_bitcoin'] = 'Bitcoin';
+$_['te_donate_network_base'] = 'Base';
+$_['te_donate_address_tron'] = 'TKB4TNF9GRCcJQHavDCaMbFQVsEp322BhU';
+$_['te_donate_address_bitcoin'] = 'bc1qr38nutpnjeqygs8tnsypw32hqtgpe0wnuf3jnv';
+$_['te_donate_address_base'] = '0x5706F582478CE6C15Ef6489B103AC018280B0540';
+$_['te_donate_accepts_tron'] = 'Приймає: TRX і USDT (TRC-20) в мережі Tron.';
+$_['te_donate_accepts_bitcoin'] = 'Приймає: BTC.';
+$_['te_donate_accepts_base'] = 'Приймає: ETH і токени в мережі Base.';
+$_['te_donate_warning_tron'] = 'Надсилайте лише TRX або USDT (TRC-20) в мережі Tron. Не використовуйте ERC-20 або BEP-20.';
+$_['te_donate_warning_bitcoin'] = 'Надсилайте лише BTC у мережі Bitcoin. Це нативна адреса SegWit (вона починається з bc1).';
+$_['te_donate_warning_base'] = 'Надсилайте лише в мережі Base (L2 для Ethereum). Це адреса EVM, тому такий самий рядок дійсний в інших мережах EVM. Переказ в основній мережі Ethereum або в іншій мережі EVM може не надійти на гаманець Base.';
+$_['te_donate_qr_link'] = 'QR-коди на GitHub';
 
 // Value
 $_['value_analization_mode_only_empty'] = 'Шукати тільки порожні значення';

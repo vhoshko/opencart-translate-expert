@@ -407,6 +407,16 @@
 				        <?php echo $text_about_page; ?>
 				      </div>
 				    </div>
+				    <div class="te-card">
+				      <div class="te-card__head"><?php echo $te_donate_card; ?></div>
+				      <div class="te-card__body">
+				        <p><?php echo $te_donate_intro; ?></p>
+				        <p><strong><?php echo $te_donate_network_tron; ?></strong><br><code><?php echo $te_donate_address_tron; ?></code><br><?php echo $te_donate_accepts_tron; ?><br><?php echo $te_donate_warning_tron; ?></p>
+				        <p><strong><?php echo $te_donate_network_bitcoin; ?></strong><br><code><?php echo $te_donate_address_bitcoin; ?></code><br><?php echo $te_donate_accepts_bitcoin; ?><br><?php echo $te_donate_warning_bitcoin; ?></p>
+				        <p><strong><?php echo $te_donate_network_base; ?></strong><br><code><?php echo $te_donate_address_base; ?></code><br><?php echo $te_donate_accepts_base; ?><br><?php echo $te_donate_warning_base; ?></p>
+				        <p><a href="https://github.com/vhoshko/opencart-translate-expert#donate" target="_blank" rel="noopener noreferrer"><?php echo $te_donate_qr_link; ?></a></p>
+				      </div>
+				    </div>
 				  </div>
 				</div>
 			</div>

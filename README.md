@@ -121,6 +121,38 @@ See [docker/README.md](docker/README.md) for the details.
 
 For consultation and support on module operation, open an issue on GitHub: https://github.com/vhoshko/opencart-translate-expert/issues
 
+## Donate
+
+If the module is useful to you, you can support its development with a crypto donation.
+
+<table>
+<tr>
+<th>Tron</th>
+<th>Bitcoin</th>
+<th>Base</th>
+</tr>
+<tr>
+<td align="center"><img src="docs/donate/qr-tron.png" width="180" alt="Tron QR code"></td>
+<td align="center"><img src="docs/donate/qr-bitcoin.png" width="180" alt="Bitcoin QR code"></td>
+<td align="center"><img src="docs/donate/qr-base.png" width="180" alt="Base QR code"></td>
+</tr>
+<tr>
+<td><code>TKB4TNF9GRCcJQHavDCaMbFQVsEp322BhU</code></td>
+<td><code>bc1qr38nutpnjeqygs8tnsypw32hqtgpe0wnuf3jnv</code></td>
+<td><code>0x5706F582478CE6C15Ef6489B103AC018280B0540</code></td>
+</tr>
+<tr>
+<td>Accepts: TRX and USDT (TRC-20) on the Tron network.</td>
+<td>Accepts: BTC.</td>
+<td>Accepts: ETH and tokens on the Base network.</td>
+</tr>
+<tr>
+<td>Send only TRX or USDT (TRC-20) on the Tron network. Do not use ERC-20 or BEP-20.</td>
+<td>Send only BTC on the Bitcoin network. This is a native SegWit address (it starts with bc1).</td>
+<td>Send only on the Base network (an Ethereum L2). This is an EVM address, so the same string is valid on other EVM networks. A transfer on Ethereum mainnet or on another EVM network may not arrive at the Base wallet.</td>
+</tr>
+</table>
+
 ## License
 
 See [LICENSE](LICENSE).
