@@ -95,6 +95,25 @@ A separate article and a video tell how to get the key:
 
 The About tab of the module shows the module version and the support link. Support is through GitHub Issues: https://github.com/vhoshko/opencart-translate-expert/issues
 
+## Donate
+
+If the module is useful to you, you can support its development with a crypto donation.
+
+- Tron
+  - TKB4TNF9GRCcJQHavDCaMbFQVsEp322BhU
+  - Accepts: TRX and tokens on the Tron network.
+  - Send only on the Tron network. Do not use ERC-20 or BEP-20.
+- Bitcoin
+  - bc1qr38nutpnjeqygs8tnsypw32hqtgpe0wnuf3jnv
+  - Accepts: BTC.
+  - Send only BTC on the Bitcoin network. This is a native SegWit address (it starts with bc1).
+- Base
+  - 0x5706F582478CE6C15Ef6489B103AC018280B0540
+  - Accepts: ETH and tokens on the Base network.
+  - Send only on the Base network (an Ethereum L2). This is an EVM address, so the same string is valid on other EVM networks. A transfer on Ethereum mainnet or on another EVM network may not arrive at the Base wallet.
+
+QR codes: https://github.com/vhoshko/opencart-translate-expert#donate
+
 <!--
 Main images of the module (1024x1024, same design):
 main-image.en.png (English), main-image.uk.png (Ukrainian)
