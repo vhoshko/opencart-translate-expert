@@ -256,6 +256,8 @@ For a larger change, dispatch `ote-implementer`. Give it these items:
 
 If the change splits into a server part (library, controller, PHP tests) and a front-end part (JS, CSS, templates, language files, JS tests), dispatch 2 implementers in one message. Give each agent a disjoint file list. Give each cross-file item to one owner, for example the controller `$data` keys that the templates need. Tell the other agent that the item is not its work (task 59).
 
+If the change alters what an action does to the state in memory (for example a save that updates a baseline), find the tests that expect the old behavior. Put them in the plan Steps. The implementer then updates them at the start, and they do not fail as a surprise (task 93: a test that expected a second save to send the same content, and tests that reuse a saved file).
+
 If the brief lists tests, name a test for each function that selects between code paths, for example page checks, flags and error routing. Do not list tests only for the render helpers (task 57: the review found no test for `showTranslatedCharCount()`).
 
 If the change adds a request loop, name one test for each branch that ends or continues the loop. A branch without a test can end the loop in a wrong state (task 58: a non-deep batch with no tables ended the analysis with a wrong progress counter).

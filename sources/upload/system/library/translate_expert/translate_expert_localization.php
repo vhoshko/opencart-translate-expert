@@ -248,12 +248,21 @@ class TranslateExpertLocalization extends TranslateExpertCore
 	private function buildAnalizeFileItem($analizeFile)
 	{
 		$keys = array();
-		foreach ($analizeFile['toTranslate'] as $key => $line)
+		foreach ($analizeFile['allKeys'] as $item)
+		{
+			$line = $item['source'];
+			$target = $item['target'];
+			$translated = is_array($target);
 			$keys[] = array(
-				'key' => (string)$key,
+				'key' => (string)$item['key'],
 				'text' => $line['text'],
 				'fullText' => $line['full_text'],
-				'expression' => !empty($line['expression']) ? 1 : 0);
+				'expression' => !empty($line['expression']) ? 1 : 0,
+				'translated' => $translated ? 1 : 0,
+				'targetText' => $translated ? $target['text'] : '',
+				'targetFullText' => $translated ? $target['full_text'] : '',
+				'targetExpression' => $translated && !empty($target['expression']) ? 1 : 0);
+		}
 
 		return array(
 			'root' => $analizeFile['root'],
@@ -301,6 +310,7 @@ class TranslateExpertLocalization extends TranslateExpertCore
 			'needToTranslateFileCount' => $needToTranslateFileCount,
 			'needToTranslateValueCount' => $needToTranslateValueCount,
 			'needToTranslateCharCount' => $needToTranslateCharCount,
+			'translatedFileCount' => $fileCount - $needToTranslateFileCount,
 		);
 	}
 
@@ -314,10 +324,16 @@ class TranslateExpertLocalization extends TranslateExpertCore
 		$contentFromParsed = $this->parseLocalizationFile($contentFrom);
 		$contentToParsed = $this->parseLocalizationFile($contentTo);
 		$toTranslate = array();
+		$allKeys = array();
 		foreach ($contentFromParsed as $key => $valueFrom)
 		{
-			if (!isset($contentToParsed[$key]))
+			$inTarget = isset($contentToParsed[$key]);
+			if (!$inTarget)
 				$toTranslate[$key] = $valueFrom;
+			$allKeys[] = array(
+				'key' => $key,
+				'source' => $valueFrom,
+				'target' => $inTarget ? $contentToParsed[$key] : null);
 		}
 
 		$res = array(
@@ -326,6 +342,7 @@ class TranslateExpertLocalization extends TranslateExpertCore
 			'pathFrom' => $pathFrom,
 			'pathTo' => $pathTo,
 			'toTranslate' => $toTranslate,
+			'allKeys' => $allKeys,
 			'contentFrom' => $contentFrom,
 			'contentTo' => $contentTo);
 		return $res;

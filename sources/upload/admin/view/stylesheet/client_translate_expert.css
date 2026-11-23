@@ -517,6 +517,17 @@
 .te-app .te-loc-root td {
   color: var(--te-muted);
 }
+.te-app .te-loc-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 var(--te-gap);
+  font-weight: 600;
+  cursor: pointer;
+}
+.te-app .te-loc-only-todo tr.te-loc-done {
+  display: none;
+}
 @media (max-width: 767px) {
   .te-app .te-diff {
     grid-template-columns: 1fr;

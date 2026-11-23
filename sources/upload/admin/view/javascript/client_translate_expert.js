@@ -2131,7 +2131,8 @@ function teLocNewState(scope) {
 		stopRequested: false,
 		queue: [],
 		queueTotal: 0,
-		lastRoot: null
+		lastRoot: null,
+		lastRootRow: null
 	};
 }
 
@@ -2220,23 +2221,84 @@ function teLocDecodeEntities(s, source) {
 	return area.value;
 }
 
-// Returns the content of the target file: contentTo and the lines of the keys (statements) that have a value.
-// Returns null if there is no line to write.
-function teLocBuildFile(file, values) {
+// Returns the number of keys of the file that the target file does not have yet.
+function teLocTodoCount(file) {
+	var keys = file && $.isArray(file.keys) ? file.keys : [];
+	var count = 0;
+	for (var i = 0; i < keys.length; i++) {
+		if (Number(keys[i].translated) !== 1) {
+			count++;
+		}
+	}
+	return count;
+}
+
+// A textarea turns CRLF and CR into LF. Compare the values with the same line breaks, so that an unchanged value is not an edit.
+function teLocNormalizeEol(text) {
+	return String(text).replace(/\r\n?/g, '\n');
+}
+
+function teLocNoteApplied(applied, key, statement, value, expression) {
+	if ($.isArray(applied)) {
+		applied.push({ key: key, statement: statement, value: value, expression: expression });
+	}
+}
+
+// After a save, the file in memory must match the saved file. The next save then compares the textareas with the saved values.
+function teLocApplySaved(file, content, applied) {
+	file.contentTo = content;
+	file.targetExists = 1;
+	for (var i = 0; i < applied.length; i++) {
+		for (var j = 0; j < file.keys.length; j++) {
+			var k = file.keys[j];
+			if (k.key !== applied[i].key) {
+				continue;
+			}
+			k.translated = 1;
+			k.targetFullText = applied[i].statement;
+			k.targetExpression = applied[i].expression;
+			k.targetText = applied[i].expression ? '' : teLocEscape(applied[i].value);
+		}
+	}
+}
+
+// Returns the content of the target file: contentTo with the edited statements replaced and the lines of the missing keys added.
+// Returns null if there is nothing to write.
+// applied (optional array): gets one item for each written key: { key, statement, value, expression }.
+function teLocBuildFile(file, values, applied) {
+	var content = typeof file.contentTo === 'string' ? file.contentTo : '';
 	var lines = [];
+	var replaced = false;
 	var keys = $.isArray(file.keys) ? file.keys : [];
 	for (var i = 0; i < keys.length; i++) {
 		var k = keys[i];
-		if (Number(k.expression) === 1) {
-			lines.push(String(k.fullText));
-		} else if (values && Object.prototype.hasOwnProperty.call(values, k.key) && $.trim(values[k.key]) !== '') {
-			lines.push(teLocStatement(k.key, values[k.key]));
+		var has = values && Object.prototype.hasOwnProperty.call(values, k.key) && $.trim(values[k.key]) !== '';
+		if (Number(k.translated) !== 1) {
+			if (Number(k.expression) === 1) {
+				lines.push(String(k.fullText));
+				teLocNoteApplied(applied, k.key, String(k.fullText), '', 1);
+			} else if (has) {
+				lines.push(teLocStatement(k.key, values[k.key]));
+				teLocNoteApplied(applied, k.key, lines[lines.length - 1], values[k.key], 0);
+			}
+		} else if (Number(k.expression) !== 1 && Number(k.targetExpression) !== 1 && has
+			&& teLocNormalizeEol(values[k.key]) !== teLocNormalizeEol(teLocUnescape(k.targetText, teLocQuote(k.targetFullText)))) {
+			var statement = teLocStatement(k.key, values[k.key]);
+			var old = typeof k.targetFullText === 'string' ? k.targetFullText : '';
+			var pos = old === '' ? -1 : content.lastIndexOf(old);
+			teLocNoteApplied(applied, k.key, statement, values[k.key], 0);
+			if (pos === -1) {
+				lines.push(statement);
+			} else {
+				content = content.substring(0, pos) + statement + content.substring(pos + old.length);
+				replaced = true;
+			}
 		}
 	}
 	if (!lines.length) {
-		return null;
+		return replaced ? content : null;
 	}
-	var base = (typeof file.contentTo === 'string' ? file.contentTo : '').replace(/\s+$/, '');
+	var base = content.replace(/\s+$/, '');
 	var head;
 	if (base === '') {
 		head = '<?php\n';
@@ -2255,6 +2317,7 @@ function teLocRenderTotals(scope, totals) {
 	var t = totals || {};
 	var items = [
 		['te_loc_totals_files', t.fileCount],
+		['te_loc_totals_translated', t.translatedFileCount],
 		['te_loc_totals_to_translate', t.needToTranslateFileCount],
 		['te_loc_totals_values', t.needToTranslateValueCount],
 		['te_loc_totals_chars', t.needToTranslateCharCount]
@@ -2276,14 +2339,26 @@ function teLocBuildTableSkeleton(scope) {
 	headRow.append(teEl('th', { 'class': 'te-num' }, teT('te_loc_col_keys')));
 	headRow.append(teEl('th', { 'class': 'te-num' }, teT('te_loc_col_chars')));
 	headRow.append(teEl('th', {}, teT('te_loc_col_state')));
+	headRow.append(teEl('th', {}, teT('te_loc_col_action')));
 	var totalRow = teEl('tr', { 'class': 'te-table__total' });
 	totalRow.append(teEl('td', {}, teT('te_site_total')));
 	totalRow.append(teEl('td', { 'class': 'te-num te-loc-total' }, '0'));
 	totalRow.append(teEl('td', { 'class': 'te-num te-loc-total-chars' }, '0'));
+	totalRow.append(teEl('td', { 'class': 'te-loc-total-state' }));
 	totalRow.append(teEl('td', { 'class': 'te-site-actions' }).append(teSiteButton('te-js-loc-translate-all te-hidden', teT('te_loc_translate_all'), { 'id': teLocIds(scope).translateAll.substring(1) })));
 	table.append(teEl('thead').append(headRow).append(totalRow));
 	table.append(teEl('tbody', { 'class': 'te-loc-tbody' }));
 	return wrap.append(table);
+}
+
+// The filter is not stored. A new analysis builds it again, unchecked.
+function teLocBuildFilter(scope) {
+	var id = 'te-loc-filter-todo-' + scope;
+	var label = teEl('label', { 'class': 'te-loc-filter', 'for': id });
+	label.append(teEl('input', { 'type': 'checkbox', 'id': id, 'class': 'te-js-loc-filter' }));
+	label.append(document.createTextNode(' '));
+	label.append(teEl('span', {}, teT('te_loc_filter_todo')));
+	return label;
 }
 
 function teLocFileLabel(file) {
@@ -2293,6 +2368,9 @@ function teLocFileLabel(file) {
 function teLocBadge(file) {
 	if (file.saved) {
 		return teEl('span', { 'class': 'te-badge te-badge--ok' }, teT('te_loc_state_saved'));
+	}
+	if (teLocTodoCount(file) === 0) {
+		return teEl('span', { 'class': 'te-badge te-badge--ok' }, teT('te_loc_state_translated'));
 	}
 	if (Number(file.targetExists) === 0) {
 		return teEl('span', { 'class': 'te-badge te-badge--error' }, teT('te_loc_state_missing'));
@@ -2310,22 +2388,31 @@ function teLocRefreshState(scope, index) {
 	if (file && cell.length) {
 		cell.empty().append(teLocBadge(file));
 	}
+	// After a save the keys of the file are translated. Hide the translate buttons and set the key count to 0.
+	if (file && teLocTodoCount(file) === 0) {
+		var row = teLocFindRow(scope, 'te-loc-file', index);
+		row.find('.te-loc-todo').text('0');
+		row.find('.te-js-loc-translate-save').addClass('te-hidden');
+		teLocFindRow(scope, 'te-table__detail', index).find('.te-js-loc-translate').addClass('te-hidden');
+	}
 }
 
 function teLocBuildFileRow(scope, file, index) {
-	var tr = teEl('tr', { 'class': 'te-loc-file', 'data-index': index });
+	var todo = teLocTodoCount(file);
+	var tr = teEl('tr', { 'class': 'te-loc-file' + (todo === 0 ? ' te-loc-done' : ''), 'data-index': index });
 	var label = teT('te_loc_toggle', { path: teLocFileLabel(file) });
 	var nameCell = teEl('td');
 	nameCell.append(teEl('button', { 'type': 'button', 'class': 'te-table__expand te-js-loc-toggle', 'aria-expanded': 'false', 'aria-label': label, 'title': label }));
 	nameCell.append(teEl('span', { 'class': 'te-table__name' }, teLocFileLabel(file)));
 	tr.append(nameCell);
-	tr.append(teEl('td', { 'class': 'te-num' }, file.keys.length));
+	tr.append(teEl('td', { 'class': 'te-num te-loc-todo' }, todo));
 	tr.append(teEl('td', { 'class': 'te-num te-loc-chars' }, teFormatInt(Number(file.charCount) || 0)));
-	// The "Translate and save file" button of the row is under "Translate all" of the total row, before the state badge.
-	var stateCell = teEl('td', { 'class': 'te-site-actions' });
-	stateCell.append(teSiteButton('te-js-loc-translate-save', teT('te_loc_translate_save_file'), { 'data-index': index, 'disabled': teLocState[scope].running ? 'disabled' : null }));
-	stateCell.append(teEl('span', { 'class': 'te-loc-state' }).append(teLocBadge(file)));
-	tr.append(stateCell);
+	tr.append(teEl('td').append(teEl('span', { 'class': 'te-loc-state' }).append(teLocBadge(file))));
+	var actionCell = teEl('td', { 'class': 'te-site-actions' });
+	if (todo > 0) {
+		actionCell.append(teSiteButton('te-js-loc-translate-save', teT('te_loc_translate_save_file'), { 'data-index': index, 'disabled': teLocState[scope].running ? 'disabled' : null }));
+	}
+	tr.append(actionCell);
 	return tr;
 }
 
@@ -2337,7 +2424,7 @@ function teLocRenderSource(content, keys) {
 	keys = $.isArray(keys) ? keys : [];
 	for (var i = 0; i < keys.length; i++) {
 		var statement = typeof keys[i].fullText === 'string' ? keys[i].fullText : '';
-		if (statement === '') {
+		if (statement === '' || Number(keys[i].translated) === 1) {
 			continue;
 		}
 		var found = text.indexOf(statement, pos);
@@ -2376,7 +2463,9 @@ function teLocRenderDiff(scope, file, index) {
 	var sourceId = 'te-loc-source-' + scope + '-' + index;
 	var bar = teEl('div', { 'class': 'te-diff__bar' });
 	bar.append(teEl('button', { 'type': 'button', 'class': 'te-collapse-toggle te-js-collapse', 'data-te-target': '#' + sourceId, 'aria-expanded': 'false', 'aria-controls': sourceId }, teT('te_loc_source_file')));
-	bar.append(teSiteButton('te-js-loc-translate', teT('te_loc_translate_file'), { 'data-index': index, 'disabled': state.running ? 'disabled' : null }));
+	if (teLocTodoCount(file) > 0) {
+		bar.append(teSiteButton('te-js-loc-translate', teT('te_loc_translate_file'), { 'data-index': index, 'disabled': state.running ? 'disabled' : null }));
+	}
 	bar.append(teSiteButton('te-js-loc-save', teT('te_loc_save_file'), { 'data-index': index, 'disabled': state.running ? 'disabled' : null }));
 	diff.append(bar);
 
@@ -2388,18 +2477,27 @@ function teLocRenderDiff(scope, file, index) {
 	for (var i = 0; i < file.keys.length; i++) {
 		var k = file.keys[i];
 		diff.append(teEl('div', { 'class': 'te-diff__key' }, k.key));
+		var isCode = Number(k.expression) === 1 || Number(k.targetExpression) === 1;
+		var translated = Number(k.translated) === 1;
 		if (Number(k.expression) === 1) {
 			diff.append(teEl('div', { 'class': 'te-diff__source te-diff__source--code' }, k.fullText));
-			var target = teEl('div', { 'class': 'te-diff__target te-diff__target--code', 'data-key': k.key }, k.fullText);
+		} else {
+			diff.append(teEl('div', { 'class': 'te-diff__source' }, teLocUnescape(k.text, teLocQuote(k.fullText))));
+		}
+		if (isCode) {
+			var target = teEl('div', { 'class': 'te-diff__target te-diff__target--code', 'data-key': k.key }, translated ? k.targetFullText : k.fullText);
 			target.append(teEl('span', { 'class': 'te-badge te-badge--muted' }, teT('te_loc_expression')));
 			diff.append(target);
 		} else {
-			diff.append(teEl('div', { 'class': 'te-diff__source' }, teLocUnescape(k.text, teLocQuote(k.fullText))));
 			var cell = teEl('div', { 'class': 'te-diff__cell' });
 			cell.append(teEl('button', { 'type': 'button', 'class': 'te-loc-key-translate te-js-loc-key-translate', 'data-index': index, 'data-key': k.key,
 				'title': teT('te_site_translate'), 'aria-label': teT('te_site_translate') + ': ' + k.key, 'style': 'background-image: url("' + teLocIconUrl() + '");',
 				'disabled': state.running ? 'disabled' : null }));
-			cell.append(teEl('textarea', { 'class': 'te-diff__target', 'data-key': k.key, 'rows': '2', 'aria-label': k.key }));
+			var area = teEl('textarea', { 'class': 'te-diff__target', 'data-key': k.key, 'rows': '2', 'aria-label': k.key });
+			if (translated) {
+				area.val(teLocUnescape(k.targetText, teLocQuote(k.targetFullText)));
+			}
+			cell.append(area);
 			diff.append(cell);
 		}
 	}
@@ -2408,8 +2506,8 @@ function teLocRenderDiff(scope, file, index) {
 }
 
 function teLocBuildDetailRow(scope, file, index) {
-	var tr = teEl('tr', { 'class': 'te-table__detail te-hidden', 'data-index': index });
-	tr.append(teEl('td', { 'colspan': '4' }).append(teLocRenderDiff(scope, file, index)));
+	var tr = teEl('tr', { 'class': 'te-table__detail te-hidden' + (teLocTodoCount(file) === 0 ? ' te-loc-done' : ''), 'data-index': index });
+	tr.append(teEl('td', { 'colspan': '5' }).append(teLocRenderDiff(scope, file, index)));
 	return tr;
 }
 
@@ -2418,11 +2516,16 @@ function teLocAppendFile(scope, index) {
 	var file = state.files[index];
 	var tbody = $(teLocIds(scope).result).find('.te-loc-tbody');
 	var root = typeof file.root === 'string' ? file.root : '';
+	var done = teLocTodoCount(file) === 0;
 	if (root !== state.lastRoot) {
+		state.lastRootRow = null;
 		if (typeof file.rootName === 'string' && file.rootName !== '') {
-			tbody.append(teEl('tr', { 'class': 'te-table__group te-loc-root' }).append(teEl('td', { 'colspan': '4' }, teT('te_loc_root', { name: file.rootName }))));
+			state.lastRootRow = teEl('tr', { 'class': 'te-table__group te-loc-root' + (done ? ' te-loc-done' : '') }).append(teEl('td', { 'colspan': '5' }, teT('te_loc_root', { name: file.rootName })));
+			tbody.append(state.lastRootRow);
 		}
 		state.lastRoot = root;
+	} else if (!done && state.lastRootRow) {
+		state.lastRootRow.removeClass('te-loc-done');
 	}
 	tbody.append(teLocBuildFileRow(scope, file, index));
 	tbody.append(teLocBuildDetailRow(scope, file, index));
@@ -2442,7 +2545,7 @@ function teLocSetBusy(scope, busy) {
 
 function teLocHasKeys(state) {
 	for (var i = 0; i < state.files.length; i++) {
-		if (state.files[i].keys.length > 0) {
+		if (teLocTodoCount(state.files[i]) > 0) {
 			return true;
 		}
 	}
@@ -2451,11 +2554,23 @@ function teLocHasKeys(state) {
 
 function teLocHasUnsaved(state) {
 	for (var i = 0; i < state.files.length; i++) {
-		if (state.files[i].keys.length > 0 && !state.files[i].saved) {
+		if (teLocTodoCount(state.files[i]) > 0 && !state.files[i].saved) {
 			return true;
 		}
 	}
 	return false;
+}
+
+// Updates the state badge of the total row and shows or hides "Translate all".
+function teLocRefreshTotal(scope) {
+	var state = teLocState[scope];
+	var ids = teLocIds(scope);
+	var unsaved = teLocHasUnsaved(state);
+	$(ids.translateAll).toggleClass('te-hidden', !unsaved);
+	var cell = $(ids.result).find('.te-loc-total-state').empty();
+	if (state.files.length) {
+		cell.append(unsaved ? teEl('span', { 'class': 'te-badge te-badge--warn' }, teT('te_loc_state_partial')) : teEl('span', { 'class': 'te-badge te-badge--ok' }, teT('te_loc_state_translated')));
+	}
 }
 
 function teLocEndRun(scope, result) {
@@ -2467,7 +2582,7 @@ function teLocEndRun(scope, result) {
 	state.mode = null;
 	teLocSetBusy(scope, false);
 	var hasKeys = teLocHasKeys(state);
-	$(ids.translateAll).toggleClass('te-hidden', !teLocHasUnsaved(state));
+	teLocRefreshTotal(scope);
 	if (previous === 'analyze' && result === 'done' && !hasKeys) {
 		teAlerts.show(ids.alerts, 'info', teT('te_loc_no_files'));
 	}
@@ -2496,7 +2611,7 @@ function teLocStartAnalysis(scope) {
 	state.running = true;
 	state.mode = 'analyze';
 	teLocState[scope] = state;
-	$(ids.result).empty().append(teLocBuildTableSkeleton(scope));
+	$(ids.result).empty().removeClass('te-loc-only-todo').append(teLocBuildFilter(scope)).append(teLocBuildTableSkeleton(scope));
 	$(ids.totals).empty().addClass('te-hidden');
 	teLocSetBusy(scope, true);
 	teProgress.start(ids.progress, teT('te_loc_analyzing'));
@@ -2538,9 +2653,7 @@ function teLocOnBatch(scope, data) {
 		file.keys = $.isArray(file.keys) ? file.keys : [];
 		file.saved = 0;
 		state.files.push(file);
-		if (file.keys.length > 0) {
-			teLocAppendFile(scope, state.files.length - 1);
-		}
+		teLocAppendFile(scope, state.files.length - 1);
 	}
 
 	var next = Number(data.nextFileIndex);
@@ -2584,7 +2697,7 @@ function teLocTranslateFile(scope, index, done, fail, onlyKey) {
 	var texts = [];
 	for (var i = 0; i < file.keys.length; i++) {
 		var k = file.keys[i];
-		if (Number(k.expression) === 1 || (typeof onlyKey === 'string' && k.key !== onlyKey)) {
+		if (Number(k.expression) === 1 || Number(k.targetExpression) === 1 || (typeof onlyKey === 'string' ? k.key !== onlyKey : Number(k.translated) === 1)) {
 			continue;
 		}
 		var text = $.trim(teLocUnescape(k.text, teLocQuote(k.fullText)));
@@ -2621,7 +2734,8 @@ function teLocTranslateFile(scope, index, done, fail, onlyKey) {
 function teLocSaveFile(scope, index, done, fail) {
 	var state = teLocState[scope];
 	var file = state.files[index];
-	var content = teLocBuildFile(file, teLocReadValues(scope, index));
+	var applied = [];
+	var content = teLocBuildFile(file, teLocReadValues(scope, index), applied);
 	if (content === null) {
 		teAlerts.show(teLocIds(scope).alerts, 'info', teT('te_loc_nothing_to_save', { path: file.pathTo }));
 		done(false);
@@ -2635,8 +2749,10 @@ function teLocSaveFile(scope, index, done, fail) {
 			return;
 		}
 		if (teLocState[scope] === state) {
+			teLocApplySaved(file, content, applied);
 			file.saved = 1;
 			teLocRefreshState(scope, index);
+			teLocRefreshTotal(scope);
 		}
 		done(true, file);
 	}).fail(function(xhr) {
@@ -2653,7 +2769,7 @@ function teLocTranslateAllStart(scope) {
 	}
 	var queue = [];
 	for (var i = 0; i < state.files.length; i++) {
-		if (state.files[i].keys.length > 0 && !state.files[i].saved) {
+		if (teLocTodoCount(state.files[i]) > 0 && !state.files[i].saved) {
 			queue.push(i);
 		}
 	}
@@ -2714,6 +2830,9 @@ function teLocTranslateAllNext(scope) {
 function teLocInit() {
 	var app = $('.te-loc-app');
 	app.off('.teLoc');
+	app.on('change.teLoc', '.te-js-loc-filter', function() {
+		$(teLocIds(teLocScope(this)).result).toggleClass('te-loc-only-todo', $(this).prop('checked') === true);
+	});
 	app.on('click.teLoc', '.te-js-loc-analyze', function() {
 		teLocStartAnalysis(teLocScope(this));
 	});
