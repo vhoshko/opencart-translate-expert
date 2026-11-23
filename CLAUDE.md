@@ -70,6 +70,8 @@ If a change touches only files under `docs/**`, run the unit tests. Do not bump 
 
 **Before you run a build script, bump the patch version in `_version.txt`.** The format is `MM.mm.pppp`, for example `04.01.0101` → `04.01.0102`. Every build run needs a new patch version. Never build twice with the same version number.
 
+**Exception: the `/release` command.** Phase 1 changes `_version.txt` to a new minor or major version with the patch part `0100`. It runs no build. Phase 2 builds that version after the PR merge. It does not bump the patch part. Do not use this exception for other work.
+
 **Never leave `.zip` files or build artifact folders in the repo root.** The build scripts remove these items themselves. If leftover zips or `OpenCartTranslateExpertClient-*` folders are in the root, remove them.
 
 ## Tests

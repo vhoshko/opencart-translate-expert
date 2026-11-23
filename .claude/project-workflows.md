@@ -63,6 +63,7 @@ Edit `sources/` only. `sources_release*/` and `releases/` are build output.
 | OC4 Twig name test | `php tests/test_oc4_twig_filters.php` | Static check. Fails on a filter, test, function or tag that Twig v3.4.2 (OC 4.0.2.x) or v3.18.0 (OC 4.1.0.x) does not define |
 | Bump version | `/bump-version` | Changes the patch part of `_version.txt` (`MM.mm.pppp`). **Do it before every build** |
 | Build per-version zips | `./build.sh` | Leaves zips in the root. Use the release build instead |
+| Release (2 phases) | `/release phase1`, then `/release phase2` after the PR merge | Phase 1 bumps to a new minor or major version (patch `0100`), writes `docs/release/<tag>/` notes (en, uk), commits and opens the PR. Phase 2 tags the squash commit (no `v` prefix), builds without a bump and creates the GitHub release with the `.full.zip` asset |
 | Release build | `./build.release.sh` | Puts the output in `releases/v<version>/`. **Run it after every change** (see `CLAUDE.md`) |
 
 ## OpenCart Core Source Probe
