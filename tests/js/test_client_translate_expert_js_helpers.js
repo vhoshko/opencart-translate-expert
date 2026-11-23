@@ -10,6 +10,8 @@
 'use strict';
 
 const fs = require('fs');
+const os = require('os');
+const child = require('child_process');
 const path = require('path');
 const { JSDOM } = require('jsdom');
 
@@ -515,7 +517,7 @@ const SITE_I18N = {
 const LOC_I18N = {
 	te_loc_analyzing: 'Analyzing files', te_loc_translating: 'Translating {path}', te_loc_cnt_files: 'Files {n} of {total}', te_loc_totals_files: 'Files: {count}',
 	te_loc_totals_to_translate: 'To translate: {count}', te_loc_totals_values: 'Values: {count}', te_loc_totals_chars: 'Chars: {count}', te_loc_col_file: 'File',
-	te_loc_col_keys: 'Keys', te_loc_col_chars: 'Chars', te_loc_col_state: 'State', te_loc_state_missing: 'missing', te_loc_state_partial: 'partial', te_loc_state_saved: 'saved',
+	te_loc_col_keys: 'Keys', te_loc_col_chars: 'Chars', te_loc_col_state: 'State', te_loc_col_action: 'Action', te_loc_state_translated: 'translated', te_loc_filter_todo: 'Show only files to translate', te_loc_totals_translated: 'Translated: {count}', te_loc_state_missing: 'missing', te_loc_state_partial: 'partial', te_loc_state_saved: 'saved',
 	te_loc_toggle: 'Toggle {path}', te_loc_root: 'Extension: {name}', te_loc_expression: 'PHP code', te_loc_source_file: 'Source file',
 	te_loc_translate_file: 'Translate file', te_loc_translate_save_file: 'Translate and save file', te_loc_save_file: 'Save file', te_loc_saved: 'Saved: {path}', te_loc_nothing_to_save: 'Nothing: {path}',
 	te_loc_no_files: 'All translated.', te_loc_translate_all: 'Translate all', te_loc_translate_all_confirm: 'Translate all ({lang})?'
@@ -1052,8 +1054,10 @@ function testSiteBs5(w) {
 // ---- Tabs "Catalog files" and "Admin files" ----
 
 const LANG_FROM = { language_id: 1, code: 'en-gb', name: 'English', image: '' };
-const locKey = (key, text) => ({ key: key, text: text, fullText: "$_['" + key + "'] = '" + text + "';", expression: 0 });
-const locExpr = (key, code) => ({ key: key, text: '', fullText: "$_['" + key + "'] = " + code + ';', expression: 1 });
+const locKey = (key, text) => ({ key: key, text: text, fullText: "$_['" + key + "'] = '" + text + "';", expression: 0, translated: 0, targetText: '', targetFullText: '', targetExpression: 0 });
+const locExpr = (key, code) => ({ key: key, text: '', fullText: "$_['" + key + "'] = " + code + ';', expression: 1, translated: 0, targetText: '', targetFullText: '', targetExpression: 0 });
+// A key that the target file has: text is the source text, target the escaped target literal content.
+const locDone = (key, text, target) => Object.assign(locKey(key, text), { translated: 1, targetText: target, targetFullText: "$_['" + key + "'] = '" + target + "';" });
 const locFile = (pathFrom, keys, extra) => Object.assign({
 	root: 'core', rootName: '', pathFrom: pathFrom, pathTo: pathFrom, targetExists: 1, keys: keys,
 	contentFrom: '<?php\n' + keys.map((k) => k.fullText).join('\n') + '\n', contentTo: '<?php\n// head\n'
@@ -1065,7 +1069,7 @@ const locBatch = (files, next, done, totals) => {
 	}
 	return data;
 };
-const LOC_TOTALS = { fileCount: 12, needToTranslateFileCount: 2, needToTranslateValueCount: 5, needToTranslateCharCount: 1234 };
+const LOC_TOTALS = { fileCount: 12, translatedFileCount: 3, needToTranslateFileCount: 2, needToTranslateValueCount: 5, needToTranslateCharCount: 1234 };
 
 function locStart(w, calls, scope) {
 	const id = scope === 'admin' ? '#te-begin-admin-localization-analization' : '#te-begin-localization-analization';
@@ -1097,25 +1101,25 @@ function testLocAnalysis(w) {
 	calls.get[0].dfd.resolve(locBatch([f0, f1, f2], 10, false, LOC_TOTALS));
 	const rows = () => w.$('#te-loc-result-catalog tr.te-loc-file');
 	const row0 = rows()[0];
-	check('batch 0: only files with keys are rows, data-index is the server index', () => rows().length === 2 && w.$(rows()[0]).attr('data-index') === '0' && w.$(rows()[1]).attr('data-index') === '2');
-	check('batch 0: badges partial and missing, key count, toggle button', () => w.$(rows()[0]).find('.te-badge--warn').text() === 'partial' && w.$(rows()[1]).find('.te-badge--error').text() === 'missing'
+	check('batch 0: every file is a row (also one without keys), data-index is the server index', () => rows().length === 3 && w.$(rows()[0]).attr('data-index') === '0' && w.$(rows()[1]).attr('data-index') === '1' && w.$(rows()[2]).attr('data-index') === '2');
+	check('batch 0: badges partial and missing, key count, toggle button', () => w.$(rows()[0]).find('.te-badge--warn').text() === 'partial' && w.$(rows()[1]).find('.te-badge--ok').text() === 'translated' && w.$(rows()[2]).find('.te-badge--error').text() === 'missing'
 		&& w.$(rows()[0]).children('td.te-num').eq(0).text() === '1' && w.$(rows()[0]).children('td.te-loc-chars').text() === '0' && w.$(rows()[0]).find('button.te-table__expand').attr('aria-expanded') === 'false');
-	check('batch 0: totals text and progress counters', () => !w.$('#te-loc-totals-catalog').hasClass('te-hidden') && w.$('#te-loc-totals-catalog').text() === 'Files: 12To translate: 2Values: 5Chars: 1 234'
+	check('batch 0: totals text and progress counters', () => !w.$('#te-loc-totals-catalog').hasClass('te-hidden') && w.$('#te-loc-totals-catalog').text() === 'Files: 12Translated: 3To translate: 2Values: 5Chars: 1 234'
 		&& w.$('#te-loc-progress-catalog .te-progress__counters').text() === 'Files 10 of 12Request 1');
 	check('batch 0: the second request has nextFileIndex 10 and the same scope', () => calls.get.length === 2 && calls.get[1].data.nextFileIndex === 10 && calls.get[1].data.scope === 'catalog');
-	check('batch 0: the per-file buttons are disabled while the analysis runs', () => w.$('#te-loc-result-catalog .te-js-loc-translate').length === 2 && w.$('#te-loc-result-catalog .te-js-loc-translate-save').length === 2 && w.$('#te-loc-result-catalog .te-js-loc-translate, #te-loc-result-catalog .te-js-loc-translate-save, #te-loc-result-catalog .te-js-loc-save').filter(function() { return !this.disabled; }).length === 0);
+	check('batch 0: the per-file buttons are disabled while the analysis runs', () => w.$('#te-loc-result-catalog .te-js-loc-translate').length === 2 && w.$('#te-loc-result-catalog .te-js-loc-translate-save').length === 2 && w.$('#te-loc-result-catalog .te-js-loc-save').length === 3 && w.$('#te-loc-result-catalog .te-js-loc-translate, #te-loc-result-catalog .te-js-loc-translate-save, #te-loc-result-catalog .te-js-loc-save').filter(function() { return !this.disabled; }).length === 0);
 	check('batch 0: the per-key translate buttons are disabled while the analysis runs', () => w.$('#te-loc-result-catalog .te-js-loc-key-translate').length > 0 && w.$('#te-loc-result-catalog .te-js-loc-key-translate').filter(function() { return !this.disabled; }).length === 0);
 	check('batch 0: the total row is the second head row, with the keys to translate of the totals and a hidden Translate all', () => w.$('#te-loc-result-catalog thead tr').length === 2
 		&& w.$('#te-loc-result-catalog thead tr').eq(1).hasClass('te-table__total') && w.$('#te-loc-result-catalog thead .te-loc-total').text() === '5'
-		&& w.$('#te-loc-result-catalog thead tr').eq(0).children('th').map(function() { return w.$(this).text(); }).get().join('|') === 'File|Keys|Chars|State'
-		&& w.$('#te-loc-result-catalog thead .te-table__total td').eq(2).is('.te-loc-total-chars') && w.$('#te-loc-result-catalog thead .te-loc-total-chars').text() === '1 234'
+		&& w.$('#te-loc-result-catalog thead tr').eq(0).children('th').map(function() { return w.$(this).text(); }).get().join('|') === 'File|Keys|Chars|State|Action'
+		&& w.$('#te-loc-result-catalog thead .te-table__total td').eq(2).is('.te-loc-total-chars') && w.$('#te-loc-result-catalog thead .te-table__total td').eq(3).is('.te-loc-total-state') && w.$('#te-loc-result-catalog thead .te-table__total td').eq(4).find('#te-loc-translate-all-catalog').length === 1 && w.$('#te-loc-result-catalog thead .te-loc-total-chars').text() === '1 234'
 		&& w.$('#te-loc-result-catalog thead .te-table__total #te-loc-translate-all-catalog.te-js-loc-translate-all').length === 1
 		&& w.$('#te-loc-translate-all-catalog').hasClass('te-hidden') && w.$('#te-loc-result-catalog tfoot').length === 0);
 	calls.get[1].dfd.resolve(locBatch([locFile('/d.php', [locKey('d', 'D')])], 12, true, null));
-	check('batch 1 (no totals): the nodes of batch 0 stay, a new row is added, the totals stay', () => rows().length === 3 && rows()[0] === row0 && w.$(rows()[2]).attr('data-index') === '3'
+	check('batch 1 (no totals): the nodes of batch 0 stay, a new row is added, the totals stay', () => rows().length === 4 && rows()[0] === row0 && w.$(rows()[3]).attr('data-index') === '3'
 		&& w.$('#te-loc-totals-catalog').text().indexOf('Files: 12') === 0);
 	check('done: the per-key translate buttons are enabled', () => w.$('#te-loc-result-catalog .te-js-loc-key-translate').filter(function() { return this.disabled; }).length === 0);
-	check('done: the per-file buttons of all rows are enabled', () => w.$('#te-loc-result-catalog .te-js-loc-save').length === 3 && w.$('#te-loc-result-catalog .te-js-loc-translate, #te-loc-result-catalog .te-js-loc-save').filter(function() { return this.disabled; }).length === 0);
+	check('done: the per-file buttons of all rows are enabled', () => w.$('#te-loc-result-catalog .te-js-loc-save').length === 4 && w.$('#te-loc-result-catalog .te-js-loc-translate, #te-loc-result-catalog .te-js-loc-save').filter(function() { return this.disabled; }).length === 0);
 	check('done: te-progress--done, Analyze enabled, Translate all visible, no alert', () => w.$('#te-loc-progress-catalog').hasClass('te-progress--done') && w.$('#te-begin-localization-analization').prop('disabled') === false
 		&& !w.$('#te-loc-translate-all-catalog').hasClass('te-hidden') && w.$('#te-loc-alerts-catalog .te-alert').length === 0 && w.teLocState.catalog.running === false);
 
@@ -1144,8 +1148,9 @@ function testLocAnalysis(w) {
 	// no keys at all
 	req = locStart(w, calls, 'catalog');
 	req.dfd.resolve(locBatch([locFile('/b.php', [])], 1, true, { fileCount: 1, needToTranslateFileCount: 0, needToTranslateValueCount: 0, needToTranslateCharCount: 0 }));
-	check('no file has keys: an info alert, no Translate all, no table row', () => w.$('#te-loc-alerts-catalog .te-alert--info .te-alert__message').text() === 'All translated.'
-		&& w.$('#te-loc-translate-all-catalog').hasClass('te-hidden') && w.$('#te-loc-result-catalog tr.te-loc-file').length === 0 && w.$('#te-loc-progress-catalog').hasClass('te-progress--done'));
+	check('no file has keys to translate: an info alert, no Translate all, the file still in the list as translated, total state translated', () => w.$('#te-loc-alerts-catalog .te-alert--info .te-alert__message').text() === 'All translated.'
+		&& w.$('#te-loc-translate-all-catalog').hasClass('te-hidden') && w.$('#te-loc-result-catalog tr.te-loc-file').length === 1 && w.$('#te-loc-result-catalog tr.te-loc-file .te-badge--ok').text() === 'translated'
+		&& w.$('#te-loc-result-catalog .te-loc-total-state .te-badge--ok').text() === 'translated' && w.$('#te-loc-progress-catalog').hasClass('te-progress--done'));
 
 	// nextFileIndex does not grow
 	const before = calls.get.length;
@@ -1163,7 +1168,7 @@ function testLocAnalysis(w) {
 		locFile('/z.php', [locKey('z', 'Z')])
 	], 5, true, { fileCount: 5, needToTranslateFileCount: 5, needToTranslateValueCount: 5, needToTranslateCharCount: 5 }));
 	check('OC4 roots: one group row with the extension name, none for core files', () => w.$('#te-loc-result-catalog tr.te-loc-root').length === 1 && w.$('#te-loc-result-catalog tr.te-loc-root').text() === 'Extension: opencart'
-		&& w.$('#te-loc-result-catalog tr.te-loc-root td').attr('colspan') === '4');
+		&& w.$('#te-loc-result-catalog tr.te-loc-root td').attr('colspan') === '5');
 	check('a renamed main file shows from and to', () => w.$('#te-loc-result-catalog tr.te-loc-file').eq(3).find('.te-table__name').text() === '/old.php → /new.php'
 		&& w.$('#te-loc-result-catalog tr.te-loc-file').eq(0).find('.te-table__name').text() === '/a.php');
 
@@ -1237,7 +1242,15 @@ function testLocFileHelpers(w) {
 	check('teLocBuildFile: an existing target without ?> gets a blank line and the lines', () => w.teLocBuildFile({ keys: keys, contentTo: "<?php\n$_['z'] = 'Z';\n\n" }, { a: 'AA' }) === "<?php\n$_['z'] = 'Z';\n\n$_['a'] = 'AA';\n$_['e'] = sprintf('x');\n");
 	check('teLocBuildFile: a target that ends with ?> gets a new <?php', () => w.teLocBuildFile({ keys: keys, contentTo: "<?php\n$_['z'] = 'Z';\n?>\n" }, { a: 'AA' }) === "<?php\n$_['z'] = 'Z';\n?>\n\n<?php\n$_['a'] = 'AA';\n$_['e'] = sprintf('x');\n");
 	check('teLocBuildFile: an empty value is skipped', () => w.teLocBuildFile({ keys: keys, contentTo: '' }, { a: '  ', b: 'B' }) === "<?php\n$_['e'] = sprintf('x');\n$_['b'] = 'B';\n");
-	check('teLocBuildFile: no line gives null', () => w.teLocBuildFile({ keys: [locKey('a', 'A')], contentTo: '<?php\n' }, {}) === null && w.teLocBuildFile({ keys: [], contentTo: '' }, { a: 'x' }) === null);
+	check('teLocBuildFile: a target value with CRLF and the same textarea value (LF) gives null', () => {
+		const crlf = { key: 'c', text: 'r', fullText: "$_['c'] = 'r';", expression: 0, translated: 1, targetText: 'r1\\r\\nr2', targetFullText: "$_['c'] = \"r1\\r\\nr2\";", targetExpression: 0 };
+		return w.teLocBuildFile({ keys: [crlf], contentTo: "<?php\n" + crlf.targetFullText + "\n" }, { c: 'r1\nr2' }) === null;
+	});
+	check('teLocBuildFile: a multi-line value in a CRLF target with the same textarea value (LF) gives null', () => {
+		const ml = { key: 'm', text: 'r', fullText: "$_['m'] = 'r';", expression: 0, translated: 1, targetText: 'a\r\nb', targetFullText: "$_['m'] = 'a\r\nb';", targetExpression: 0 };
+		return w.teLocBuildFile({ keys: [ml], contentTo: "<?php\r\n" + ml.targetFullText + "\r\n" }, { m: 'a\nb' }) === null;
+	});
+	check('teLocBuildFile: no line gives null',() => w.teLocBuildFile({ keys: [locKey('a', 'A')], contentTo: '<?php\n' }, {}) === null && w.teLocBuildFile({ keys: [], contentTo: '' }, { a: 'x' }) === null);
 	check('teLocBuildFile: the same input gives the same output (no duplicate on a second save)', () => {
 		const file = { keys: keys, contentTo: "<?php\n$_['z'] = 'Z';\n" };
 		return w.teLocBuildFile(file, { a: 'AA' }) === w.teLocBuildFile(file, { a: 'AA' });
@@ -1276,12 +1289,17 @@ function testLocTranslateSave(w) {
 	check('save: route, content from teLocBuildFile, the target language of the analysis, path, scope, root', () => /client_translate_expert\/saveLocalizationFile&token=/.test(s.url)
 		&& s.data.fileContent === expected && s.data.langId == 2 && s.data.path === '/a.php' && s.data.scope === 'catalog' && s.data.root === 'core'
 		&& expected === "<?php\n$_['a'] = 'Hi & co';\n$_['b'] = 'It\\'s <b>x</b>';\n$_['c'] = sprintf('x');\n");
+	const f0snap = JSON.parse(JSON.stringify({ keys: f0.keys, contentTo: f0.contentTo, targetExists: f0.targetExists }));
 	s.dfd.resolve({ success: 1 });
 	check('saved: badge saved, a success alert with the path', () => w.$('#te-loc-result-catalog tr.te-loc-file').eq(0).find('.te-badge--ok').text() === 'saved'
 		&& w.$('#te-loc-alerts-catalog .te-alert--success .te-alert__message').text() === 'Saved: /a.php');
 	row(0).find('.te-js-loc-save').trigger('click');
-	check('a second save sends the same content', () => calls.post.length === 3 && calls.post[2].data.fileContent === expected);
-	calls.post[2].dfd.resolve({ success: 1 });
+	check('a second save with no edit sends nothing: the saved values are the new baseline', () => calls.post.length === 2 && w.$('#te-loc-alerts-catalog .te-alert--info').length === 1);
+	// The next checks start from the state of the analysis: keys that are not translated and no alert.
+	f0.keys = f0snap.keys;
+	f0.contentTo = f0snap.contentTo;
+	f0.targetExists = f0snap.targetExists;
+	w.$('#te-loc-alerts-catalog').empty();
 
 	const posts = calls.post.length;
 	row(1).find('.te-js-loc-save').trigger('click');
@@ -1290,6 +1308,8 @@ function testLocTranslateSave(w) {
 	ta(2, 'f').val('Fehler');
 	row(2).find('.te-js-loc-save').trigger('click');
 	calls.post[calls.post.length - 1].dfd.resolve({ success: 0, message: 'Cannot write' });
+	check('save with success 0: the baseline stays (the keys are not translated, the translate buttons stay)', () => w.teLocState.catalog.files[2].keys.every(function(k) { return Number(k.translated) !== 1; })
+		&& !row(2).find('.te-js-loc-translate-save').hasClass('te-hidden'));
 	check('save with success 0: an error alert, the badge stays', () => w.$('#te-loc-alerts-catalog .te-alert--error .te-alert__message').text() === 'Cannot write'
 		&& w.$('#te-loc-result-catalog tr.te-loc-file').eq(2).find('.te-badge--warn').length === 1 && row(2).find('.te-js-loc-save').prop('disabled') === false);
 	row(2).find('.te-js-loc-translate').trigger('click');
@@ -1308,6 +1328,7 @@ function testLocTranslateSave(w) {
 	w.$('#te-loc-result-catalog tr.te-table__detail').eq(0).find('textarea[data-key="r"]').val('RR');
 	w.$('#te-loc-result-catalog tr.te-table__detail').eq(0).find('.te-js-loc-save').trigger('click');
 	const raceSave = calls.post[calls.post.length - 1];
+	const raceFile = w.teLocState.catalog.files[0];
 	let thrown = null;
 	w.addEventListener('error', function(e) { thrown = e; });
 	w.$('#te-begin-localization-analization').trigger('click');
@@ -1317,6 +1338,7 @@ function testLocTranslateSave(w) {
 		thrown = e;
 	}
 	check('save, then a new analysis before the answer: no exception, the success alert names the path', () => thrown === null && w.$('#te-loc-alerts-catalog .te-alert--success .te-alert__message').text() === 'Saved: /race.php');
+	check('save, then a new analysis before the answer: the old file keeps its keys (no baseline change)', () => raceFile.keys.every(function(k) { return Number(k.translated) !== 1; }));
 	calls.get[calls.get.length - 1].dfd.resolve(locBatch([], 0, true, null));
 
 	// The translate button of one key
@@ -1349,11 +1371,11 @@ function testLocTranslateSave(w) {
 	const frow = w.$('#te-loc-result-catalog tr.te-loc-file').eq(0);
 	const fbtn = frow.find('.te-js-loc-translate-save');
 	const fdetail = w.$('#te-loc-result-catalog tr.te-table__detail').eq(0);
-	check('file row: the third cell holds the characters to translate of the file (charCount), the key list spans 4 columns', () => frow.children('td').eq(1).text() === '1'
-		&& frow.children('td').eq(2).is('.te-num.te-loc-chars') && frow.children('td').eq(2).text() === '1 500' && fdetail.children('td').attr('colspan') === '4');
-	check('file row: a Translate and save file button in the third cell (under Translate all), before the state badge, no Translate file button in the row', () => fbtn.length === 1 && fbtn.text() === 'Translate and save file' && fbtn.attr('data-index') === '0'
-		&& frow.children('td').eq(3).children().eq(0).is(fbtn) && frow.children('td').eq(3).children().eq(1).find('.te-badge--error').length === 1 && frow.find('.te-js-loc-translate').length === 0
-		&& w.$('#te-loc-result-catalog thead .te-table__total td').eq(3).find('.te-js-loc-translate-all').length === 1 && fdetail.find('.te-js-loc-translate').text() === 'Translate file');
+	check('file row: the third cell holds the characters to translate of the file (charCount), the key list spans 5 columns', () => frow.children('td').eq(1).text() === '1'
+		&& frow.children('td').eq(2).is('.te-num.te-loc-chars') && frow.children('td').eq(2).text() === '1 500' && fdetail.children('td').attr('colspan') === '5');
+	check('file row: a Translate and save file button in the Action cell (last), the state badge in the State cell, no Translate file button in the row', () => fbtn.length === 1 && fbtn.text() === 'Translate and save file' && fbtn.attr('data-index') === '0'
+		&& frow.children('td').eq(4).children().eq(0).is(fbtn) && frow.children('td').eq(3).find('.te-badge--error').length === 1 && frow.find('.te-js-loc-translate').length === 0
+		&& w.$('#te-loc-result-catalog thead .te-table__total td').eq(4).find('.te-js-loc-translate-all').length === 1 && fdetail.find('.te-js-loc-translate').text() === 'Translate file');
 	const fposts = calls.post.length;
 	fbtn.trigger('click');
 	const fp = calls.post[calls.post.length - 1];
@@ -1390,6 +1412,7 @@ function testLocTranslateAll(w) {
 	const asked = [];
 	w.confirm = function(text) { asked.push(text); return false; };
 	locLoad(w, calls, [locFile('/a.php', [locKey('a', 'A')]), locFile('/n.php', []), locFile('/c.php', [locKey('c', 'C')])]);
+	const keysAtStart = w.teLocState.catalog.files.map(function(f) { return JSON.parse(JSON.stringify({ keys: f.keys, contentTo: f.contentTo, targetExists: f.targetExists })); });
 	w.$('#te-loc-translate-all-catalog').trigger('click');
 	check('confirm false: no request, the question names the language', () => calls.post.length === 0 && asked[0] === 'Translate all (Ukrainian)?' && w.teLocState.catalog.running === false);
 	w.confirm = function() { return true; };
@@ -1417,7 +1440,8 @@ function testLocTranslateAll(w) {
 		w.teLocTranslateAllStart('catalog');
 		return hidden && calls.post.length === n && w.teLocState.catalog.running === false;
 	});
-	w.teLocState.catalog.files.forEach(function(f) { f.saved = 0; });
+	// A save makes the saved values the baseline of the file. Go back to the keys of the analysis for the next checks.
+	w.teLocState.catalog.files.forEach(function(f, i) { f.saved = 0; f.keys = keysAtStart[i].keys; f.contentTo = keysAtStart[i].contentTo; f.targetExists = keysAtStart[i].targetExists; });
 
 	// stop
 	const before = calls.post.length;
@@ -1452,6 +1476,194 @@ function testLocTranslateAll(w) {
 		&& calls.post[before4].data.fileContent === "<?php\n$_['x'] = sprintf('a');\n");
 	calls.post[before4].dfd.resolve({ success: 1 });
 	check('the run of the expression-only file is done', () => w.$('#te-loc-progress-catalog').hasClass('te-progress--done') && w.$('#te-loc-progress-catalog .te-progress__line').text() === 'Saved: /e.php');
+}
+
+function testLocTodo(w) {
+	console.log('\nLocalization: translated files, filter, edit of translated keys:');
+	const calls = stubAjax(w);
+	w.teLocInit();
+	w.showTranslatedCharCount = function() {};
+	w.confirm = function() { return true; };
+	const result = () => w.$('#te-loc-result-catalog');
+	const rows = () => result().find('tr.te-loc-file');
+	const detail = (i) => result().find('tr.te-table__detail[data-index="' + i + '"]');
+	const doneFile = (path, extra) => locFile(path, [locDone('d', 'Done', 'Gotowe')], Object.assign({ contentTo: "<?php\n$_['d'] = 'Gotowe';\n" }, extra || {}));
+	const todoFile = (path, extra) => locFile(path, [locKey('t', 'Todo')], extra);
+	const loadOne = (files, next, done, totals) => {
+		const req = locStart(w, calls, 'catalog');
+		req.dfd.resolve(locBatch(files, next, done, totals || { fileCount: 5, translatedFileCount: 2, needToTranslateFileCount: 1, needToTranslateValueCount: 1, needToTranslateCharCount: 4 }));
+	};
+	const files = [
+		doneFile('/a.php'), todoFile('/b.php'),
+		doneFile('/p/x.php', { root: 'ext:one', rootName: 'one' }), doneFile('/p/y.php', { root: 'ext:one', rootName: 'one' }),
+		todoFile('/q/z.php', { root: 'ext:two', rootName: 'two' }), doneFile('/q/w.php', { root: 'ext:two', rootName: 'two' }),
+		doneFile('/p/v.php', { root: 'ext:three', rootName: 'three' })
+	];
+	loadOne(files.slice(0, 5), 5, false);
+	const filter = () => result().find('input.te-js-loc-filter');
+	check('list: all files are rows, a translated file has the translated badge and no row button, a todo file has the button', () => rows().length === 5
+		&& rows().eq(0).find('.te-badge--ok').text() === 'translated' && rows().eq(0).find('.te-js-loc-translate-save').length === 0 && rows().eq(0).children('td').eq(1).text() === '0'
+		&& rows().eq(1).find('.te-badge--warn').text() === 'partial' && rows().eq(1).find('.te-js-loc-translate-save').length === 1 && rows().eq(1).children('td').eq(1).text() === '1');
+	check('list: the Action cell is the last cell of the row', () => rows().eq(1).children('td').length === 5 && rows().eq(1).children('td').eq(4).find('.te-js-loc-translate-save').length === 1);
+	check('the editor bar of a translated file has no Translate file button, Save file stays', () => detail(0).find('.te-js-loc-translate').length === 0 && detail(0).find('.te-js-loc-save').length === 1
+		&& detail(1).find('.te-js-loc-translate').length === 1);
+	check('filter: a checkbox with the label above the table, off by default', () => filter().length === 1 && filter().prop('checked') === false && filter().closest('label').text().trim() === 'Show only files to translate'
+		&& result().children().eq(0).is('label.te-loc-filter') && !result().hasClass('te-loc-only-todo'));
+	check('filter: te-loc-done on translated files, their detail rows and a root group while all its files are done', () => rows().eq(0).hasClass('te-loc-done') && detail(0).hasClass('te-loc-done')
+		&& !rows().eq(1).hasClass('te-loc-done') && !detail(1).hasClass('te-loc-done')
+		&& result().find('tr.te-loc-root').eq(0).hasClass('te-loc-done') && !result().find('tr.te-loc-root').eq(1).hasClass('te-loc-done'));
+	check('filter: stays enabled while the analysis runs', () => w.teLocState.catalog.running === true && filter().prop('disabled') === false);
+	const ls = Object.keys(w.localStorage || {}).length;
+	const ss = Object.keys(w.sessionStorage || {}).length;
+	filter().prop('checked', true).trigger('change');
+	check('filter on: the result container gets te-loc-only-todo, nothing is stored in the browser', () => result().hasClass('te-loc-only-todo')
+		&& Object.keys(w.localStorage || {}).length === ls && Object.keys(w.sessionStorage || {}).length === ss && w.document.cookie === '');
+	calls.get[calls.get.length - 1].dfd.resolve(locBatch(files.slice(5), 7, true, null));
+	check('rows of a later batch: te-loc-done by the file, a root group of an earlier batch that gets a todo file stays visible, a new all-done root is hidden', () => rows().length === 7
+		&& rows().eq(5).hasClass('te-loc-done') && detail(5).hasClass('te-loc-done') && !result().find('tr.te-loc-root').eq(1).hasClass('te-loc-done')
+		&& result().find('tr.te-loc-root').eq(2).hasClass('te-loc-done') && result().hasClass('te-loc-only-todo') && filter().prop('checked') === true);
+	check('after the run: the filter is enabled, the total row shows partial, Translate all is visible', () => filter().prop('disabled') === false
+		&& result().find('.te-loc-total-state .te-badge--warn').text() === 'partial' && !w.$('#te-loc-translate-all-catalog').hasClass('te-hidden'));
+	w.teLocSetBusy('catalog', true);
+	check('teLocSetBusy does not disable the filter', () => filter().prop('disabled') === false);
+	w.teLocSetBusy('catalog', false);
+	rows().eq(1).find('.te-js-loc-translate-save').trigger('click');
+	calls.post[calls.post.length - 1].dfd.resolve({ success: 1, texts: ['Gotowe'] });
+	calls.post[calls.post.length - 1].dfd.resolve({ success: 1 });
+	check('a save does not change te-loc-done, the file shows saved', () => !rows().eq(1).hasClass('te-loc-done') && rows().eq(1).find('.te-badge--ok').text() === 'saved');
+	check('after the save of the file, one other todo file is left: the total state is partial', () => result().find('.te-loc-total-state .te-badge--warn').text() === 'partial');
+	rows().eq(4).find('.te-js-loc-translate-save').trigger('click');
+	calls.post[calls.post.length - 1].dfd.resolve({ success: 1, texts: ['Gotowe'] });
+	calls.post[calls.post.length - 1].dfd.resolve({ success: 1 });
+	check('after the last save: the total state is translated, Translate all is hidden', () => result().find('.te-loc-total-state .te-badge--ok').text() === 'translated' && w.$('#te-loc-translate-all-catalog').hasClass('te-hidden'));
+	locStart(w, calls, 'catalog');
+	check('a new analysis resets the filter to off', () => filter().prop('checked') === false && !result().hasClass('te-loc-only-todo'));
+	calls.get[calls.get.length - 1].dfd.resolve(locBatch([], 0, true, null));
+
+	loadOne([doneFile('/a.php'), doneFile('/b.php', { root: 'ext:one', rootName: 'one' })], 2, true, { fileCount: 2, translatedFileCount: 2, needToTranslateFileCount: 0, needToTranslateValueCount: 0, needToTranslateCharCount: 0 });
+	check('all files translated: info alert, Translate all hidden, total state translated, the totals show the count', () => w.$('#te-loc-alerts-catalog .te-alert--info').length === 1
+		&& w.$('#te-loc-translate-all-catalog').hasClass('te-hidden') && result().find('.te-loc-total-state .te-badge--ok').text() === 'translated' && w.$('#te-loc-totals-catalog').text().indexOf('Translated: 2') >= 0);
+	const posts = calls.post.length;
+	w.teLocTranslateAllStart('catalog');
+	check('Translate all skips fully translated files (no request)', () => calls.post.length === posts && w.teLocState.catalog.running === false);
+
+	// Translate all: only the files with keys to translate
+	loadOne([doneFile('/a.php'), todoFile('/b.php')], 2, true);
+	w.$('#te-loc-translate-all-catalog').trigger('click');
+	check('Translate all queues only the file with missing keys', () => calls.post.length === posts + 1 && JSON.parse(calls.post[posts].data.textArr).length === 1 && w.$('#te-loc-progress-catalog .te-progress__title').text() === 'Translating /b.php');
+	calls.post[posts].dfd.resolve({ success: 1, texts: ['X'] });
+	calls.post[posts + 1].dfd.resolve({ success: 1 });
+	check('Translate all ends after that file', () => w.teLocState.catalog.running === false && w.$('#te-loc-translate-all-catalog').hasClass('te-hidden'));
+
+	// editor
+	const ka = locDone('a', 'Alpha', "It\\'s");
+	const kb = locDone('b', 'Beta', 'Bee');
+	const kx = { key: 'x', text: '', fullText: "$_['x'] = sprintf('s');", expression: 1, translated: 1, targetText: '', targetFullText: "$_['x'] = sprintf('t');", targetExpression: 1 };
+	const ky = { key: 'y', text: 'Why', fullText: "$_['y'] = 'Why';", expression: 0, translated: 1, targetText: '', targetFullText: "$_['y'] = sprintf('t');", targetExpression: 1 };
+	const kn = locKey('n', 'New');
+	const ef = locFile('/e.php', [ka, kb, kx, ky, kn], { contentTo: "<?php\n" + ka.targetFullText + "\n" + kb.targetFullText + "\n" + kx.targetFullText + "\n" + ky.targetFullText + "\n" });
+	loadOne([ef], 1, true);
+	const ta = (key) => detail(0).find('textarea[data-key="' + key + '"]');
+	check('a translated key: the textarea has the decoded target value', () => ta('a').val() === "It's" && ta('b').val() === 'Bee' && ta('n').val() === '');
+	check('a translated key has the translate button, a code key has no textarea and shows the target code', () => detail(0).find('.te-js-loc-key-translate[data-key="a"]').length === 1
+		&& ta('x').length === 0 && ta('y').length === 0 && detail(0).find('.te-diff__target--code[data-key="x"]').text().indexOf(kx.targetFullText) === 0 && detail(0).find('.te-diff__target--code[data-key="y"]').text().indexOf(ky.targetFullText) === 0
+		&& detail(0).find('.te-diff__source--code').text() === kx.fullText);
+	detail(0).find('.te-js-collapse').trigger('click');
+	check('the source file marks only keys that are not translated', () => detail(0).find('pre.te-loc-source mark').length === 1 && detail(0).find('pre.te-loc-source mark').text() === kn.fullText);
+	let sv = w.teLocBuildFile(ef, { a: "It's", b: 'Bee' });
+	check('unchanged textareas: no change, null if nothing else', () => sv === null);
+	check('a blank textarea of a translated key: no change', () => w.teLocBuildFile(ef, { a: '  ', b: 'Bee' }) === null);
+	sv = w.teLocBuildFile(ef, { a: 'Alfa', b: 'Bee' });
+	check('an edit replaces the statement in place, the key occurs once, nothing else changes', () => sv === ef.contentTo.replace(ka.targetFullText, "$_['a'] = 'Alfa';") && sv.split("$_['a']").length === 2);
+	sv = w.teLocBuildFile(ef, { a: 'A $& B $1 C $\' D $` E $$', b: 'Bee' });
+	check('$&, $1, $\' are saved literally', () => sv.indexOf("$_['a'] = 'A $& B $1 C $\\' D $` E $$';") > 0 && sv.split("$_['a']").length === 2);
+	sv = w.teLocBuildFile(ef, { a: 'Alfa', b: 'Bee', x: 'no', y: 'no' });
+	check('a code statement stays unchanged after a save', () => sv.indexOf(kx.targetFullText) > 0 && sv.indexOf(ky.targetFullText) > 0 && sv.indexOf("'no'") === -1);
+	sv = w.teLocBuildFile(ef, { a: 'Alfa', n: 'Nowy' });
+	check('an edit and a new key: the edit is in place, the new line is appended with the head logic', () => sv === ef.contentTo.replace(ka.targetFullText, "$_['a'] = 'Alfa';").replace(/\s+$/, '') + "\n\n$_['n'] = 'Nowy';\n");
+	const dup = locFile('/d.php', [locDone('k', 'K', 'one')], { contentTo: "<?php\n$_['k'] = 'one';\n$_['k'] = 'one';\n" });
+	sv = w.teLocBuildFile(dup, { k: 'two' });
+	check('a duplicate statement: the last occurrence is replaced', () => sv === "<?php\n$_['k'] = 'one';\n$_['k'] = 'two';\n");
+	const lost = locFile('/l.php', [locDone('k', 'K', 'one')], { contentTo: "<?php\n" });
+	check('a target statement that is not found: the new statement is appended', () => w.teLocBuildFile(lost, { k: 'two' }) === "<?php\n\n$_['k'] = 'two';\n");
+	const dq = locFile('/q.php', [Object.assign(locDone('k', 'K', 'x'), { targetFullText: '$_["k"] = "a\\"b\\n";', targetText: 'a\\"b\\n' })], { contentTo: '<?php\n$_["k"] = "a\\"b\\n";\n' });
+	check('a double-quoted target: the decoded value is the unchanged value, an edit writes a single-quoted statement', () => w.teLocBuildFile(dq, { k: 'a"b\n' }) === null && w.teLocBuildFile(dq, { k: 'z' }) === "<?php\n$_['k'] = 'z';\n");
+
+	// the save request carries the replaced content
+	ta('a').val('Alfa');
+	detail(0).find('.te-js-loc-save').trigger('click');
+	check('save: the request carries the replaced content', () => calls.post[calls.post.length - 1].data.fileContent === ef.contentTo.replace(ka.targetFullText, "$_['a'] = 'Alfa';"));
+	const efSnap = JSON.parse(JSON.stringify({ keys: ef.keys, contentTo: ef.contentTo }));
+	calls.post[calls.post.length - 1].dfd.resolve({ success: 1 });
+	check('save: the saved value is the new baseline of the file', () => ef.contentTo === "<?php\n$_['a'] = 'Alfa';\n" + ef.contentTo.split("\n").slice(2).join("\n") && ef.keys[0].targetText === 'Alfa' && ef.keys[0].targetFullText === "$_['a'] = 'Alfa';");
+	ef.keys = efSnap.keys;
+	ef.contentTo = efSnap.contentTo;
+
+	// translate only the missing keys
+	loadOne([ef], 1, true);
+	const before = calls.post.length;
+	detail(0).find('.te-js-loc-translate').trigger('click');
+	check('Translate file sends only the keys that are not translated', () => calls.post.length === before + 1 && calls.post[before].data.textArr === JSON.stringify(['New']));
+	calls.post[before].dfd.resolve({ success: 1, texts: ['Nowy'] });
+	check('only the missing key gets the value, a translated key keeps its value', () => ta('n').val() === 'Nowy' && ta('a').val() === "It's");
+	detail(0).find('.te-js-loc-key-translate[data-key="a"]').trigger('click');
+	check('the button of one translated key translates that key', () => calls.post.length === before + 2 && calls.post[before + 1].data.textArr === JSON.stringify(['Alpha']));
+	calls.post[before + 1].dfd.resolve({ success: 1, texts: ['Alfa'] });
+	check('and sets only its textarea', () => ta('a').val() === 'Alfa' && ta('b').val() === 'Bee');
+
+	// the saved file is the new baseline of the next save
+	const bf = locFile('/s.php', [locDone('a', 'Alpha', "It\\'s"), locKey('n', 'New')], { contentTo: "<?php\n$_['a'] = 'It\\'s';\n" });
+	loadOne([bf], 1, true);
+	const base = calls.post.length;
+	ta('a').val('Alfa');
+	ta('n').val('Nowy');
+	detail(0).find('.te-js-loc-save').trigger('click');
+	const saved1 = calls.post[base].data.fileContent;
+	check('baseline: the first save replaces a and appends n', () => saved1 === "<?php\n$_['a'] = 'Alfa';\n\n$_['n'] = 'Nowy';\n");
+	calls.post[base].dfd.resolve({ success: 1 });
+	ta('a').val('');
+	detail(0).find('.te-js-loc-save').trigger('click');
+	check('baseline: after the save the key count is 0 and the translate buttons are hidden', () => w.$('#te-loc-result-catalog tr.te-loc-file').eq(0).find('.te-loc-todo').text() === '0'
+		&& detail(0).find('.te-js-loc-translate').hasClass('te-hidden'));
+	check('baseline: a cleared textarea after a save is no change, nothing is sent', () => calls.post.length === base + 1);
+	detail(0).find('.te-js-loc-save').trigger('click');
+	check('baseline: a save with the textareas unchanged sends nothing', () => calls.post.length === base + 1);
+	ta('a').val('Alfa2');
+	ta('n').val('Nowy2');
+	detail(0).find('.te-js-loc-save').trigger('click');
+	check('baseline: an edit after a save replaces the saved statements, each key occurs once', () => calls.post.length === base + 2
+		&& calls.post[base + 1].data.fileContent === "<?php\n$_['a'] = 'Alfa2';\n\n$_['n'] = 'Nowy2';\n");
+	calls.post[base + 1].dfd.resolve({ success: 1 });
+	check('baseline: an expression key written by the save stays untouched later', () => {
+		const xf = locFile('/x.php', [locExpr('e', "sprintf('x')"), locKey('n', 'New')], { contentTo: '' });
+		const ap = [];
+		const c1 = w.teLocBuildFile(xf, { n: 'N1' }, ap);
+		w.teLocApplySaved(xf, c1, ap);
+		return xf.keys[0].translated === 1 && xf.keys[0].targetExpression === 1 && xf.keys[1].targetFullText === "$_['n'] = 'N1';"
+			&& w.teLocBuildFile(xf, { n: 'N1' }) === null && w.teLocBuildFile(xf, { n: 'N2' }) === c1.replace("'N1'", "'N2'");
+	});
+}
+
+function testLocRoundTrip(w) {
+	console.log('\nLocalization: saved content read by PHP:');
+	const probe = child.spawnSync('php', ['-r', 'echo 1;'], { encoding: 'utf8' });
+	if (probe.error || probe.status !== 0) {
+		console.log('  SKIP: php is not in PATH, the round trip test does not run');
+		return;
+	}
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'te-loc-'));
+	const vals = { a: "It's \\ back", b: 'A $& B $1 C $\' D', c: 'Line', d: '<b>x</b> "q"' };
+	const kb = locDone('b', 'B', 'old b');
+	const ke = locExpr('e', "sprintf('%s', 'z')");
+	const file = locFile('/r.php', [locDone('a', 'A', 'old a'), kb, locDone('c', 'C', 'Line'), ke, locKey('d', 'D')], { contentTo: "<?php\n$_['a'] = 'old a';\n$_['b'] = 'old b';\n$_['c'] = 'Line';\n" });
+	const content = w.teLocBuildFile(file, vals);
+	const target = path.join(dir, 'out.php');
+	fs.writeFileSync(target, content);
+	const r = child.spawnSync('php', ['-r', '$_ = array(); include $argv[1]; echo json_encode($_);', target], { encoding: 'utf8' });
+	let parsed = null;
+	try { parsed = JSON.parse(r.stdout); } catch (e) { parsed = null; }
+	check('PHP reads each saved value back unchanged (edited, unchanged, new, expression)', () => parsed !== null && parsed.a === vals.a && parsed.b === vals.b && parsed.c === 'Line' && parsed.d === vals.d && parsed.e === 'z');
+	fs.rmSync(dir, { recursive: true, force: true });
 }
 
 function testLocBs5(w) {
@@ -1642,6 +1854,9 @@ for (const version of JQUERY_VERSIONS) {
 	testLocTranslateSave(w);
 	w = makeSiteWindow(version.file, false);
 	testLocTranslateAll(w);
+	w = makeSiteWindow(version.file, false);
+	testLocTodo(w);
+	testLocRoundTrip(w);
 	w = makeWindow(version.file, true);
 	testBs5(w);
 	testCharCountHelpers(w);

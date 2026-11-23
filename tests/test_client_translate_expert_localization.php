@@ -315,6 +315,7 @@ class LocalizationChildTest
 			$this->testRoots();
 			$this->testAdminAnalysis();
 			$this->testCatalogAnalysis();
+			$this->testAllKeys();
 			$this->testParser();
 			$this->testConcatenatedValueWithoutTarget();
 			$this->testBatching();
@@ -391,6 +392,16 @@ class LocalizationChildTest
 		return $names;
 	}
 
+	private function missingNames($file)
+	{
+		$names = array();
+		$keys = isset($file['keys']) ? $file['keys'] : array();
+		foreach ($keys as $key)
+			if (!$key['translated'])
+				$names[] = $key['key'];
+		return $names;
+	}
+
 	private function keyItem($file, $name)
 	{
 		$keys = isset($file['keys']) ? $file['keys'] : array();
@@ -431,11 +442,11 @@ class LocalizationChildTest
 		$header = $rows['core|/common/header.php'];
 		$this->check(strpos($header['contentFrom'], 'text_admin_inc') !== false && strpos($header['contentFrom'], 'text_catalog_inc') === false,
 			true, 'admin include is read from the admin language folder');
-		$this->check($this->keyNames($header), $this->isOc4 ? array('text_admin_inc') : array('heading_title', 'text_admin_inc'),
+		$this->check($this->missingNames($header), $this->isOc4 ? array('text_admin_inc') : array('heading_title', 'text_admin_inc'),
 			$this->isOc4 ? 'existing target file in the language extension is read (heading_title is translated)' : 'missing target file: heading_title needs translation');
 		$inc = $this->keyItem($header, 'text_admin_inc');
-		$this->check($inc, array('key' => 'text_admin_inc', 'text' => 'Admin include', 'fullText' => "\$_['text_admin_inc'] = 'Admin include';", 'expression' => 0),
-			'key item has key, text, fullText and an int expression');
+		$this->check($inc, array('key' => 'text_admin_inc', 'text' => 'Admin include', 'fullText' => "\$_['text_admin_inc'] = 'Admin include';", 'expression' => 0, 'translated' => 0, 'targetText' => '', 'targetFullText' => '', 'targetExpression' => 0),
+			'key item has the 8 key fields (a missing key has empty target data)');
 		$this->check($header['targetExists'], $this->isOc4 ? 1 : 0, 'targetExists is an int');
 		$fields = array_keys($header);
 		sort($fields);
@@ -447,6 +458,7 @@ class LocalizationChildTest
 		$quote = $rows["core|/quote'name.php"];
 		$this->check($quote['pathTo'], "/quote'name.php", 'pathTo is the raw value');
 		$this->check($this->keyNames($quote), array('text_q'), 'keys of the quote file');
+		$this->check($this->missingNames($quote), array('text_q'), 'missing keys of the quote file');
 		$this->check($quote['rootName'], '', 'core root has an empty root name');
 
 		if ($this->isOc4)
@@ -461,6 +473,7 @@ class LocalizationChildTest
 			'needToTranslateFileCount' => $this->isOc4 ? 5 : 4,
 			'needToTranslateValueCount' => 6,
 			'needToTranslateCharCount' => $this->isOc4 ? 43 : 42,
+			'translatedFileCount' => 0,
 		), 'admin totals are computed from the fixture');
 		$sum = 0;
 		foreach ($rows as $row)
@@ -472,7 +485,73 @@ class LocalizationChildTest
 	private function keyChars($file, $key)
 	{
 		$item = $this->keyItem($file, $key);
-		return is_array($item) && !$item['expression'] ? mb_strlen(trim(html_entity_decode($item['text'])), 'UTF-8') : 0;
+		return is_array($item) && !$item['translated'] && !$item['expression'] ? mb_strlen(trim(html_entity_decode($item['text'])), 'UTF-8') : 0;
+	}
+
+	private function catalogTargetCore()
+	{
+		if ($this->isOc4)
+			return $this->tmp . '/extension/ukrainian/catalog/language/uk-ua/';
+		return $this->tmp . '/catalog/language/' . $this->to . '/';
+	}
+
+	private function testAllKeys()
+	{
+		$lib = $this->newLibrary();
+		$base = $lib->analizeLocalization('1', '2', 0);
+		$src = $this->tmp . '/catalog/language/' . $this->from . '/zzkeys/';
+		$dst = $this->catalogTargetCore() . 'zzkeys/';
+		writeFile($src . 'full.php', langFile(array('k_a' => 'A', 'k_b' => 'B')));
+		writeFile($dst . 'full.php', langFile(array('k_b' => 'Бе', 'k_a' => 'А')));
+		writeFile($src . 'part.php', "<?php\n\$_['k_z'] = 'Z';\n\$_['k_expr'] = 'E' . date('Y');\n\$_['k_a'] = 'Aa &amp; b';\n\$_['k_tx'] = 'Tx';\n\$_['k_miss'] = 'Missing';\n");
+		writeFile($dst . 'part.php', "<?php\n\$_['k_tx'] = 'Tx' . date('Y');\n\$_['k_a'] = 'Аа';\n\$_['k_expr'] = 'Е';\n\$_['k_extra'] = 'Extra';\n");
+
+		$res = $lib->analizeLocalization('1', '2', 0);
+		unlink($src . 'full.php');
+		unlink($src . 'part.php');
+		unlink($dst . 'full.php');
+		unlink($dst . 'part.php');
+		$this->check($res->success, 1, 'analysis with translated and partial files succeeds');
+		if (!$res->success)
+			return;
+		$rows = $this->analysisRows($res);
+		$full = isset($rows['core|/zzkeys/full.php']) ? $rows['core|/zzkeys/full.php'] : null;
+		$part = isset($rows['core|/zzkeys/part.php']) ? $rows['core|/zzkeys/part.php'] : null;
+		$this->check($full !== null && $part !== null, true, 'translated and partial files are both in files');
+		if ($full === null || $part === null)
+			return;
+
+		$this->check($this->keyNames($full), array('k_a', 'k_b'), 'translated file: all keys in source order');
+		$this->check($this->missingNames($full), array(), 'translated file: no missing key');
+		$this->check($full['charCount'], 0, 'translated file: charCount 0');
+		$this->check($full['targetExists'], 1, 'translated file: target exists');
+		$item = $this->keyItem($full, 'k_b');
+		$this->check($item, array('key' => 'k_b', 'text' => 'B', 'fullText' => "\$_['k_b'] = 'B';", 'expression' => 0, 'translated' => 1,
+			'targetText' => 'Бе', 'targetFullText' => "\$_['k_b'] = 'Бе';", 'targetExpression' => 0), 'translated key item has target data');
+
+		$this->check($this->keyNames($part), array('k_z', 'k_expr', 'k_a', 'k_tx', 'k_miss'), 'key order is the source order');
+		$this->check($this->missingNames($part), array('k_z', 'k_miss'), 'partial file: missing keys');
+		$z = $this->keyItem($part, 'k_z');
+		$this->check($z['translated'] . '|' . $z['targetText'] . '|' . $z['targetFullText'] . '|' . $z['targetExpression'], '0|||0', 'missing key has empty target data');
+		$a = $this->keyItem($part, 'k_a');
+		$this->check(array($a['translated'], $a['text'], $a['targetText'], $a['targetFullText'], $a['targetExpression']),
+			array(1, 'Aa &amp; b', 'Аа', "\$_['k_a'] = 'Аа';", 0), 'translated key of a partial file');
+		$tx = $this->keyItem($part, 'k_tx');
+		$this->check(array($tx['expression'], $tx['translated'], $tx['targetText'], $tx['targetExpression']), array(0, 1, '', 1), 'target expression: targetExpression 1, source literal expression 0');
+		$this->check(strpos($tx['targetFullText'], "date('Y')") !== false, true, 'target expression keeps its statement');
+		$expr = $this->keyItem($part, 'k_expr');
+		$this->check(array($expr['expression'], $expr['translated'], $expr['targetText'], $expr['targetExpression']), array(1, 1, 'Е', 0), 'source expression keeps expression 1, literal target');
+		$this->check($this->keyItem($part, 'k_extra'), null, 'target-only key is not listed');
+		$this->check(array_keys($part['keys'][0]), array('key', 'text', 'fullText', 'expression', 'translated', 'targetText', 'targetFullText', 'targetExpression'), 'key item has exactly 8 fields');
+		$this->check($part['charCount'], mb_strlen('Missing', 'UTF-8') + 1, 'partial file: charCount counts missing keys only');
+
+		$b = $base->totals;
+		$t = $res->totals;
+		$this->check($t['fileCount'], $b['fileCount'] + 2, 'totals: both files counted');
+		$this->check($t['needToTranslateFileCount'], $b['needToTranslateFileCount'] + 1, 'totals: only the partial file needs translation');
+		$this->check($t['needToTranslateValueCount'], $b['needToTranslateValueCount'] + 2, 'totals: value count has missing keys only');
+		$this->check($t['translatedFileCount'], $b['translatedFileCount'] + 1, 'translatedFileCount counts the translated file');
+		$this->check($t['translatedFileCount'], $t['fileCount'] - $t['needToTranslateFileCount'], 'translatedFileCount = fileCount - needToTranslateFileCount');
 	}
 
 	private function checkResponseShape($res, $prefix)
@@ -510,11 +589,11 @@ class LocalizationChildTest
 			$this->check($cod['rootName'], 'opencart', 'catalog extension root name in the analysis');
 			$this->check($cod['pathTo'], '/payment/cod.php', 'catalog extension file keeps its path');
 			$this->check($cod['targetExists'], 0, 'missing catalog extension target file is reported');
-			$this->check($this->keyNames($cod), array('text_title', 'text_catalog_inc'), 'catalog extension keys');
-			$this->check($this->keyItem($cod, 'text_title'), array('key' => 'text_title', 'text' => 'Cash On Delivery', 'fullText' => "\$_['text_title'] = 'Cash On Delivery';", 'expression' => 0), 'catalog extension key item');
+			$this->check($this->missingNames($cod), array('text_title', 'text_catalog_inc'), 'catalog extension keys');
+			$this->check($this->keyItem($cod, 'text_title'), array('key' => 'text_title', 'text' => 'Cash On Delivery', 'fullText' => "\$_['text_title'] = 'Cash On Delivery';", 'expression' => 0, 'translated' => 0, 'targetText' => '', 'targetFullText' => '', 'targetExpression' => 0), 'catalog extension key item');
 			$this->check(strpos($cod['contentFrom'], 'text_catalog_inc') !== false && strpos($cod['contentFrom'], 'text_admin_inc') === false,
 				true, 'catalog extension include is read from the catalog language folder');
-			$this->check(in_array('text_product', $this->keyNames($rows['core|/product/product.php'])), false,
+			$this->check(in_array('text_product', $this->missingNames($rows['core|/product/product.php'])), false,
 				'existing catalog target file in the language extension is read');
 		}
 		$this->check($rows["core|/{$this->mainFrom}.php"]['pathTo'], "/{$this->mainTo}.php", $this->isOc4 ? 'catalog default.php keeps its name on OC 4' : 'catalog main file is renamed to the target language');
@@ -811,7 +890,7 @@ class LocalizationChildTest
 		{
 			$rows = $this->analysisRows($res);
 			$this->check(array_keys($rows), array('core|/common/header.php'), 'reverse direction: analysis files');
-			$this->check(in_array('heading_title', $this->keyNames($rows['core|/common/header.php'])), false,
+			$this->check(in_array('heading_title', $this->missingNames($rows['core|/common/header.php'])), false,
 				'reverse direction: existing target file in the admin folder is read');
 		}
 
