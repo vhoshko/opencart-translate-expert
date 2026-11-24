@@ -744,3 +744,15 @@
 .te-app .te-lcm-actions {
   margin-top: 8px;
 }
+
+/* Multiple selects: the "size" attribute sets the height. A fixed form-control height of the admin theme would hide the rows (issues #100 and #101). */
+.te-app select[multiple].form-control,
+.te-app select[multiple].form-select {
+  height: auto;
+}
+
+/* Same rule for a select that has no form-control class: the multiple and size attributes set the height. */
+.te-app select[multiple],
+.te-app select[size] {
+  height: auto;
+}

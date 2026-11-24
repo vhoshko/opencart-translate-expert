@@ -83,6 +83,7 @@ php tests/test_client_translate_expert_ajax_guard.php
 php tests/test_client_translate_expert_version_rules.php
 php tests/test_oc4_twig_filters.php
 php tests/test_oc30_ocmod_xml.php
+php tests/test_client_translate_expert_select_height.php
 (cd tests/js && npm ci --silent && node test_client_translate_expert_js_helpers.js)
 ```
 

@@ -206,7 +206,7 @@
 							<label class="te-field__label" for="te-analization-table"><?php echo $entry_table; ?></label>
 							<div class="te-field__control">
 							  <div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-table" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-table"><?php echo $button_clear_selection; ?></button></div>
-							  <select id="te-analization-table" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
+							  <select id="te-analization-table" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="15" class="form-control">
 								<?php foreach ($tables as $table) { ?>
 								<option value="<?php echo $table; ?>" <?php if (in_array((string)$table, $te_table)) { echo 'selected="selected"'; } ?>><?php echo $table; ?></option>
 								<?php } ?>

@@ -206,7 +206,7 @@
                         <label class="te-field__label" for="te-analization-table">{{ entry_table }}</label>
                         <div class="te-field__control">
                           <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-table" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-table">{{ button_clear_selection }}</button></div>
-                          <select id="te-analization-table" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="6" class="form-select">
+                          <select id="te-analization-table" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="15" class="form-select">
                             {% for table in tables %}
                             <option value="{{ table }}" {% if table in te_table %}selected="selected"{% endif %}>{{ table }}</option>
                             {% endfor %}
