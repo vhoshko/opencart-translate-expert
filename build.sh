@@ -30,6 +30,25 @@ strip_oc4_event_blocks() {
     fi
 }
 
+# Check the OC 3.0 OCMOD XML after the Twig rewrite. GNU sed and BSD sed read \? in a different way,
+# so the patterns use [?]. A wrong rewrite leaves PHP tags in header.twig (issue #98).
+check_oc30_xml() {
+    local xml="$1"
+    local need
+    for need in '{{ client_translate_expert_head_html }}' '{{ client_translate_expert_header_html }}'; do
+        if ! grep -qF "$need" "$xml"; then
+            echo "ERROR: $need is missing in the OC 3.0 OCMOD XML" >&2
+            exit 1
+        fi
+    done
+    # awk has no pipe, so pipefail cannot hide a match. Line 1 is the XML declaration.
+    if awk 'NR > 1 && /<[?]|[?]>/ { found = 1 } END { exit !found }' "$xml"; then
+        echo "ERROR: PHP tag left in the OC 3.0 OCMOD XML" >&2
+        awk 'NR > 1 && /<[?]|[?]>/ { print NR ": " $0 }' "$xml" >&2
+        exit 1
+    fi
+}
+
 # Check a finished package: the 7 library files are in the translate_expert folder
 # and no old library file name or class name remains in the package contents.
 OLD_LIB_NAMES='vh_google_translator|VHGoogleTranslator|LibraryClientTranslateExpert|ClientTranslateExpertCronHelper|ClientTranslateExpertI18n|ClientTranslateExpertRouteFilter|client_translate_expert_(core|cron_helper|i18n|route_filter)\.php|client_localization_translate_expert|library/client_translate_expert\.php'
@@ -168,8 +187,9 @@ check_package "$SCRIPT_DIR/OpenCartTranslateExpertClient-oc1.5-v${VERSION}-${LOC
 cp -r sources_release sources_release_30
 
 file_replace sources_release_30/upload/system/OpenCartTranslateExpertClient.ocmod.xml '.tpl' '.twig'
-file_replace sources_release_30/upload/system/OpenCartTranslateExpertClient.ocmod.xml '<\?php echo \$' '{{ '
-file_replace sources_release_30/upload/system/OpenCartTranslateExpertClient.ocmod.xml '; \?\>' ' }}'
+file_replace sources_release_30/upload/system/OpenCartTranslateExpertClient.ocmod.xml '<[?]php echo [$]' '{{ '
+file_replace sources_release_30/upload/system/OpenCartTranslateExpertClient.ocmod.xml '; [?]>' ' }}'
+check_oc30_xml sources_release_30/upload/system/OpenCartTranslateExpertClient.ocmod.xml
 
 # Strip OC4-only event handlers before zip (PHP 8.0 type hints break PHP 7.x)
 OC30_CTRL="sources_release_30/upload/admin/controller/extension/module/client_translate_expert.php"

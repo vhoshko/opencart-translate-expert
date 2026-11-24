@@ -110,6 +110,9 @@ php tests/test_client_translate_expert_settings_cards.php
 # Donation info tests: wallet addresses in the README, store descriptions and language files, QR image files, template and whitelist keys (static, no DB, no API key)
 php tests/test_client_translate_expert_donation_info.php
 
+# OC 3.0 OCMOD XML tests: the sed lines of build.sh that make the Twig lines in header.twig (runs the real lines on a copy of the XML, no OpenCart, no DB, no API key)
+php tests/test_oc30_ocmod_xml.php
+
 # OC4 Twig name check: filters, tests, functions, tags (static, no Twig needed)
 php tests/test_oc4_twig_filters.php
 
@@ -149,6 +152,8 @@ The donation info test checks that each wallet address is the same in `README.md
 The JS helper tests load the real `client_translate_expert.js` in jsdom. They cover the `teT` lookup and placeholders, the FA 4 and FA 6 icon classes, the Bootstrap adapter with BS5 and with no Bootstrap, and the `teAlerts` text-only rendering of JSON, non-JSON and jqXHR responses. They also cover the localization tabs: the analysis loop, the key list, the PHP literal helpers, translate and save for one file, "Translate all" with Stop, the translated state, the "only files to translate" filter, the edit of translated keys and a PHP round trip of the saved file (skipped if `php` is not in the PATH). `npm ci` installs the pinned dev dependencies (jsdom, jQuery 3.7.1) into `tests/js/node_modules/`, which git ignores. jQuery 1.7.1 is the OC 1.5 file in `tests/js/vendor/`.
 
 The version rules tests call the `private static` helpers of the admin controller and the model with a version string. They cover each branch (OC 1.5, 2.2, 2.3, 3.0 and 4.x). Any PHP warning fails these tests.
+
+The OC 3.0 OCMOD XML test reads the `file_replace` function and the `file_replace` lines for the OC 3.0 OCMOD XML from `build.sh`. It runs them with `bash` on a copy of the XML. It fails if `header.twig` does not get `{{ client_translate_expert_head_html }}` and `{{ client_translate_expert_header_html }}`, or if a PHP tag remains. Use `[?]` and `[$]` in `sed` patterns. GNU `sed` and BSD `sed` read `\?` in a different way.
 
 The OC4 Twig name test reads each `.twig` file under `sources/`. It fails on a filter, test, function or tag that Twig v3.4.2 (OpenCart 4.0.2.x) or Twig v3.18.0 (OpenCart 4.1.0.x) does not define. Such a name breaks the OC4 admin page with "Could not load template". It also fails on syntax that only Twig v3.18.0 accepts (`has some`, `has every`, `xor`, the `...` spread, `name: value` arguments) and on an unclosed comment, block, string or `verbatim` block. The test skips comments and `verbatim` blocks, and it checks string interpolation.
 

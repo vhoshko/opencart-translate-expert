@@ -277,6 +277,10 @@ Give the agent these items:
 
 The agent owns the sequence. Its definition in `.claude/agents/ote-build-test.md` lists the steps. The agent reports pass or fail, error details, the test count, the version bump and the release path. The main context sees only this summary.
 
+### Read the built output (changes to `build.sh` rewrites)
+
+A green build does not prove that a text rewrite is correct (issue #98). If the diff changes a `file_replace` or `sed` line of `build.sh`, open the built package. Read the changed lines in the output file. The dev container has GNU `sed` and the maintainer can build on macOS with BSD `sed`. Use patterns that work in both, and say in the report that BSD `sed` was not run.
+
 ### Compare with a baseline (changes to `build.sh` or to a version rule)
 
 If the task changes `build.sh` or moves a version rule into the code, prove that the packages behave the same (task 68). Do these steps:
