@@ -6,7 +6,7 @@
  *   php tests/test_client_translate_expert_select_height.php
  *
  * Reads the .tpl, the .oc4.twig and the CSS file. No OpenCart, no DB, no API key.
- * The table list #te-analization-table shows 15 rows. The CSS rule lets the size attribute set the height.
+ * The table list, the category filter and the manufacturer filter show 15 rows. The CSS rule lets the size attribute set the height.
  */
 
 $base = __DIR__ . '/../sources/upload/admin/view/';
@@ -39,14 +39,22 @@ function check($ok, $label)
 	}
 }
 
+// select id => rows
+$lists = array(
+	'te-analization-table' => 15,
+	'te-analization-product-category-id-filter' => 15,
+	'te-analization-product-manufacturer-filter' => 15,
+);
 foreach ($files as $name => $path) {
 	echo "== {$name} ==\n";
 	$html = file_get_contents($path);
-	$found = preg_match('/<select\b[^\n]*\bid="te-analization-table"[^\n]*/', $html, $m) === 1;
-	check($found, 'the table list select exists');
-	$tag = $found ? $m[0] : '';
-	check(strpos($tag, 'multiple="multiple"') !== false, 'the table list is a multiple select');
-	check(strpos($tag, 'size="15"') !== false, 'the table list shows 15 rows (size="15")');
+	foreach ($lists as $id => $rows) {
+		$found = preg_match('/<select\b[^\n]*\bid="' . $id . '"[^\n]*/', $html, $m) === 1;
+		check($found, "{$id}: the select exists");
+		$tag = $found ? $m[0] : '';
+		check(strpos($tag, 'multiple="multiple"') !== false, "{$id}: it is a multiple select");
+		check(strpos($tag, 'size="' . $rows . '"') !== false, "{$id}: it shows {$rows} rows (size=\"{$rows}\")");
+	}
 }
 
 echo "== css ==\n";

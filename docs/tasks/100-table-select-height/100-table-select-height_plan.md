@@ -33,3 +33,7 @@ The investigation agent is skipped. Two greps found the select in both templates
 ## Update 24.11.2026 (user feedback)
 The user showed the CSS of their admin theme: `select[multiple], select[size] { height: auto; }` and `.form-control { height: 36px; }`. In that theme the old `size="6"` already shows 6 rows, and the new CSS rule has no effect there. The rule stays as a safety net for themes with a fixed height (issue #101, unconfirmed).
 The user chose a fixed, larger size: `size="15"` replaces `size="10"` in both templates, in the test and in the docs.
+
+## Update 24.11.2026 (user request after the PR)
+The user said that the filter lists are the work of issue #101. The PR closes #100 and #101.
+The user asked for the same row count for the category filter and the manufacturer filter. `#te-analization-product-category-id-filter` and `#te-analization-product-manufacturer-filter` now have `size="15"` in both templates. The stock status filter keeps `size="6"`, because the user did not name it. The test checks the 3 lists (21 checks).

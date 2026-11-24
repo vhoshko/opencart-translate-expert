@@ -156,7 +156,7 @@ The JS helper tests load the real `client_translate_expert.js` in jsdom. They co
 
 The version rules tests call the `private static` helpers of the admin controller and the model with a version string. They cover each branch (OC 1.5, 2.2, 2.3, 3.0 and 4.x). Any PHP warning fails these tests.
 
-The select height test checks that `#te-analization-table` has `size="15"` in both admin templates. It checks that the CSS file lets the `size` attribute set the height of the multiple selects with `height: auto`. The rules are `select[multiple].form-control`, `select[multiple].form-select`, `select[multiple]` and `select[size]` under `.te-app`.
+The select height test checks that `#te-analization-table`, the category filter and the manufacturer filter have `size="15"` in both admin templates. It checks that the CSS file lets the `size` attribute set the height of the multiple selects with `height: auto`. The rules are `select[multiple].form-control`, `select[multiple].form-select`, `select[multiple]` and `select[size]` under `.te-app`.
 
 The OC 3.0 OCMOD XML test reads the `file_replace` function and the `file_replace` lines for the OC 3.0 OCMOD XML from `build.sh`. It runs them with `bash` on a copy of the XML. It fails if `header.twig` does not get `{{ client_translate_expert_head_html }}` and `{{ client_translate_expert_header_html }}`, or if a PHP tag remains. Use `[?]` and `[$]` in `sed` patterns. GNU `sed` and BSD `sed` read `\?` in a different way.
 
