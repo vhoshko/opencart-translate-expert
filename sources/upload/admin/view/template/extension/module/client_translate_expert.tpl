@@ -206,7 +206,7 @@
 							<label class="te-field__label" for="te-analization-table"><?php echo $entry_table; ?></label>
 							<div class="te-field__control">
 							  <div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-table" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-table"><?php echo $button_clear_selection; ?></button></div>
-							  <select id="te-analization-table" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
+							  <select id="te-analization-table" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="15" class="form-control">
 								<?php foreach ($tables as $table) { ?>
 								<option value="<?php echo $table; ?>" <?php if (in_array((string)$table, $te_table)) { echo 'selected="selected"'; } ?>><?php echo $table; ?></option>
 								<?php } ?>
@@ -238,7 +238,7 @@
 							  <label class="te-field__label" for="te-analization-product-category-id-filter"><?php echo $entry_table_product_category_id_filter; ?></label>
 							  <div class="te-field__control">
 								<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-product-category-id-filter" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-product-category-id-filter"><?php echo $button_clear_selection; ?></button></div>
-								<select id="te-analization-product-category-id-filter" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
+								<select id="te-analization-product-category-id-filter" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="15" class="form-control">
 								  <?php foreach($categories as $category) { ?>
 								  <?php if(in_array((string)$category['category_id'], $te_product_category_id)) { ?>
 								  <option value="<?php echo $category['category_id']; ?>" selected="selected"><?php echo $category['name']; ?></option>
@@ -266,7 +266,7 @@
 							  <label class="te-field__label" for="te-analization-product-manufacturer-filter"><?php echo $entry_table_product_manufacturer_filter; ?></label>
 							  <div class="te-field__control">
 								<div style="margin-bottom: 5px;"><button type="button" class="btn btn-default btn-xs te-multi-select-all" data-te-target="#te-analization-product-manufacturer-filter" data-te-caption-first="<?php echo htmlspecialchars($button_select_first, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $button_select_all; ?></button> <button type="button" class="btn btn-default btn-xs te-multi-select-clear" data-te-target="#te-analization-product-manufacturer-filter"><?php echo $button_clear_selection; ?></button></div>
-								<select id="te-analization-product-manufacturer-filter" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="6" class="form-control">
+								<select id="te-analization-product-manufacturer-filter" data-te-max="<?php echo (int)$te_multi_select_max; ?>" multiple="multiple" size="15" class="form-control">
 								  <?php foreach ($manufacturers as $manufacturer) { ?>
 								  <option value="<?php echo $manufacturer['manufacturer_id']; ?>" <?php if (in_array((string)$manufacturer['manufacturer_id'], $te_manufacturer_id)) { echo 'selected="selected"'; } ?>><?php echo $manufacturer['name']; ?></option>
 								  <?php } ?>
