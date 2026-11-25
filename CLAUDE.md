@@ -110,7 +110,7 @@ php tests/test_client_translate_expert_settings_cards.php
 # Donation info tests: wallet addresses in the README, store descriptions and language files, QR image files, template and whitelist keys (static, no DB, no API key)
 php tests/test_client_translate_expert_donation_info.php
 
-# Select height test: size of the table list and the CSS rule for the multiple selects in the .tpl, the .oc4.twig and the CSS (static, no DB, no API key)
+# Select height test: size and class te-select-multi of the multiple selects in the .tpl and the .oc4.twig, and the CSS rules (static, no DB, no API key)
 php tests/test_client_translate_expert_select_height.php
 
 # OC 3.0 OCMOD XML tests: the sed lines of build.sh that make the Twig lines in header.twig (runs the real lines on a copy of the XML, no OpenCart, no DB, no API key)
@@ -156,7 +156,7 @@ The JS helper tests load the real `client_translate_expert.js` in jsdom. They co
 
 The version rules tests call the `private static` helpers of the admin controller and the model with a version string. They cover each branch (OC 1.5, 2.2, 2.3, 3.0 and 4.x). Any PHP warning fails these tests.
 
-The select height test checks that `#te-analization-table`, the category filter and the manufacturer filter have `size="15"` in both admin templates. It checks that the CSS file lets the `size` attribute set the height of the multiple selects with `height: auto`. The rules are `select[multiple].form-control`, `select[multiple].form-select`, `select[multiple]` and `select[size]` under `.te-app`.
+The select height test checks that `#te-analization-table`, the category filter and the manufacturer filter have `size="15"` in both admin templates. It checks that the 4 multiple selects have the class `te-select-multi` in both templates. It checks the rule `.te-app .te-select-multi` with `height: auto !important`. Some themes (for example ocStore) set the select height with `!important`, and this rule wins over them. The test fails if a rule for a general `select` or `input` has `!important`. It also fails if the old rules for `select[multiple]` or `select[size]` come back.
 
 The OC 3.0 OCMOD XML test reads the `file_replace` function and the `file_replace` lines for the OC 3.0 OCMOD XML from `build.sh`. It runs them with `bash` on a copy of the XML. It fails if `header.twig` does not get `{{ client_translate_expert_head_html }}` and `{{ client_translate_expert_header_html }}`, or if a PHP tag remains. Use `[?]` and `[$]` in `sed` patterns. GNU `sed` and BSD `sed` read `\?` in a different way.
 
