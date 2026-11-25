@@ -206,7 +206,7 @@
                         <label class="te-field__label" for="te-analization-table">{{ entry_table }}</label>
                         <div class="te-field__control">
                           <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-table" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-table">{{ button_clear_selection }}</button></div>
-                          <select id="te-analization-table" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="15" class="form-select">
+                          <select id="te-analization-table" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="15" class="form-select te-select-multi">
                             {% for table in tables %}
                             <option value="{{ table }}" {% if table in te_table %}selected="selected"{% endif %}>{{ table }}</option>
                             {% endfor %}
@@ -238,7 +238,7 @@
                           <label class="te-field__label" for="te-analization-product-category-id-filter">{{ entry_table_product_category_id_filter }}</label>
                           <div class="te-field__control">
                             <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-category-id-filter" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-category-id-filter">{{ button_clear_selection }}</button></div>
-                            <select id="te-analization-product-category-id-filter" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="15" class="form-select mb-2">
+                            <select id="te-analization-product-category-id-filter" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="15" class="form-select mb-2 te-select-multi">
                               {% for category in categories %}
                               <option value="{{ category.category_id }}" {% if category.category_id in te_product_category_id %}selected="selected"{% endif %}>{{ category.name }}</option>
                               {% endfor %}
@@ -250,7 +250,7 @@
                           <label class="te-field__label" for="te-analization-product-stock-status-filter">{{ entry_table_product_stock_status_filter }}</label>
                           <div class="te-field__control">
                             <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-stock-status-filter" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-stock-status-filter">{{ button_clear_selection }}</button></div>
-                            <select id="te-analization-product-stock-status-filter" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="6" class="form-select mb-2">
+                            <select id="te-analization-product-stock-status-filter" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="6" class="form-select mb-2 te-select-multi">
                               {% for stock_status in stock_statuses %}
                               <option value="{{ stock_status.stock_status_id }}" {% if stock_status.stock_status_id in te_stock_status %}selected="selected"{% endif %}>{{ stock_status.name }}</option>
                               {% endfor %}
@@ -262,7 +262,7 @@
                           <label class="te-field__label" for="te-analization-product-manufacturer-filter">{{ entry_table_product_manufacturer_filter }}</label>
                           <div class="te-field__control">
                             <div class="mb-1"><button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-all" data-te-target="#te-analization-product-manufacturer-filter" data-te-caption-first="{{ button_select_first|e('html_attr') }}">{{ button_select_all }}</button> <button type="button" class="btn btn-outline-secondary btn-sm te-multi-select-clear" data-te-target="#te-analization-product-manufacturer-filter">{{ button_clear_selection }}</button></div>
-                            <select id="te-analization-product-manufacturer-filter" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="15" class="form-select mb-2">
+                            <select id="te-analization-product-manufacturer-filter" data-te-max="{{ te_multi_select_max }}" multiple="multiple" size="15" class="form-select mb-2 te-select-multi">
                               {% for manufacturer in manufacturers %}
                               <option value="{{ manufacturer.manufacturer_id }}" {% if manufacturer.manufacturer_id in te_manufacturer_id %}selected="selected"{% endif %}>{{ manufacturer.name }}</option>
                               {% endfor %}

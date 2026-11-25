@@ -745,14 +745,7 @@
   margin-top: 8px;
 }
 
-/* Multiple selects: the "size" attribute sets the height. A fixed form-control height of the admin theme would hide the rows (issues #100 and #101). */
-.te-app select[multiple].form-control,
-.te-app select[multiple].form-select {
-  height: auto;
-}
-
-/* Same rule for a select that has no form-control class: the multiple and size attributes set the height. */
-.te-app select[multiple],
-.te-app select[size] {
-  height: auto;
+/* Module multiple selects: some themes (for example ocStore) set a select height with !important. The class te-select-multi wins over them (issue #104). Only the module selects have this class. */
+.te-app .te-select-multi {
+  height: auto !important;
 }
